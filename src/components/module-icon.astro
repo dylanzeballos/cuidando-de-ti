@@ -1,0 +1,45 @@
+---
+import type { ModuleIconName } from '@/lib/module-catalog';
+
+interface Props {
+  name: ModuleIconName;
+  size?: number;
+  class?: string;
+}
+
+const { name, size = 17, class: className = '' } = Astro.props;
+
+// Trazo lineal propio del sistema; no incrusta marca de ninguna empresa.
+const paths: Record<ModuleIconName, string> = {
+  catalog:
+    '<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0l-7.2-7.2A2 2 0 0 1 2.8 12V4.8A2 2 0 0 1 4.8 2.8H12a2 2 0 0 1 1.4.6l7.2 7.2a2 2 0 0 1 0 2.8Z" /><circle cx="7.6" cy="7.6" r="1.2" />',
+  inventory:
+    '<rect x="3" y="3" width="7.5" height="7.5" rx="1.4" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.4" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.4" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.4" />',
+  sales:
+    '<path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 21z" /><path d="M9 8h6M9 12h6" />',
+  costs:
+    '<circle cx="12" cy="12" r="8" /><path d="M12 7.5v9" /><path d="M9.4 10.2h4.3a1.8 1.8 0 0 1 0 3.6H9.4" />',
+  billing:
+    '<path d="M6 3h9l4 4v14H6z" /><path d="M15 3v4h4" /><path d="M9 12h6M9 16h6" />',
+  commerce: '<path d="M4 7h16l-1.5 12H5.5z" /><path d="M8.5 7a3.5 3.5 0 0 1 7 0" />',
+  customers:
+    '<circle cx="9" cy="8" r="3.2" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0" /><path d="M16 11a3 3 0 1 0-1.8-5.4" /><path d="M15 20a5.5 5.5 0 0 1 5.5-5.5" />',
+  identity:
+    '<circle cx="10" cy="8" r="3.2" /><path d="M3.5 20a6.5 6.5 0 0 1 13 0" /><path d="m17 9 2 2 4-4" />',
+  generic: '<circle cx="12" cy="12" r="8" /><path d="M12 8v4l2.5 2.5" />',
+};
+---
+
+<svg
+  class={className}
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.8"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  set:html={paths[name]}
+/>

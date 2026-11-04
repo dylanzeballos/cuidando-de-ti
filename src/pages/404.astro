@@ -1,0 +1,12 @@
+---
+import StatusPage from '@/components/status-page.astro';
+
+Astro.response.status = 404;
+Astro.response.statusText = 'Not found';
+---
+
+<StatusPage
+  title="Sitio no encontrado"
+  heading="No encontramos este sitio"
+  message="El dominio solicitado no corresponde a una empresa publicada. Revisa la dirección o contacta con soporte."
+/>

@@ -1,0 +1,41 @@
+---
+interface Props {
+  size?: number;
+  class?: string;
+}
+
+// Marca de la instalación: una cruz de farmacia en un distintivo con degradado.
+// El logo es del producto (Cuidando de Ti), no de una empresa genérica; se
+// reutiliza en la administración y en el inicio de sesión.
+const { size = 38, class: className = '' } = Astro.props;
+---
+
+<span class:list={['brand-mark', className]} style={`--mark-size:${size}px`} aria-hidden="true">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" focusable="false">
+    <path
+      d="M9.5 3.5A1.5 1.5 0 0 1 11 2h2a1.5 1.5 0 0 1 1.5 1.5V8.5H20a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5h-5.5v5A1.5 1.5 0 0 1 13 22h-2a1.5 1.5 0 0 1-1.5-1.5v-5H4A1.5 1.5 0 0 1 2.5 14v-4A1.5 1.5 0 0 1 4 8.5h5.5V3.5Z"
+      fill="currentColor"></path>
+  </svg>
+</span>
+
+<style>
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: var(--mark-size);
+    height: var(--mark-size);
+    border-radius: calc(var(--mark-size) * 0.3);
+    background: linear-gradient(145deg, #14b8a6 0%, #0f766e 100%);
+    color: #fff;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      0 10px 20px -8px rgba(15, 118, 110, 0.9);
+  }
+
+  .brand-mark svg {
+    display: block;
+    width: 60%;
+    height: 60%;
+  }
+</style>

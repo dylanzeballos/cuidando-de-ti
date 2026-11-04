@@ -1,0 +1,12 @@
+---
+import StatusPage from '@/components/status-page.astro';
+
+Astro.response.status = 503;
+Astro.response.statusText = 'Service Unavailable';
+---
+
+<StatusPage
+  title="Servicio no disponible"
+  heading="Servicio temporalmente no disponible"
+  message="No pudimos cargar la configuración del sitio en este momento. Inténtalo de nuevo en unos minutos."
+/>

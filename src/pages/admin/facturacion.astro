@@ -1,0 +1,58 @@
+---
+import AdminShell from '@/components/admin/admin-shell.astro';
+import LoadingState from '@/components/primitives/loading-state.astro';
+import EmptyState from '@/components/primitives/empty-state.astro';
+import ErrorState from '@/components/primitives/error-state.astro';
+import { INSTALLATION } from '@/lib/installation';
+
+// El middleware ya garantiza la sesión para `/admin/**`; la empresa es la de la
+// instalación y se resuelve en el servidor. Este módulo todavía no tiene contrato
+// de backend, así que solo muestra su estado y lo que hará cuando se habilite.
+const empresa = Astro.locals.empresa;
+const empresaName = empresa?.name ?? INSTALLATION.name;
+const status = empresa === null ? 'loading' : empresa.status;
+---
+
+<AdminShell title="Facturación" active="/admin/facturacion">
+  <header class="adm-page-head">
+    <h1>Facturación</h1>
+    <p class="adm-sub">Documentos y procesos fiscales de {empresaName}.</p>
+  </header>
+
+  {
+    status === 'loading' ? (
+      <LoadingState label="Cargando la configuración de la empresa…" />
+    ) : status === 'unavailable' ? (
+      <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
+    ) : (
+      <>
+        <section class="adm-card" aria-labelledby="facturacion-estado">
+          <div class="adm-card-head">
+            <h2 id="facturacion-estado">Estado del módulo</h2>
+            <span class="adm-chip">Por habilitar</span>
+          </div>
+          <p class="adm-sub">
+            La emisión fiscal se activa cuando el backend publica el contrato de
+            facturación y la empresa lo contrata. Mientras tanto puedes seguir
+            cobrando y emitiendo tickets desde <a href="/admin/ventas">Ventas</a>.
+          </p>
+          <h3 class="svc-subtitle">Lo que incluirá</h3>
+          <ul class="adm-list" role="list">
+            <li><span class="adm-chip">Facturas y notas de crédito</span></li>
+            <li><span class="adm-chip">Series y numeración</span></li>
+            <li><span class="adm-chip">Impuestos por venta</span></li>
+          </ul>
+        </section>
+
+        <EmptyState
+          title="Aún no hay documentos fiscales"
+          message="Cuando se habilite el módulo verás aquí las facturas generadas a partir de las ventas de la empresa."
+        >
+          <a class="adm-btn" href="/admin/ventas" style="align-self: flex-start; text-decoration: none;">
+            Ver ventas
+          </a>
+        </EmptyState>
+      </>
+    )
+  }
+</AdminShell>

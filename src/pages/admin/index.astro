@@ -1,0 +1,67 @@
+---
+import AdminShell from '@/components/admin/admin-shell.astro';
+import SectionHeading from '@/components/primitives/section-heading.astro';
+import Panel from '@/components/primitives/panel.astro';
+import LoadingState from '@/components/primitives/loading-state.astro';
+import EmptyState from '@/components/primitives/empty-state.astro';
+import ErrorState from '@/components/primitives/error-state.astro';
+import ModuleIcon from '@/components/module-icon.astro';
+import { buildModuleViews, groupModuleViews } from '@/lib/module-catalog';
+
+// La empresa y sus módulos los adjunta el middleware desde el servidor; nunca
+// se leen de `query` ni `body`. Sin configuración resuelta no se muestra nada.
+const empresa = Astro.locals.empresa;
+const status = empresa === null ? 'loading' : empresa.status;
+const views = empresa !== null && empresa.status === 'ok' ? buildModuleViews(empresa.modules) : [];
+const groups = groupModuleViews(views);
+---
+
+<AdminShell title="Inicio" active="/admin">
+  <header class="adm-page-head">
+    <SectionHeading eyebrow="Panel" title="Inicio" level={1} />
+    <p class="adm-sub">Accesos rápidos a los módulos habilitados para esta empresa.</p>
+  </header>
+
+  {
+    status === 'loading' ? (
+      <LoadingState label="Cargando la configuración de la empresa…" />
+    ) : status === 'unavailable' ? (
+      <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
+    ) : groups.length === 0 ? (
+      <EmptyState
+        title="Aún no hay módulos habilitados"
+        message="Activa módulos en la configuración de la empresa para verlos aquí."
+      />
+    ) : (
+      groups.map((group) => (
+        <section class="adm-dash-group" aria-labelledby={`grupo-${group.id}`}>
+          <h2 id={`grupo-${group.id}`} class="adm-dash-group-title">
+            {group.label}
+          </h2>
+          <ul class="adm-dashboard" role="list">
+            {group.views.map((view) => (
+              <li class="adm-dashboard-item">
+                <Panel labelledby={`mod-${view.code}`} class="adm-dashboard-card">
+                  <span class="adm-dashboard-icon" aria-hidden="true">
+                    <ModuleIcon name={view.icon} size={20} />
+                  </span>
+                  <h3 id={`mod-${view.code}`} class="adm-dashboard-title">
+                    {view.name}
+                  </h3>
+                  {view.description && <p class="adm-dashboard-desc">{view.description}</p>}
+                  {view.route ? (
+                    <a class="adm-dashboard-link" href={view.route}>
+                      Abrir sección
+                    </a>
+                  ) : (
+                    <span class="adm-chip">Próximamente</span>
+                  )}
+                </Panel>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    )
+  }
+</AdminShell>

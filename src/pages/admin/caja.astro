@@ -1,0 +1,218 @@
+---
+import AdminShell from '@/components/admin/admin-shell.astro';
+import LoadingState from '@/components/primitives/loading-state.astro';
+import EmptyState from '@/components/primitives/empty-state.astro';
+import ErrorState from '@/components/primitives/error-state.astro';
+import { API_BASE_URL } from 'astro:env/server';
+import { createAdminClient, type Branch } from '@/lib/admin/catalog-api';
+import { resolveSalesClient } from '@/lib/sales/sales-service';
+import { formatMoney, paymentMethodLabel } from '@/lib/sales/cart';
+import type { CashSession } from '@/lib/sales/sales-api';
+import { INSTALLATION } from '@/lib/installation';
+
+// El token viene de la sesión de servidor; el navegador nunca lo recibe. La
+// empresa es implícita de la instalación: no se lee de `query` ni de `body`.
+const auth = await Astro.session?.get('auth');
+if (!auth) {
+  return Astro.redirect('/entrar?redirect=%2Fadmin%2Fcaja', 303);
+}
+
+const empresa = Astro.locals.empresa;
+const empresaName = INSTALLATION.name;
+
+const catalog = createAdminClient({ baseUrl: API_BASE_URL, token: auth.accessToken });
+const sales = resolveSalesClient(auth.accessToken);
+
+const back = (params: Record<string, string>) =>
+  new Response(null, {
+    status: 303,
+    headers: { location: `/admin/caja?${new URLSearchParams(params).toString()}` },
+  });
+
+let branches: Branch[] = [];
+let loadError: string | null = null;
+const branchesResult = await catalog.listBranches();
+if (branchesResult.status === 'ok') branches = branchesResult.data;
+else loadError = branchesResult.message;
+
+const queryBranchId = Astro.url.searchParams.get('branchId');
+const selectedBranch = branches.find((branch) => branch.id === queryBranchId) ?? branches[0] ?? null;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+  const branchId = String(form.get('branchId') ?? '').trim();
+
+  if (action === 'open') {
+    const rawAmount = String(form.get('initialAmount') ?? '').trim();
+    const initialAmount = Number(rawAmount);
+    // Validación en servidor antes de llamar a la API.
+    if (branchId.length === 0) return back({ error: 'Elige una sucursal.' });
+    if (rawAmount.length === 0 || !Number.isFinite(initialAmount) || initialAmount < 0) {
+      return back({ branchId, error: 'El monto inicial debe ser un número mayor o igual a cero.' });
+    }
+    const result = await sales.openCashSession({ branchId, initialAmount });
+    if (result.status === 'ok') return back({ branchId, ok: 'Caja abierta.' });
+    return back({ branchId, error: result.message });
+  }
+
+  if (action === 'close') {
+    const sessionId = String(form.get('sessionId') ?? '').trim();
+    const rawCounted = String(form.get('countedAmount') ?? '').trim();
+    const countedAmount = Number(rawCounted);
+    if (sessionId.length === 0) return back({ branchId, error: 'Turno no válido.' });
+    if (rawCounted.length === 0 || !Number.isFinite(countedAmount) || countedAmount < 0) {
+      return back({ branchId, error: 'El monto contado debe ser un número mayor o igual a cero.' });
+    }
+    const result = await sales.closeCashSession(sessionId, countedAmount);
+    if (result.status === 'ok') return back({ branchId, closed: result.data.id });
+    return back({ branchId, error: result.message });
+  }
+
+  return back({ branchId, error: 'Acción no reconocida.' });
+}
+
+// Turno abierto de la sucursal seleccionada.
+let openSession: CashSession | null = null;
+if (selectedBranch) {
+  const sessionsResult = await sales.listCashSessions({ status: 'OPEN', branchId: selectedBranch.id });
+  if (sessionsResult.status === 'ok') openSession = sessionsResult.data[0] ?? null;
+  else loadError ??= sessionsResult.message;
+}
+
+// Resumen del turno recién cerrado.
+const closedId = Astro.url.searchParams.get('closed');
+let closedSession: CashSession | null = null;
+if (closedId) {
+  const closedResult = await sales.getCashSession(closedId);
+  if (closedResult.status === 'ok') closedSession = closedResult.data;
+}
+
+const okMessage = Astro.url.searchParams.get('ok');
+const errorMessage = Astro.url.searchParams.get('error');
+const status = empresa === null ? 'loading' : empresa.status;
+---
+
+<AdminShell title="Caja" active="/admin/ventas">
+  <header class="adm-page-head">
+    <h1>Caja</h1>
+    <p class="adm-sub">Abre y cierra el turno de caja de {empresaName}. Las ventas requieren un turno abierto.</p>
+  </header>
+
+  {okMessage && <p class="adm-banner adm-banner--ok" role="status">{okMessage}</p>}
+  {errorMessage && <p class="adm-banner adm-banner--error" role="alert">{errorMessage}</p>}
+  {loadError && <p class="adm-banner adm-banner--error" role="alert">{loadError}</p>}
+
+  {
+    status === 'loading' ? (
+      <LoadingState label="Cargando la configuración de la empresa…" />
+    ) : status === 'unavailable' ? (
+      <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
+    ) : branches.length === 0 ? (
+      <EmptyState
+        title="Aún no hay sucursales"
+        message="Crea una sucursal en el inventario para poder abrir la caja."
+      />
+    ) : (
+      <>
+        <section class="adm-card" aria-labelledby="sucursal-title">
+          <div class="adm-card-head">
+            <h2 id="sucursal-title">Sucursal</h2>
+            <span class="adm-chip">{branches.length}</span>
+          </div>
+          <ul class="adm-list" role="list">
+            {branches.map((branch) => (
+              <li>
+                <a href={`/admin/caja?branchId=${branch.id}`}>
+                  <span class={`adm-chip${selectedBranch?.id === branch.id ? ' adm-chip--on' : ''}`}>
+                    {branch.code} · {branch.name}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {closedSession && (
+          <section class="adm-card" aria-labelledby="resumen-title">
+            <div class="adm-card-head">
+              <h2 id="resumen-title">Resumen del turno cerrado</h2>
+              <span class="adm-chip">cerrado</span>
+            </div>
+            <dl class="svc-summary">
+              <div><dt>Ventas registradas</dt><dd>{closedSession.saleCount}</dd></div>
+              <div><dt>Monto inicial</dt><dd>{formatMoney(closedSession.initialAmount)}</dd></div>
+              <div><dt>Efectivo esperado</dt><dd>{formatMoney(closedSession.expectedAmount)}</dd></div>
+              <div><dt>Monto contado</dt><dd>{formatMoney(closedSession.countedAmount)}</dd></div>
+              <div><dt>Diferencia</dt><dd>{formatMoney(closedSession.difference)}</dd></div>
+            </dl>
+            <h3 class="svc-subtitle">Totales por método de pago</h3>
+            {Object.keys(closedSession.totalsByPaymentMethod).length === 0 ? (
+              <p class="adm-empty">Sin pagos registrados en el turno.</p>
+            ) : (
+              <ul class="adm-list" role="list">
+                {Object.entries(closedSession.totalsByPaymentMethod).map(([method, amount]) => (
+                  <li><span class="adm-chip">{paymentMethodLabel(method)}: {formatMoney(amount)}</span></li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {openSession ? (
+          <section class="adm-card" aria-labelledby="turno-title">
+            <div class="adm-card-head">
+              <h2 id="turno-title">Turno abierto</h2>
+              <span class="adm-badge adm-badge--on">Abierto</span>
+            </div>
+            <dl class="svc-summary">
+              <div><dt>Monto inicial</dt><dd>{formatMoney(openSession.initialAmount)}</dd></div>
+              <div><dt>Ventas registradas</dt><dd>{openSession.saleCount}</dd></div>
+            </dl>
+            <p class="adm-sub">
+              <a href="/admin/ventas">Ir al punto de venta</a> ·
+              <a href="/admin/ventas/historial">Historial de ventas</a>
+            </p>
+            <form class="adm-form" method="post">
+              <input type="hidden" name="action" value="close" />
+              <input type="hidden" name="branchId" value={selectedBranch?.id ?? ''} />
+              <input type="hidden" name="sessionId" value={openSession.id} />
+              <div class="adm-field">
+                <label for="countedAmount">Monto contado (Bs)</label>
+                <input
+                  id="countedAmount"
+                  name="countedAmount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                  value={openSession.expectedAmount === null ? '' : String(openSession.expectedAmount)}
+                />
+              </div>
+              <div class="adm-actions">
+                <button class="adm-btn" type="submit">Cerrar caja</button>
+              </div>
+            </form>
+          </section>
+        ) : (
+          <section class="adm-card" aria-labelledby="abrir-title">
+            <div class="adm-card-head">
+              <h2 id="abrir-title">Abrir caja</h2>
+            </div>
+            <form class="adm-form" method="post">
+              <input type="hidden" name="action" value="open" />
+              <input type="hidden" name="branchId" value={selectedBranch?.id ?? ''} />
+              <div class="adm-field">
+                <label for="initialAmount">Monto inicial (Bs)</label>
+                <input id="initialAmount" name="initialAmount" type="number" min="0" step="0.01" required />
+              </div>
+              <div class="adm-actions">
+                <button class="adm-btn" type="submit">Abrir caja</button>
+              </div>
+            </form>
+          </section>
+        )}
+      </>
+    )
+  }
+</AdminShell>

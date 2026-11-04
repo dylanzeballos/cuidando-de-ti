@@ -1,0 +1,5 @@
+---
+// La portada pública se retiró: el producto es la administración de la empresa.
+// La raíz redirige al panel; el middleware envía a `/entrar` si no hay sesión.
+return Astro.redirect('/admin', 307);
+---

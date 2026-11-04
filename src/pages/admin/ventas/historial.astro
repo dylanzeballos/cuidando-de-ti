@@ -1,0 +1,95 @@
+---
+import AdminShell from '@/components/admin/admin-shell.astro';
+import LoadingState from '@/components/primitives/loading-state.astro';
+import EmptyState from '@/components/primitives/empty-state.astro';
+import ErrorState from '@/components/primitives/error-state.astro';
+import { resolveSalesClient } from '@/lib/sales/sales-service';
+import { formatMoney, paymentMethodLabel } from '@/lib/sales/cart';
+import type { Sale } from '@/lib/sales/sales-api';
+import { INSTALLATION } from '@/lib/installation';
+
+// El token viene de la sesión de servidor; el navegador nunca lo recibe. El
+// historial se renderiza en servidor, sin hidratación.
+const auth = await Astro.session?.get('auth');
+if (!auth) {
+  return Astro.redirect('/entrar?redirect=%2Fadmin%2Fventas%2Fhistorial', 303);
+}
+
+const empresa = Astro.locals.empresa;
+const empresaName = INSTALLATION.name;
+const sales = resolveSalesClient(auth.accessToken);
+
+const listResult = await sales.listSales();
+const rows: Sale[] = listResult.status === 'ok' ? listResult.data.items : [];
+const loadError = listResult.status === 'unavailable' ? listResult.message : null;
+const status = empresa === null ? 'loading' : empresa.status;
+
+const paymentSummary = (sale: Sale): string => {
+  const methods = [...new Set(sale.payments.map((payment) => paymentMethodLabel(payment.method)))];
+  return methods.length === 0 ? '—' : methods.join(', ');
+};
+---
+
+<AdminShell title="Ventas" active="/admin/ventas">
+  <header class="adm-page-head">
+    <h1>Historial de ventas</h1>
+    <p class="adm-sub">Ventas registradas de {empresaName}.</p>
+    <p class="adm-sub"><a href="/admin/ventas">Ir al punto de venta</a></p>
+  </header>
+
+  {loadError && <p class="adm-banner adm-banner--error" role="alert">{loadError}</p>}
+
+  {
+    status === 'loading' ? (
+      <LoadingState label="Cargando la configuración de la empresa…" />
+    ) : status === 'unavailable' ? (
+      <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
+    ) : listResult.status !== 'ok' ? (
+      <ErrorState message="No pudimos cargar el historial de ventas. Inténtalo de nuevo en unos minutos." />
+    ) : rows.length === 0 ? (
+      <EmptyState
+        title="Aún no hay ventas"
+        message="Las ventas que registres aparecerán aquí."
+      />
+    ) : (
+      <section class="adm-card" aria-labelledby="historial-title">
+        <div class="adm-card-head">
+          <h2 id="historial-title">Ventas</h2>
+          <span class="adm-chip">{listResult.data.total}</span>
+        </div>
+        <div class="adm-table-wrap">
+          <table class="adm-table">
+            <thead>
+              <tr>
+                <th scope="col">Folio</th>
+                <th scope="col">Fecha</th>
+                <th scope="col">Total</th>
+                <th scope="col">Pago</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((sale) => (
+                <tr>
+                  <td>#{sale.number}</td>
+                  <td>{new Date(sale.createdAt).toLocaleString('es-BO')}</td>
+                  <td>{formatMoney(sale.total)}</td>
+                  <td>{paymentSummary(sale)}</td>
+                  <td>
+                    <span class={`adm-badge ${sale.status === 'ANNULLED' ? 'adm-badge--off' : 'adm-badge--on'}`}>
+                      {sale.status === 'ANNULLED' ? 'Anulada' : 'Completada'}
+                    </span>
+                  </td>
+                  <td>
+                    <a href={`/admin/ventas/${sale.id}`}>Ver detalle</a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )
+  }
+</AdminShell>

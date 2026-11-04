@@ -1,0 +1,242 @@
+---
+import AdminShell from '@/components/admin/admin-shell.astro';
+import LoadingState from '@/components/primitives/loading-state.astro';
+import EmptyState from '@/components/primitives/empty-state.astro';
+import ErrorState from '@/components/primitives/error-state.astro';
+import { resolveCostsClient } from '@/lib/admin/costs-service';
+import { isValidPeriod, EXPENSE_FIELD_ERRORS, validateExpenseInput } from '@/lib/admin/costs-validation';
+import type { ExpenseSummary } from '@/lib/admin/costs-api';
+import { formatMoney } from '@/lib/sales/cart';
+import { INSTALLATION } from '@/lib/installation';
+
+// El token viene de la sesión de servidor; el navegador nunca lo recibe. La
+// empresa es implícita de la instalación: no se lee de `query` ni de `body`. El
+// middleware ya garantiza la sesión para `/admin/**`.
+const auth = await Astro.session?.get('auth');
+if (!auth) {
+  return Astro.redirect('/entrar?redirect=%2Fadmin%2Fgastos', 303);
+}
+
+const empresa = Astro.locals.empresa;
+const empresaName = INSTALLATION.name;
+
+const costs = resolveCostsClient(auth.accessToken, empresaName);
+
+const currentPeriod = new Date().toISOString().slice(0, 7);
+const requestedPeriod = Astro.url.searchParams.get('period');
+const period = requestedPeriod !== null && isValidPeriod(requestedPeriod) ? requestedPeriod : currentPeriod;
+
+const back = (params: Record<string, string>) =>
+  new Response(null, {
+    status: 303,
+    headers: { location: `/admin/gastos?${new URLSearchParams({ period, ...params }).toString()}` },
+  });
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+
+  if (action !== 'expense') return back({ error: 'Acción no reconocida.' });
+
+  const concept = String(form.get('concept') ?? '').trim();
+  const amountRaw = String(form.get('amount') ?? '');
+  const submittedPeriod = String(form.get('period') ?? period);
+
+  // Validación en servidor antes de llamar a la API: un gasto inválido no se envía.
+  const fieldError = validateExpenseInput({ concept, amountRaw, period: submittedPeriod });
+  if (fieldError !== null) return back({ form: 'expense', error: fieldError, concept, period: submittedPeriod });
+
+  const result = await costs.createExpense({
+    concept,
+    amount: Number(amountRaw),
+    period: submittedPeriod,
+  });
+  if (result.status === 'ok') return back({ period: submittedPeriod, ok: 'Gasto registrado.' });
+  // Los errores del backend (periodo duplicado) se muestran legibles y no se añaden al listado.
+  return back({ form: 'expense', error: result.message, concept, period: submittedPeriod });
+}
+
+let summary: ExpenseSummary | null = null;
+let loadError: string | null = null;
+let costsUnavailable = false;
+
+const summaryResult = await costs.listExpenses({ period });
+if (summaryResult.status === 'ok') summary = summaryResult.data;
+else {
+  costsUnavailable = summaryResult.status === 'unavailable';
+  loadError = summaryResult.message;
+}
+
+const okMessage = Astro.url.searchParams.get('ok');
+const errorMessage = Astro.url.searchParams.get('error');
+const isFieldError =
+  Astro.url.searchParams.get('form') === 'expense' &&
+  errorMessage !== null &&
+  EXPENSE_FIELD_ERRORS.has(errorMessage);
+const pageError = errorMessage !== null && !isFieldError ? errorMessage : null;
+
+const EXPENSE_FIELD_ERROR_TEXT: Record<string, string> = {
+  'concept-required': 'Escribe el concepto del gasto.',
+  'period-required': 'Elige el periodo del gasto.',
+  'period-invalid': 'El periodo debe ser un mes válido.',
+  'amount-required': 'Escribe el monto del gasto.',
+  'amount-invalid': 'El monto debe ser un número.',
+  'amount-negative': 'El monto debe ser un número mayor o igual a cero.',
+};
+const fieldError = isFieldError && errorMessage !== null ? (EXPENSE_FIELD_ERROR_TEXT[errorMessage] ?? 'Revisa este campo.') : null;
+const submittedConcept = Astro.url.searchParams.get('concept') ?? '';
+const total = summary?.total ?? 0;
+const expenseCount = summary?.items.length ?? 0;
+
+// El middleware adjunta la empresa desde el servidor; `null` solo mientras se resuelve.
+const status = empresa === null ? 'loading' : empresa.status;
+---
+
+<AdminShell title="Gastos" active="/admin/costos">
+  <header class="adm-page-head">
+    <h1>Gastos</h1>
+    <p class="adm-sub">
+      Gastos y costos operativos por periodo de {empresaName}. El costo de compra
+      por producto está en <a href="/admin/costos">Costos</a>.
+    </p>
+  </header>
+
+  {okMessage && <p class="adm-banner adm-banner--ok" role="status">{okMessage}</p>}
+  {pageError && <p class="adm-banner adm-banner--error" role="alert">{pageError}</p>}
+
+  {
+    status === 'loading' ? (
+      <LoadingState label="Cargando la configuración de la empresa…" />
+    ) : status === 'unavailable' ? (
+      <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
+    ) : loadError !== null ? (
+      <ErrorState
+        title={costsUnavailable ? 'La API de gastos no está disponible' : 'No se pudo cargar'}
+        message="No pudimos cargar los gastos del periodo. Inténtalo de nuevo en unos minutos."
+      />
+    ) : (
+      <>
+        <section class="adm-card" aria-labelledby="periodo-title">
+          <div class="adm-card-head">
+            <h2 id="periodo-title">Periodo</h2>
+            <span class="adm-chip">{period}</span>
+          </div>
+          <form class="adm-form" method="get">
+            <div class="adm-field">
+              <label for="period-select">Mes</label>
+              <input id="period-select" name="period" type="month" value={period} required />
+            </div>
+            <div class="adm-actions">
+              <button class="adm-btn adm-btn--ghost" type="submit">Ver periodo</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="adm-card" aria-labelledby="registrar-title">
+          <div class="adm-card-head">
+            <h2 id="registrar-title">Registrar gasto</h2>
+          </div>
+
+          <form class="adm-form" method="post" aria-describedby={fieldError ? 'expense-error' : undefined}>
+            <input type="hidden" name="action" value="expense" />
+            <div class="adm-field">
+              <label for="expense-concept">Concepto</label>
+              <input
+                id="expense-concept"
+                name="concept"
+                required
+                maxlength="160"
+                placeholder="Alquiler…"
+                autocomplete="off"
+                value={submittedConcept}
+                aria-invalid={errorMessage === 'concept-required'}
+                aria-describedby={fieldError ? 'expense-error' : undefined}
+              />
+            </div>
+            <div class="adm-field">
+              <label for="expense-amount">Monto (Bs)</label>
+              <input
+                id="expense-amount"
+                name="amount"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                autocomplete="off"
+                aria-invalid={errorMessage === 'amount-negative' || errorMessage === 'amount-invalid' || errorMessage === 'amount-required'}
+                aria-describedby={fieldError ? 'expense-error' : undefined}
+              />
+            </div>
+            <div class="adm-field">
+              <label for="expense-period">Periodo</label>
+              <input
+                id="expense-period"
+                name="period"
+                type="month"
+                value={period}
+                required
+                autocomplete="off"
+                aria-invalid={errorMessage === 'period-invalid' || errorMessage === 'period-required'}
+                aria-describedby={fieldError ? 'expense-error' : undefined}
+              />
+            </div>
+            <div class="adm-actions">
+              <button class="adm-btn" type="submit">Registrar gasto</button>
+            </div>
+          </form>
+          {fieldError && (
+            <p id="expense-error" class="adm-field-error" role="alert">{fieldError}</p>
+          )}
+        </section>
+
+        <section class="adm-card" aria-labelledby="lista-title">
+          <div class="adm-card-head">
+            <h2 id="lista-title">Gastos de {period}</h2>
+            <span class="adm-chip">{expenseCount}</span>
+          </div>
+
+          <dl class="svc-summary">
+            <div>
+              <dt>Total del periodo</dt>
+              <dd class="adm-num">{formatMoney(total)}</dd>
+            </div>
+          </dl>
+
+          {expenseCount === 0 ? (
+            <EmptyState
+              title="Sin gastos en el periodo"
+              message={`No hay gastos registrados en ${period}. El total del periodo es cero.`}
+            />
+          ) : (
+            <div class="adm-table-wrap">
+              <table class="adm-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Concepto</th>
+                    <th scope="col">Monto</th>
+                    <th scope="col">Registrado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summary?.items.map((expense) => (
+                    <tr>
+                      <td>{expense.concept}</td>
+                      <td class="adm-num">{formatMoney(expense.amount)}</td>
+                      <td>{new Date(expense.createdAt).toLocaleDateString('es-BO')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th scope="row" colspan="2">Total del periodo</th>
+                    <td class="adm-num">{formatMoney(total)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </section>
+      </>
+    )
+  }
+</AdminShell>

@@ -1,0 +1,136 @@
+---
+import '@/styles/admin.css';
+import BaseLayout from '@/layouts/base-layout.astro';
+import BrandLogo from '@/components/brand-logo.astro';
+import ModuleIcon from '@/components/module-icon.astro';
+import { buildModuleViews, groupModuleViews } from '@/lib/module-catalog';
+import { INSTALLATION } from '@/lib/installation';
+
+interface Props {
+  title: string;
+  /** Códigos de módulos habilitados de la empresa. */
+  modules?: string[];
+  accountEmail?: string | null;
+  /** Ruta de la sección activa, por ejemplo `/admin/catalogo`. */
+  active?: string;
+}
+
+const {
+  title,
+  active,
+  modules = Astro.locals.empresa?.modules ?? [],
+  accountEmail = Astro.locals.account?.email ?? null,
+} = Astro.props;
+
+const views = buildModuleViews(modules);
+const groups = groupModuleViews(views);
+
+// La sección activa es la del módulo dueño de la ruta: las subpáginas (caja,
+// gastos, roles, historial) comparten la del módulo para no perder el contexto.
+const currentRoute = active ?? '';
+const isActive = (route: string) => currentRoute === route || currentRoute.startsWith(`${route}/`);
+const currentView = views.find((view) => view.route !== null && isActive(view.route)) ?? null;
+const isHome = currentRoute === '/admin' || currentRoute.length === 0;
+
+const documentTitle = `${title} · ${INSTALLATION.name}`;
+---
+
+<BaseLayout title={documentTitle} noindex>
+  <a class="adm-skip" href="#contenido">Saltar al contenido</a>
+  <div class="adm-shell">
+    <aside class="adm-sidebar">
+      <header class="adm-brand">
+        <BrandLogo size={38} />
+        <span class="adm-brand-text">
+          <strong>{INSTALLATION.name}</strong>
+          <small>{INSTALLATION.sector}</small>
+        </span>
+      </header>
+
+      <nav class="adm-nav" aria-label="Secciones">
+        {
+          groups.length === 0 ? (
+            <p class="adm-nav-empty">No hay módulos habilitados.</p>
+          ) : (
+            groups.map((group) => (
+              <div class="adm-nav-group">
+                <p class="adm-nav-group-label">{group.label}</p>
+                {group.views.map((view) =>
+                  view.route ? (
+                    <a
+                      href={view.route}
+                      class="adm-nav-link"
+                      aria-current={isActive(view.route) ? 'page' : undefined}
+                    >
+                      <ModuleIcon name={view.icon} class="adm-nav-icon" />
+                      <span class="adm-nav-text">{view.name}</span>
+                    </a>
+                  ) : (
+                    <span class="adm-nav-item">
+                      <ModuleIcon name={view.icon} class="adm-nav-icon" />
+                      <span class="adm-nav-text">{view.name}</span>
+                      <span class="adm-nav-soon">Próximamente</span>
+                    </span>
+                  ),
+                )}
+              </div>
+            ))
+          )
+        }
+      </nav>
+
+      <footer class="adm-sidebar-foot">
+        <div class="adm-account">
+          <span class="adm-account-avatar" aria-hidden="true">
+            {(accountEmail ?? '?').slice(0, 1).toUpperCase()}
+          </span>
+          <span class="adm-account-mail" title={accountEmail ?? 'Sesión activa'}>
+            {accountEmail ?? 'Sesión activa'}
+          </span>
+        </div>
+        <form method="post" action="/api/auth/logout">
+          <button class="adm-logout" type="submit">
+            <svg
+              class="adm-logout-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.9"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <path d="m16 17 5-5-5-5" />
+              <path d="M21 12H9" />
+            </svg>
+            Cerrar sesión
+          </button>
+        </form>
+      </footer>
+    </aside>
+
+    <main class="adm-main" id="contenido">
+      <nav class="adm-crumbs" aria-label="Ruta de navegación">
+        {
+          isHome ? (
+            <span aria-current="page">Inicio</span>
+          ) : (
+            <>
+              <a href="/admin">Inicio</a>
+              {currentView && (
+                <>
+                  <span class="adm-crumbs-sep" aria-hidden="true">/</span>
+                  <span aria-current="page">{currentView.name}</span>
+                </>
+              )}
+            </>
+          )
+        }
+      </nav>
+      <slot />
+    </main>
+  </div>
+</BaseLayout>

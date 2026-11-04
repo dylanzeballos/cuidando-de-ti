@@ -1,0 +1,313 @@
+---
+import AdminShell from '@/components/admin/admin-shell.astro';
+import LoadingState from '@/components/primitives/loading-state.astro';
+import EmptyState from '@/components/primitives/empty-state.astro';
+import ErrorState from '@/components/primitives/error-state.astro';
+import { resolveIdentityClient } from '@/lib/admin/identity-service';
+import { validateRoleName } from '@/lib/admin/identity-validation';
+import {
+  describeModule,
+  filterSelectablePermissions,
+  selectablePermissionCodes,
+  selectablePermissionGroups,
+} from '@/lib/module-catalog';
+import type { Role, UserAccount } from '@/lib/admin/identity-api';
+import { INSTALLATION } from '@/lib/installation';
+
+// Todas las operaciones se resuelven en el servidor con el token de la sesión.
+// Los módulos habilitados provienen de la empresa de la instalación, no del cliente.
+const auth = await Astro.session?.get('auth');
+if (!auth) {
+  return Astro.redirect('/entrar?redirect=%2Fadmin%2Froles', 303);
+}
+
+const client = resolveIdentityClient(auth.accessToken);
+const empresa = Astro.locals.empresa;
+const modules = empresa?.modules ?? [];
+const empresaName = INSTALLATION.name;
+
+const back = (params: Record<string, string>) =>
+  new Response(null, {
+    status: 303,
+    headers: { location: `/admin/roles?${new URLSearchParams(params).toString()}` },
+  });
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+
+  if (action === 'save-role') {
+    const roleId = String(form.get('roleId') ?? '').trim();
+    const name = String(form.get('name') ?? '').trim();
+    const description = String(form.get('description') ?? '').trim();
+    const requested = form.getAll('permissions').map(String);
+
+    // Validación en servidor antes de llamar a la API.
+    if (validateRoleName(name) !== null) return back({ error: 'name-required', edit: roleId });
+
+    const permissionsResult = await client.listPermissions();
+    if (permissionsResult.status !== 'ok') return back({ error: permissionsResult.message });
+
+    // Un permiso de un módulo no habilitado no se concede, aunque venga en la solicitud.
+    const permissions = filterSelectablePermissions(requested, permissionsResult.data, modules);
+    const input = { name, description: description.length > 0 ? description : null, permissions };
+
+    const result = roleId.length > 0
+      ? await client.updateRole(roleId, input)
+      : await client.createRole(input);
+
+    if (result.status === 'ok') return back({ ok: roleId.length > 0 ? 'Rol actualizado.' : 'Rol creado.' });
+    return back({ error: result.message, edit: roleId });
+  }
+
+  if (action === 'delete-role') {
+    const roleId = String(form.get('roleId') ?? '').trim();
+    const confirm = form.get('confirm') === '1';
+    if (roleId.length === 0) return back({ error: 'Rol no válido.' });
+
+    // Se advierte cuando el rol sigue asignado a usuarios y no se elimina sin confirmación.
+    const rolesResult = await client.listRoles();
+    if (rolesResult.status !== 'ok') return back({ error: rolesResult.message });
+    const target = rolesResult.data.find((role) => role.id === roleId) ?? null;
+    if (target === null) return back({ error: 'El rol ya no existe.' });
+
+    let assignments: number | null = null;
+    const usersResult = await client.listUsers();
+    if (usersResult.status === 'ok') {
+      assignments = usersResult.data.items.filter((user) => user.roles.includes(target.name)).length;
+    }
+
+    if (!confirm && assignments !== null && assignments > 0) {
+      return back({ warn: roleId });
+    }
+
+    const result = await client.deleteRole(roleId);
+    if (result.status === 'ok') return back({ ok: 'Rol eliminado.' });
+    return back({ error: result.message, edit: roleId });
+  }
+
+  return back({ error: 'Acción no reconocida.' });
+}
+
+let roles: Role[] = [];
+let users: UserAccount[] = [];
+let permissionsGroups = selectablePermissionGroups([], modules);
+let loadError: string | null = null;
+
+const [rolesResult, permissionsResult, usersResult] = await Promise.all([
+  client.listRoles(),
+  client.listPermissions(),
+  client.listUsers(),
+]);
+if (rolesResult.status === 'ok') roles = rolesResult.data;
+else loadError = rolesResult.message;
+if (permissionsResult.status === 'ok') {
+  permissionsGroups = selectablePermissionGroups(permissionsResult.data, modules);
+} else {
+  loadError ??= permissionsResult.message;
+}
+if (usersResult.status === 'ok') users = usersResult.data.items;
+
+const selectableCodes = permissionsResult.status === 'ok'
+  ? selectablePermissionCodes(permissionsResult.data, modules)
+  : new Set<string>();
+
+const okMessage = Astro.url.searchParams.get('ok');
+const errorMessage = Astro.url.searchParams.get('error');
+const fieldError = errorMessage === 'name-required' ? 'Escribe el nombre del rol.' : null;
+const pageError = errorMessage !== null && fieldError === null ? errorMessage : null;
+
+const editId = Astro.url.searchParams.get('edit') ?? '';
+const editingRole = roles.find((role) => role.id === editId) ?? null;
+const selectedPermissions = new Set(editingRole?.permissions ?? []);
+const hiddenPermissions = editingRole === null
+  ? []
+  : editingRole.permissions.filter((code) => !selectableCodes.has(code));
+
+const warnId = Astro.url.searchParams.get('warn') ?? '';
+const warnRole = roles.find((role) => role.id === warnId) ?? null;
+const warnAssignments = warnRole === null
+  ? 0
+  : users.filter((user) => user.roles.includes(warnRole.name)).length;
+
+// El middleware adjunta la empresa desde el servidor; `null` solo mientras se resuelve.
+const status = empresa === null ? 'loading' : empresa.status;
+---
+
+<AdminShell title="Roles" active="/admin/usuarios">
+  <header class="adm-page-head">
+    <h1>Roles y permisos</h1>
+    <p class="adm-sub">Roles de {empresaName} con permisos por módulo habilitado.</p>
+  </header>
+
+  {okMessage && <p class="adm-banner adm-banner--ok" role="status">{okMessage}</p>}
+  {pageError && <p class="adm-banner adm-banner--error" role="alert">{pageError}</p>}
+
+  {
+    status === 'loading' ? (
+      <LoadingState label="Cargando la configuración de la empresa…" />
+    ) : status === 'unavailable' ? (
+      <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
+    ) : loadError ? (
+      <ErrorState message={loadError} />
+    ) : (
+      <>
+        {warnRole && (
+          <>
+            <p class="adm-banner adm-banner--warn" role="alert">
+              El rol «{warnRole.name}» está asignado a {warnAssignments} usuario(s). No se elimina sin
+              confirmación.
+            </p>
+            <form class="adm-actions" method="post">
+              <input type="hidden" name="action" value="delete-role" />
+              <input type="hidden" name="roleId" value={warnRole.id} />
+              <input type="hidden" name="confirm" value="1" />
+              <button class="adm-btn adm-btn--danger" type="submit">Confirmar eliminación</button>
+            </form>
+          </>
+        )}
+
+        <section class="adm-card" aria-labelledby="rol-form-title">
+          <div class="adm-card-head">
+            <h2 id="rol-form-title">{editingRole ? `Editar «${editingRole.name}»` : 'Nuevo rol'}</h2>
+            {editingRole && <a class="adm-dashboard-link" href="/admin/roles">Cancelar edición</a>}
+          </div>
+
+          <form method="post">
+            <input type="hidden" name="action" value="save-role" />
+            <input type="hidden" name="roleId" value={editingRole?.id ?? ''} />
+
+            <div class="adm-form">
+              <div class="adm-field">
+                <label for="role-name">Nombre</label>
+                <input
+                  id="role-name"
+                  name="name"
+                  required
+                  maxlength="80"
+                  value={editingRole?.name ?? ''}
+                  aria-invalid={fieldError !== null}
+                  aria-describedby={fieldError ? 'role-name-error' : undefined}
+                />
+                {fieldError && <p id="role-name-error" class="adm-field-error" role="alert">{fieldError}</p>}
+              </div>
+              <div class="adm-field">
+                <label for="role-description">Descripción</label>
+                <input
+                  id="role-description"
+                  name="description"
+                  maxlength="240"
+                  value={editingRole?.description ?? ''}
+                />
+              </div>
+            </div>
+
+            {hiddenPermissions.length > 0 && (
+              <p class="adm-banner adm-banner--warn" role="status">
+                Permisos de módulos no habilitados que no se ofrecen ni se concederán:{' '}
+                {hiddenPermissions.join(', ')}.
+              </p>
+            )}
+
+            <fieldset class="adm-roles">
+              <legend>Permisos por módulo habilitado</legend>
+              {permissionsGroups.length === 0 ? (
+                <p class="adm-empty">
+                  <strong>No hay módulos con permisos habilitados.</strong> Activa módulos en la
+                  configuración de la empresa para asignar permisos.
+                </p>
+              ) : (
+                permissionsGroups.map((group) => (
+                  <div class="adm-role-group">
+                    <p class="adm-role-group-title">{describeModule(group.moduleCode).name}</p>
+                    <div class="adm-role-grid">
+                      {group.permissions.map((permission) => (
+                        <span class="adm-check">
+                          <input
+                            id={`perm-${permission.code}`}
+                            name="permissions"
+                            type="checkbox"
+                            value={permission.code}
+                            checked={selectedPermissions.has(permission.code)}
+                          />
+                          <label for={`perm-${permission.code}`}>
+                            {permission.description || permission.code}
+                          </label>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </fieldset>
+
+            <div class="adm-actions">
+              <button class="adm-btn" type="submit">{editingRole ? 'Guardar rol' : 'Crear rol'}</button>
+            </div>
+          </form>
+        </section>
+
+        {roles.length === 0 ? (
+          <EmptyState title="Aún no hay roles" message="Crea el primero para asignar permisos a tus usuarios." />
+        ) : (
+          <section class="adm-card" aria-labelledby="lista-roles-title">
+            <div class="adm-card-head">
+              <h2 id="lista-roles-title">Roles de la empresa</h2>
+              <span class="adm-chip">{roles.length}</span>
+            </div>
+
+            <div class="adm-table-wrap">
+              <table class="adm-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Rol</th>
+                    <th scope="col">Permisos</th>
+                    <th scope="col">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {roles.map((role) => (
+                    <tr>
+                      <td>
+                        <strong>{role.name}</strong>
+                        {role.description && (
+                          <>
+                            <br />
+                            <span class="adm-sub">{role.description}</span>
+                          </>
+                        )}
+                      </td>
+                      <td>
+                        {role.permissions.length === 0 ? (
+                          <span class="adm-chip">Sin permisos</span>
+                        ) : (
+                          <ul class="adm-list" role="list">
+                            {role.permissions.map((code) => (
+                              <li><span class="adm-chip">{code}</span></li>
+                            ))}
+                          </ul>
+                        )}
+                      </td>
+                      <td>
+                        <div class="adm-actions-cell">
+                          <a class="adm-btn adm-btn--small adm-btn--ghost" href={`/admin/roles?edit=${role.id}`}>
+                            Editar
+                          </a>
+                          <form method="post">
+                            <input type="hidden" name="action" value="delete-role" />
+                            <input type="hidden" name="roleId" value={role.id} />
+                            <button class="adm-btn adm-btn--small adm-btn--danger" type="submit">Eliminar</button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+      </>
+    )
+  }
+</AdminShell>

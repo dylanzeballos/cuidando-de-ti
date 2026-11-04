@@ -1,0 +1,22 @@
+schema: spec-driven
+context: |
+  Idioma de los artefactos: español; conservar encabezados estructurales y MUST/SHALL en inglés.
+  Producto: frontend de sistema de información por empresa (una instalación por empresa) en Astro 7, React para shadcn/ui y Tailwind CSS v4.
+  Leer DESIGN.md y AGENTS.md antes de proponer o aplicar cambios.
+  La API hermana está en ../plataforma-core-api; su contrato público está en docs/contracts/empresa-site-v1.md.
+  No poner secretos en PUBLIC_ ni confiar en datos de empresa del navegador para autorizar accesos.
+  Usar HTML semántico, foco visible, contraste y movimiento reducido; hidratar solo controles interactivos.
+rules:
+  proposal:
+    - Declarar alcance, dependencias, exclusiones y plan de reversión.
+  specs:
+    - Escribir requisitos verificables y escenarios Given/When/Then para carga, dominio desconocido y fallo de API.
+  design:
+    - Explicar SSR, caché, resolución de dominio y estados de interfaz.
+  tasks:
+    - Descomponer en tareas pequeñas con pruebas y comandos de verificación.
+operations:
+  apply:
+    guidance:
+      - Implementar solo tareas del cambio activo y marcar cada casilla al completarla.
+      - Ejecutar npm run check y npm run build; informar bloqueos reales antes de continuar.

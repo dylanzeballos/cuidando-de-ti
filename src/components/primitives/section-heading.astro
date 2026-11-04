@@ -1,0 +1,24 @@
+---
+interface Props {
+  title: string;
+  eyebrow?: string;
+  /** Nivel del encabezado. Por defecto `h2`. */
+  level?: 1 | 2 | 3;
+  id?: string;
+  class?: string;
+}
+
+const { title, eyebrow, level = 2, id, class: className = '' } = Astro.props;
+const Tag = `h${level}` as 'h1' | 'h2' | 'h3';
+const sizes: Record<number, string> = {
+  1: 'text-4xl font-semibold tracking-tighter',
+  2: 'text-2xl font-semibold tracking-tighter',
+  3: 'text-xl font-medium',
+};
+---
+
+<header class:list={['mb-6', className]}>
+  {eyebrow && <p class="text-eyebrow font-bold uppercase tracking-eyebrow text-[var(--empresa-primary)]">{eyebrow}</p>}
+  <Tag id={id} class:list={['m-0 mt-1', sizes[level]]}>{title}</Tag>
+  <slot />
+</header>

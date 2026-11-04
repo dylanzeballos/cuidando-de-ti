@@ -1,0 +1,136 @@
+---
+import AdminShell from '@/components/admin/admin-shell.astro';
+import PosIsland, { type PosProduct } from '@/components/sales/pos';
+import LoadingState from '@/components/primitives/loading-state.astro';
+import EmptyState from '@/components/primitives/empty-state.astro';
+import ErrorState from '@/components/primitives/error-state.astro';
+import { API_BASE_URL } from 'astro:env/server';
+import { createAdminClient, type Branch } from '@/lib/admin/catalog-api';
+import { resolveSalesClient } from '@/lib/sales/sales-service';
+import type { CashSession } from '@/lib/sales/sales-api';
+import { INSTALLATION } from '@/lib/installation';
+
+// El token viene de la sesión de servidor; el navegador nunca lo recibe. La
+// empresa es implícita de la instalación. El armado de venta es la única isla
+// hidratada de ventas; el resto se renderiza en servidor.
+const auth = await Astro.session?.get('auth');
+if (!auth) {
+  return Astro.redirect('/entrar?redirect=%2Fadmin%2Fventas', 303);
+}
+
+const empresa = Astro.locals.empresa;
+const empresaName = INSTALLATION.name;
+
+const catalog = createAdminClient({ baseUrl: API_BASE_URL, token: auth.accessToken });
+const sales = resolveSalesClient(auth.accessToken);
+
+const [productsResult, branchesResult, sessionsResult] = await Promise.all([
+  catalog.listProducts({ active: true }),
+  catalog.listBranches(),
+  sales.listCashSessions({ status: 'OPEN' }),
+]);
+
+let loadError: string | null = null;
+let products: PosProduct[] = [];
+let branches: Branch[] = [];
+let openSessions: CashSession[] = [];
+
+if (productsResult.status === 'ok') {
+  products = productsResult.data.items.map((product) => ({
+    id: product.id,
+    sku: product.sku,
+    name: product.name,
+    unit: product.unit,
+    unitPrice: product.unitPrice,
+    taxRate: product.taxRate,
+  }));
+} else {
+  loadError = productsResult.message;
+}
+if (branchesResult.status === 'ok') branches = branchesResult.data;
+else loadError ??= branchesResult.message;
+if (sessionsResult.status === 'ok') openSessions = sessionsResult.data;
+else loadError ??= sessionsResult.message;
+
+const branchName = (branchId: string) => {
+  const branch = branches.find((item) => item.id === branchId);
+  return branch ? `${branch.code} · ${branch.name}` : 'Sucursal';
+};
+
+// Sucursales con turno abierto; se elige por `branchId` o la primera disponible.
+const sessionsByBranch = new Map(openSessions.map((session) => [session.branchId, session]));
+const queryBranchId = Astro.url.searchParams.get('branchId');
+const selectedBranchId =
+  queryBranchId && sessionsByBranch.has(queryBranchId) ? queryBranchId : (openSessions[0]?.branchId ?? null);
+const openSession = selectedBranchId ? (sessionsByBranch.get(selectedBranchId) ?? null) : null;
+
+const status = empresa === null ? 'loading' : empresa.status;
+---
+
+<AdminShell title="Ventas" active="/admin/ventas">
+  <header class="adm-page-head">
+    <h1>Punto de venta</h1>
+    <p class="adm-sub">
+      Arma y registra la venta de {empresaName}. Requiere un turno de caja abierto.
+    </p>
+    <p class="adm-sub">
+      <a href="/admin/caja">Caja</a> · <a href="/admin/ventas/historial">Historial de ventas</a>
+    </p>
+  </header>
+
+  {loadError && <p class="adm-banner adm-banner--error" role="alert">{loadError}</p>}
+
+  {
+    status === 'loading' ? (
+      <LoadingState label="Cargando la configuración de la empresa…" />
+    ) : status === 'unavailable' ? (
+      <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
+    ) : loadError !== null ? (
+      <ErrorState message="No pudimos cargar el catálogo o los turnos de caja. Inténtalo de nuevo en unos minutos." />
+    ) : openSession === null || selectedBranchId === null ? (
+      <EmptyState
+        title="No hay un turno de caja abierto"
+        message="Abre la caja antes de registrar ventas."
+      >
+        <a class="adm-btn" href="/admin/caja" style="align-self: flex-start; text-decoration: none;">
+          Abrir la caja
+        </a>
+      </EmptyState>
+    ) : (
+      <>
+        {openSessions.length > 1 && (
+          <section class="adm-card" aria-labelledby="pos-sucursal">
+            <div class="adm-card-head">
+              <h2 id="pos-sucursal">Sucursal</h2>
+            </div>
+            <ul class="adm-list" role="list">
+              {openSessions.map((session) => (
+                <li>
+                  <a href={`/admin/ventas?branchId=${session.branchId}`}>
+                    <span class={`adm-chip${session.branchId === selectedBranchId ? ' adm-chip--on' : ''}`}>
+                      {branchName(session.branchId)}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {products.length === 0 ? (
+          <EmptyState
+            title="No hay productos activos"
+            message="Registra productos en el catálogo para poder venderlos."
+          />
+        ) : (
+          <PosIsland
+            client:load
+            branchId={selectedBranchId}
+            registerEndpoint="/admin/ventas/registrar"
+            products={products}
+          />
+        )}
+      </>
+    )
+  }
+</AdminShell>

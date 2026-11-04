@@ -1,0 +1,187 @@
+---
+import AdminShell from '@/components/admin/admin-shell.astro';
+import { API_BASE_URL } from 'astro:env/server';
+import { createAdminClient, type Category, type Product } from '@/lib/admin/catalog-api';
+import { INSTALLATION } from '@/lib/installation';
+
+// El token viene de la sesión de servidor; el navegador nunca lo recibe. El
+// middleware ya garantiza la sesión para `/admin/**`.
+const auth = await Astro.session?.get('auth');
+if (!auth) {
+  return Astro.redirect('/entrar?redirect=%2Fadmin%2Fcatalogo', 303);
+}
+const empresaName = INSTALLATION.name;
+
+const client = createAdminClient({ baseUrl: API_BASE_URL, token: auth.accessToken });
+
+const redirectWith = (key: 'ok' | 'error', message: string) =>
+  Astro.redirect(`/admin/catalogo?${key}=${encodeURIComponent(message)}`, 303);
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+
+  let result;
+  if (action === 'category') {
+    result = await client.createCategory(String(form.get('name') ?? ''));
+  } else if (action === 'product') {
+    const categoryId = String(form.get('categoryId') ?? '').trim();
+    result = await client.createProduct({
+      sku: String(form.get('sku') ?? ''),
+      name: String(form.get('name') ?? ''),
+      unit: String(form.get('unit') ?? 'UNIT'),
+      unitPrice: Number(form.get('unitPrice') ?? '0'),
+      taxRate: Number(form.get('taxRate') ?? '0'),
+      barcode: String(form.get('barcode') ?? '').trim() || null,
+      categoryId: categoryId || null,
+    });
+  } else {
+    return redirectWith('error', 'Acción no reconocida.');
+  }
+
+  if (result.status === 'ok') {
+    return redirectWith('ok', 'Operación realizada.');
+  }
+  return redirectWith('error', result.message);
+}
+
+let categories: Category[] = [];
+let products: Product[] = [];
+let loadError: string | null = null;
+
+const [categoriesResult, productsResult] = await Promise.all([
+  client.listCategories(),
+  client.listProducts(),
+]);
+if (categoriesResult.status === 'ok') {
+  categories = categoriesResult.data;
+} else {
+  loadError = categoriesResult.message;
+}
+if (productsResult.status === 'ok') {
+  products = productsResult.data.items;
+} else {
+  loadError ??= productsResult.message;
+}
+
+const okMessage = Astro.url.searchParams.get('ok');
+const errorMessage = Astro.url.searchParams.get('error');
+---
+
+<AdminShell title="Catálogo" active="/admin/catalogo">
+  <header class="adm-page-head">
+    <h1>Catálogo</h1>
+    <p class="adm-sub">{products.length} productos en {categories.length} categorías de {empresaName}.</p>
+  </header>
+
+  {okMessage && <p class="adm-banner adm-banner--ok" role="status">{okMessage}</p>}
+  {errorMessage && <p class="adm-banner adm-banner--error" role="alert">{errorMessage}</p>}
+  {loadError && <p class="adm-banner adm-banner--error" role="alert">{loadError}</p>}
+
+  <section class="adm-card" aria-labelledby="categorias-title">
+    <div class="adm-card-head">
+      <h2 id="categorias-title">Categorías</h2>
+      <span class="adm-chip">{categories.length}</span>
+    </div>
+
+    <form class="adm-form" method="post">
+      <input type="hidden" name="action" value="category" />
+      <div class="adm-field">
+        <label for="category-name">Nombre</label>
+        <input id="category-name" name="name" required maxlength="120" placeholder="Bebidas" />
+      </div>
+      <div class="adm-actions">
+        <button class="adm-btn" type="submit">Crear categoría</button>
+      </div>
+    </form>
+
+    {categories.length === 0 ? (
+      <p class="adm-empty"><strong>Aún no hay categorías.</strong> Crea la primera para agrupar tus productos.</p>
+    ) : (
+      <ul class="adm-list">
+        {categories.map((category) => (
+          <li><span class="adm-chip">{category.name}{!category.active ? ' · inactiva' : ''}</span></li>
+        ))}
+      </ul>
+    )}
+  </section>
+
+  <section class="adm-card" aria-labelledby="productos-title">
+    <div class="adm-card-head">
+      <h2 id="productos-title">Productos</h2>
+      <span class="adm-chip">{products.length}</span>
+    </div>
+
+    <form class="adm-form" method="post">
+      <input type="hidden" name="action" value="product" />
+      <div class="adm-field">
+        <label for="sku">SKU</label>
+        <input id="sku" name="sku" required maxlength="64" placeholder="AGUA-2L" />
+      </div>
+      <div class="adm-field">
+        <label for="name">Nombre</label>
+        <input id="name" name="name" required maxlength="200" placeholder="Agua 2L" />
+      </div>
+      <div class="adm-field">
+        <label for="barcode">Código de barras</label>
+        <input id="barcode" name="barcode" maxlength="64" inputmode="numeric" />
+      </div>
+      <div class="adm-field">
+        <label for="unit">Unidad</label>
+        <select id="unit" name="unit" required>
+          <option value="UNIT">Unidad</option>
+          <option value="KG">Kilogramo</option>
+          <option value="LITER">Litro</option>
+          <option value="PACK">Paquete</option>
+        </select>
+      </div>
+      <div class="adm-field">
+        <label for="unitPrice">Precio (Bs)</label>
+        <input id="unitPrice" name="unitPrice" type="number" min="0" step="0.01" required />
+      </div>
+      <div class="adm-field">
+        <label for="taxRate">Impuesto (%)</label>
+        <input id="taxRate" name="taxRate" type="number" min="0" max="100" step="0.01" value="13" required />
+      </div>
+      <div class="adm-field">
+        <label for="categoryId">Categoría</label>
+        <select id="categoryId" name="categoryId">
+          <option value="">Sin categoría</option>
+          {categories.filter((category) => category.active).map((category) => (
+            <option value={category.id}>{category.name}</option>
+          ))}
+        </select>
+      </div>
+      <div class="adm-actions">
+        <button class="adm-btn" type="submit">Crear producto</button>
+      </div>
+    </form>
+
+    {products.length === 0 ? (
+      <p class="adm-empty"><strong>Aún no hay productos.</strong> Registra el primero para empezar a vender.</p>
+    ) : (
+      <div class="adm-table-wrap">
+        <table class="adm-table">
+          <thead>
+            <tr><th>SKU</th><th>Nombre</th><th>Unidad</th><th>Precio</th><th>Estado</th></tr>
+          </thead>
+          <tbody>
+            {products.map((product) => (
+              <tr>
+                <td>{product.sku}</td>
+                <td>{product.name}</td>
+                <td>{product.unit}</td>
+                <td>{product.unitPrice}</td>
+                <td>
+                  <span class={`adm-badge ${product.active ? 'adm-badge--on' : 'adm-badge--off'}`}>
+                    {product.active ? 'Activo' : 'Inactivo'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </section>
+</AdminShell>

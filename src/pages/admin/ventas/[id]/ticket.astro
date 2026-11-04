@@ -1,0 +1,191 @@
+---
+import BaseLayout from '@/layouts/base-layout.astro';
+import ErrorState from '@/components/primitives/error-state.astro';
+import { API_BASE_URL } from 'astro:env/server';
+import { createAdminClient } from '@/lib/admin/catalog-api';
+import { resolveSalesClient } from '@/lib/sales/sales-service';
+import { formatMoney, lineTaxIncluded, paymentMethodLabel, round2 } from '@/lib/sales/cart';
+
+// El token y la empresa viven en el servidor; el navegador solo recibe el HTML
+// del comprobante. No se imprime el identificador ni el slug de la empresa: la
+// empresa es implícita de la instalación.
+const auth = await Astro.session?.get('auth');
+const saleId = Astro.params.id ?? '';
+if (!auth) {
+  return Astro.redirect(`/entrar?redirect=${encodeURIComponent(`/admin/ventas/${saleId}/ticket`)}`, 303);
+}
+
+const sales = resolveSalesClient(auth.accessToken);
+const receiptResult = await sales.getReceipt(saleId);
+const receipt = receiptResult.status === 'ok' ? receiptResult.data : null;
+const empresaName = Astro.locals.empresa?.name ?? null;
+
+// Impuesto incluido por línea a partir de la tasa del catálogo (informativo).
+const taxRateById = new Map<string, number>();
+if (receipt) {
+  const catalog = createAdminClient({ baseUrl: API_BASE_URL, token: auth.accessToken });
+  const productsResult = await catalog.listProducts();
+  if (productsResult.status === 'ok') {
+    for (const product of productsResult.data.items) taxRateById.set(product.id, product.taxRate);
+  }
+}
+const taxTotal = receipt
+  ? round2(
+      receipt.items.reduce(
+        (sum, item) =>
+          sum +
+          lineTaxIncluded({
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            discount: item.discount,
+            taxRate: taxRateById.get(item.productId) ?? 0,
+          }),
+        0,
+      ),
+    )
+  : 0;
+---
+
+<BaseLayout title={receipt ? `Ticket #${receipt.number}` : 'Ticket'} noindex>
+  <style>
+    .tkt-page {
+      max-width: 46rem;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+    .tkt-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .tkt-actions a {
+      color: var(--adm-brand);
+      font-weight: 600;
+    }
+    .tkt {
+      background: #fff;
+      color: #10201a;
+      border: 1px solid var(--adm-line);
+      border-radius: 14px;
+      padding: 1.5rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .tkt h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.15rem;
+      letter-spacing: -0.01em;
+    }
+    .tkt table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    .tkt th,
+    .tkt td {
+      text-align: left;
+      padding: 0.35rem 0.4rem;
+      border-bottom: 1px dashed var(--adm-line);
+      font-size: 0.85rem;
+    }
+    .tkt .num {
+      text-align: right;
+    }
+    .tkt-totals {
+      margin-top: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      font-size: 0.9rem;
+    }
+    .tkt-totals .row {
+      display: flex;
+      justify-content: space-between;
+    }
+    .tkt-totals .grand {
+      font-weight: 700;
+      font-size: 1rem;
+      border-top: 1px solid var(--adm-line);
+      padding-top: 0.35rem;
+    }
+    .tkt-muted {
+      color: var(--adm-muted);
+      font-size: 0.8rem;
+    }
+    @media print {
+      .tkt-actions {
+        display: none;
+      }
+      .tkt {
+        border: 0;
+        padding: 0;
+      }
+    }
+  </style>
+
+  <main class="tkt-page">
+    <div class="tkt-actions">
+      <a href={`/admin/ventas/${saleId}`}>Volver al detalle</a>
+      <button type="button" class="adm-btn" onclick="window.print()">Imprimir</button>
+    </div>
+
+    {
+      receipt === null ? (
+        <ErrorState
+          title={receiptResult.status === 'notFound' ? 'Ticket no encontrado' : 'No se pudo cargar el ticket'}
+          message={
+            receiptResult.status === 'notFound'
+              ? 'La venta no existe o pertenece a otra instalación.'
+              : 'No pudimos cargar el comprobante. Inténtalo de nuevo en unos minutos.'
+          }
+        />
+      ) : (
+        <article class="tkt" aria-labelledby="tkt-title">
+          <header>
+            {empresaName && <p class="tkt-muted">{empresaName}</p>}
+            <h1 id="tkt-title">Comprobante interno de venta</h1>
+            <p class="tkt-muted">
+              Folio #{receipt.number} · {new Date(receipt.createdAt).toLocaleString('es-BO')} ·
+              {receipt.status === 'ANNULLED' ? ' ANULADA' : ' COMPLETADA'}
+            </p>
+          </header>
+
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Producto</th>
+                <th scope="col" class="num">Cant.</th>
+                <th scope="col" class="num">Precio</th>
+                <th scope="col" class="num">Importe</th>
+              </tr>
+            </thead>
+            <tbody>
+              {receipt.items.map((item) => (
+                <tr>
+                  <td>{item.sku} · {item.name}</td>
+                  <td class="num">{item.quantity}</td>
+                  <td class="num">{formatMoney(item.unitPrice)}</td>
+                  <td class="num">{formatMoney(item.lineTotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div class="tkt-totals">
+            <p class="row"><span>Subtotal</span><span>{formatMoney(receipt.subtotal)}</span></p>
+            <p class="row"><span>Descuentos</span><span>{formatMoney(receipt.discountTotal)}</span></p>
+            <p class="row tkt-muted"><span>Impuesto incluido</span><span>{formatMoney(taxTotal)}</span></p>
+            <p class="row grand"><span>Total</span><span>{formatMoney(receipt.total)}</span></p>
+            <p class="row"><span>Pagado</span><span>{formatMoney(receipt.paidTotal)}</span></p>
+          </div>
+
+          <p class="tkt-muted">
+            Pagos: {receipt.payments.map((payment) => `${paymentMethodLabel(payment.method)} ${formatMoney(payment.amount)}`).join(' · ')}
+          </p>
+          {receipt.annulReason && <p class="tkt-muted">Motivo de anulación: {receipt.annulReason}</p>}
+          <p class="tkt-muted">Comprobante interno sin validez fiscal (moneda {receipt.currency}).</p>
+        </article>
+      )
+    }
+  </main>
+</BaseLayout>

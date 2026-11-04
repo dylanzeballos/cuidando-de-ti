@@ -1,0 +1,15 @@
+---
+interface Props {
+  title: string;
+  message?: string;
+  class?: string;
+}
+
+const { title, message, class: className = '' } = Astro.props;
+---
+
+<div class:list={['flex flex-col gap-1 rounded-xl border border-dashed border-border p-6 text-muted-foreground', className]}>
+  <strong class="text-foreground">{title}</strong>
+  {message && <p class="m-0">{message}</p>}
+  <slot />
+</div>

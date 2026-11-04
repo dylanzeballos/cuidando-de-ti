@@ -1,0 +1,31 @@
+---
+import '@/styles/global.css';
+import type { SiteTheme } from '@/lib/site-contract';
+import { resolveTheme, themeStyle } from '@/lib/theme';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Tema validado de la empresa. Si falta o es inseguro se usa el tema por defecto. */
+  theme?: SiteTheme | null;
+  /** Añade `<meta name="robots" content="noindex">` en rutas privadas. */
+  noindex?: boolean;
+}
+
+const { title, description, theme = null, noindex = false } = Astro.props;
+const style = themeStyle(resolveTheme(theme));
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {description && <meta name="description" content={description} />}
+    {noindex && <meta name="robots" content="noindex" />}
+    <title>{title}</title>
+  </head>
+  <body style={style}>
+    <slot />
+  </body>
+</html>

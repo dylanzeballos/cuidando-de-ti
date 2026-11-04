@@ -1,0 +1,256 @@
+---
+import AdminShell from '@/components/admin/admin-shell.astro';
+import LoadingState from '@/components/primitives/loading-state.astro';
+import ErrorState from '@/components/primitives/error-state.astro';
+import { resolveSalesClient } from '@/lib/sales/sales-service';
+import { formatMoney, paymentMethodLabel, round2 } from '@/lib/sales/cart';
+import type { Sale, SaleReturn } from '@/lib/sales/sales-api';
+
+// El token viene de la sesión de servidor; el navegador nunca lo recibe. La
+// empresa es implícita de la instalación. El detalle se renderiza en servidor.
+const auth = await Astro.session?.get('auth');
+const saleId = Astro.params.id ?? '';
+if (!auth) {
+  return Astro.redirect(`/entrar?redirect=${encodeURIComponent(`/admin/ventas/${saleId}`)}`, 303);
+}
+
+const empresa = Astro.locals.empresa;
+const sales = resolveSalesClient(auth.accessToken);
+
+const back = (params: Record<string, string>) =>
+  new Response(null, {
+    status: 303,
+    headers: { location: `/admin/ventas/${saleId}?${new URLSearchParams(params).toString()}` },
+  });
+
+const current = await sales.getSale(saleId);
+const returnsResult = await sales.listReturns(saleId);
+let returns: SaleReturn[] = returnsResult.status === 'ok' ? returnsResult.data : [];
+
+if (Astro.request.method === 'POST' && current.status === 'ok') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+
+  if (action === 'annul') {
+    const reason = String(form.get('reason') ?? '').trim();
+    const result = await sales.annulSale(saleId, reason || null);
+    if (result.status === 'ok') return back({ ok: 'Venta anulada.' });
+    return back({ error: result.message });
+  }
+
+  if (action === 'return') {
+    const sale = current.data;
+    const requested = sale.items
+      .map((item) => ({ item, quantity: Number(form.get(`quantity_${item.id}`) ?? '0') }))
+      .filter((entry) => Number.isFinite(entry.quantity) && entry.quantity > 0);
+
+    if (requested.length === 0) {
+      return back({ error: 'Indica al menos una cantidad a devolver.' });
+    }
+
+    // Ya devuelto por línea, para acotar la devolución a lo vendido menos lo devuelto.
+    const alreadyReturned = new Map<string, number>();
+    for (const saleReturn of returns) {
+      for (const item of saleReturn.items) {
+        alreadyReturned.set(item.saleItemId, round2((alreadyReturned.get(item.saleItemId) ?? 0) + item.quantity));
+      }
+    }
+
+    for (const { item, quantity } of requested) {
+      const remaining = round2(item.quantity - (alreadyReturned.get(item.id) ?? 0));
+      if (quantity > remaining) {
+        return back({ error: `No puedes devolver más de ${remaining} de ${item.name}.` });
+      }
+    }
+
+    const reason = String(form.get('reason') ?? '').trim();
+    const result = await sales.createReturn(saleId, {
+      items: requested.map(({ item, quantity }) => ({ saleItemId: item.id, quantity })),
+      reason: reason || null,
+    });
+    if (result.status === 'ok') {
+      returns = [...returns, result.data];
+      return back({ ok: 'Devolución registrada.' });
+    }
+    return back({ error: result.message });
+  }
+
+  return back({ error: 'Acción no reconocida.' });
+}
+
+const sale: Sale | null = current.status === 'ok' ? current.data : null;
+const alreadyReturned = new Map<string, number>();
+for (const saleReturn of returns) {
+  for (const item of saleReturn.items) {
+    alreadyReturned.set(item.saleItemId, round2((alreadyReturned.get(item.saleItemId) ?? 0) + item.quantity));
+  }
+}
+const returnedTotal = round2(returns.reduce((sum, saleReturn) => sum + saleReturn.total, 0));
+
+const okMessage = Astro.url.searchParams.get('ok');
+const errorMessage = Astro.url.searchParams.get('error');
+const status = empresa === null ? 'loading' : empresa.status;
+const notFound = current.status === 'notFound';
+const loadError = current.status === 'unavailable' ? current.message : null;
+---
+
+<AdminShell title={`Venta ${sale ? `#${sale.number}` : ''}`} active="/admin/ventas">
+  <header class="adm-page-head">
+    <h1>{sale ? `Venta #${sale.number}` : 'Detalle de venta'}</h1>
+    <p class="adm-sub">
+      <a href="/admin/ventas/historial">Volver al historial</a>
+      {sale && <> · <a href={`/admin/ventas/${sale.id}/ticket`}>Ver ticket</a></>}
+    </p>
+  </header>
+
+  {okMessage && <p class="adm-banner adm-banner--ok" role="status">{okMessage}</p>}
+  {errorMessage && <p class="adm-banner adm-banner--error" role="alert">{errorMessage}</p>}
+  {loadError && <p class="adm-banner adm-banner--error" role="alert">{loadError}</p>}
+
+  {
+    status === 'loading' ? (
+      <LoadingState label="Cargando la configuración de la empresa…" />
+    ) : status === 'unavailable' ? (
+      <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
+    ) : notFound ? (
+      <ErrorState title="Venta no encontrada" message="La venta no existe o pertenece a otra instalación." />
+    ) : sale === null ? (
+      <ErrorState message="No pudimos cargar la venta. Inténtalo de nuevo en unos minutos." />
+    ) : (
+      <>
+        <section class="adm-card" aria-labelledby="venta-title">
+          <div class="adm-card-head">
+            <h2 id="venta-title">Resumen</h2>
+            <span class={`adm-badge ${sale.status === 'ANNULLED' ? 'adm-badge--off' : 'adm-badge--on'}`}>
+              {sale.status === 'ANNULLED' ? 'Anulada' : 'Completada'}
+            </span>
+          </div>
+          <dl class="svc-summary">
+            <div><dt>Folio</dt><dd>#{sale.number}</dd></div>
+            <div><dt>Fecha</dt><dd>{new Date(sale.createdAt).toLocaleString('es-BO')}</dd></div>
+            <div><dt>Subtotal</dt><dd>{formatMoney(sale.subtotal)}</dd></div>
+            <div><dt>Descuentos</dt><dd>{formatMoney(sale.discountTotal)}</dd></div>
+            <div><dt>Total</dt><dd>{formatMoney(sale.total)}</dd></div>
+            <div><dt>Devuelto</dt><dd>{formatMoney(returnedTotal)}</dd></div>
+          </dl>
+          {sale.status === 'ANNULLED' && (
+            <p class="adm-sub">
+              Anulada el {sale.annulledAt ? new Date(sale.annulledAt).toLocaleString('es-BO') : '—'}
+              {sale.annulReason ? ` · ${sale.annulReason}` : ''}
+            </p>
+          )}
+        </section>
+
+        <section class="adm-card" aria-labelledby="lineas-title">
+          <div class="adm-card-head">
+            <h2 id="lineas-title">Líneas</h2>
+            <span class="adm-chip">{sale.items.length}</span>
+          </div>
+          <div class="adm-table-wrap">
+            <table class="adm-table">
+              <thead>
+                <tr>
+                  <th scope="col">Producto</th>
+                  <th scope="col">Cantidad</th>
+                  <th scope="col">Precio</th>
+                  <th scope="col">Importe</th>
+                  <th scope="col">Devuelto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sale.items.map((item) => (
+                  <tr>
+                    <td>{item.sku} · {item.name}</td>
+                    <td>{item.quantity}</td>
+                    <td>{formatMoney(item.unitPrice)}</td>
+                    <td>{formatMoney(item.lineTotal)}</td>
+                    <td>{formatMoney(alreadyReturned.get(item.id) ?? 0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <h3 class="svc-subtitle">Métodos de pago</h3>
+          <ul class="adm-list" role="list">
+            {sale.payments.map((payment) => (
+              <li><span class="adm-chip">{paymentMethodLabel(payment.method)}: {formatMoney(payment.amount)}</span></li>
+            ))}
+          </ul>
+        </section>
+
+        {returns.length > 0 && (
+          <section class="adm-card" aria-labelledby="devoluciones-title">
+            <div class="adm-card-head">
+              <h2 id="devoluciones-title">Devoluciones</h2>
+              <span class="adm-chip">{returns.length}</span>
+            </div>
+            <ul class="adm-list" role="list">
+              {returns.map((saleReturn) => (
+                <li>
+                  <span class="adm-chip">
+                    {new Date(saleReturn.createdAt).toLocaleDateString('es-BO')} · {formatMoney(saleReturn.total)}
+                    {saleReturn.reason ? ` · ${saleReturn.reason}` : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {sale.status === 'COMPLETED' && (
+          <>
+            <section class="adm-card" aria-labelledby="devolver-title">
+              <div class="adm-card-head">
+                <h2 id="devolver-title">Registrar devolución</h2>
+              </div>
+              <form class="adm-form" method="post">
+                <input type="hidden" name="action" value="return" />
+                {sale.items.map((item) => {
+                  const remaining = round2(item.quantity - (alreadyReturned.get(item.id) ?? 0));
+                  return (
+                    <div class="adm-field">
+                      <label for={`quantity_${item.id}`}>{item.name} (máx. {remaining})</label>
+                      <input
+                        id={`quantity_${item.id}`}
+                        name={`quantity_${item.id}`}
+                        type="number"
+                        min="0"
+                        max={String(remaining)}
+                        step="0.001"
+                        disabled={remaining <= 0}
+                        value="0"
+                      />
+                    </div>
+                  );
+                })}
+                <div class="adm-field">
+                  <label for="return-reason">Motivo</label>
+                  <input id="return-reason" name="reason" maxlength="240" />
+                </div>
+                <div class="adm-actions">
+                  <button class="adm-btn" type="submit">Registrar devolución</button>
+                </div>
+              </form>
+            </section>
+
+            <section class="adm-card" aria-labelledby="anular-title">
+              <div class="adm-card-head">
+                <h2 id="anular-title">Anular venta</h2>
+              </div>
+              <form class="adm-form" method="post">
+                <input type="hidden" name="action" value="annul" />
+                <div class="adm-field">
+                  <label for="annul-reason">Motivo</label>
+                  <input id="annul-reason" name="reason" maxlength="240" />
+                </div>
+                <div class="adm-actions">
+                  <button class="adm-btn adm-btn--danger" type="submit">Anular venta</button>
+                </div>
+              </form>
+            </section>
+          </>
+        )}
+      </>
+    )
+  }
+</AdminShell>
