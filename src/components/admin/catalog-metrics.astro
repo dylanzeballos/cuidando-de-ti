@@ -1,0 +1,32 @@
+---
+import type { Category, Product } from '@/lib/admin/catalog-api';
+
+interface Props {
+  total: number;
+  products: Product[];
+  categories: Category[];
+}
+
+const { total, products, categories } = Astro.props;
+const active = products.filter((product) => product.active).length;
+const uncategorized = products.filter((product) => product.categoryId === null).length;
+---
+
+<dl class="adm-metrics" aria-label="Resumen del catálogo">
+  <div>
+    <dt>Productos</dt>
+    <dd>{total}</dd>
+  </div>
+  <div>
+    <dt>Activos en la lista</dt>
+    <dd>{active}</dd>
+  </div>
+  <div>
+    <dt>Categorías</dt>
+    <dd>{categories.length}</dd>
+  </div>
+  <div>
+    <dt>Sin categoría</dt>
+    <dd>{uncategorized}</dd>
+  </div>
+</dl>

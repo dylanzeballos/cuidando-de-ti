@@ -1,0 +1,53 @@
+---
+import type { Category } from '@/lib/admin/catalog-api';
+
+interface Props {
+  query: string;
+  categoryId: string;
+  status: string;
+  categories: Category[];
+}
+
+const { query, categoryId, status, categories } = Astro.props;
+const hasFilters = query.length > 0 || categoryId.length > 0 || status.length > 0;
+---
+
+<form class="adm-catalog-filters" method="get">
+  <div class="adm-search">
+    <label class="adm-sr" for="catalog-search">Buscar productos</label>
+    <span class="adm-search-icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m20 20-3.5-3.5"></path>
+      </svg>
+    </span>
+    <input
+      id="catalog-search"
+      type="search"
+      name="q"
+      value={query}
+      placeholder="Buscar por nombre o SKU…"
+      maxlength="120"
+    />
+    <button type="submit">Buscar</button>
+  </div>
+
+  <label class="adm-sr" for="catalog-category">Categoría</label>
+  <select id="catalog-category" name="categoryId">
+    <option value="">Todas las categorías</option>
+    {categories.map((category) => (
+      <option value={category.id} selected={category.id === categoryId}>
+        {category.name}
+      </option>
+    ))}
+  </select>
+
+  <label class="adm-sr" for="catalog-status">Estado</label>
+  <select id="catalog-status" name="estado">
+    <option value="" selected={status === ''}>Todos</option>
+    <option value="activos" selected={status === 'activos'}>Activos</option>
+    <option value="inactivos" selected={status === 'inactivos'}>Inactivos</option>
+  </select>
+
+  {hasFilters && <a class="adm-link" href="/admin/catalogo">Limpiar</a>}
+</form>

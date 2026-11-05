@@ -1,0 +1,57 @@
+---
+import type { Category, Product } from '@/lib/admin/catalog-api';
+import { formatMoney } from '@/lib/sales/cart';
+
+interface Props {
+  products: Product[];
+  categories: Category[];
+}
+
+const { products, categories } = Astro.props;
+const categoryName = new Map(categories.map((category) => [category.id, category.name]));
+
+const unitLabels: Record<string, string> = {
+  UNIT: 'Unidad',
+  KG: 'Kilogramo',
+  LITER: 'Litro',
+  PACK: 'Paquete',
+};
+---
+
+<div class="adm-table-wrap">
+  <table class="adm-table">
+    <thead>
+      <tr>
+        <th scope="col">Producto</th>
+        <th scope="col">Categoría</th>
+        <th scope="col">Precio</th>
+        <th scope="col">Impuesto</th>
+        <th scope="col">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {products.map((product) => (
+        <tr>
+          <td>
+            <strong>{product.name}</strong>
+            <div class="adm-cell-muted">
+              {product.sku} · {unitLabels[product.unit] ?? product.unit}
+            </div>
+          </td>
+          <td>
+            {product.categoryId === null
+              ? '—'
+              : (categoryName.get(product.categoryId) ?? '—')}
+          </td>
+          <td class="adm-num">{formatMoney(product.unitPrice)}</td>
+          <td class="adm-num">{product.taxRate.toFixed(1)} %</td>
+          <td>
+            <span class={`adm-badge ${product.active ? 'adm-badge--on' : 'adm-badge--off'}`}>
+              {product.active ? 'Activo' : 'Inactivo'}
+            </span>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

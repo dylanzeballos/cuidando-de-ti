@@ -1,0 +1,92 @@
+/* Catálogo: filtros, formulario de categoría y grilla responsive. */
+.adm-catalog-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  align-items: start;
+  gap: 1rem;
+}
+
+.adm-inline-form {
+  display: flex;
+  gap: 0.45rem;
+  margin: 0 0 0.9rem;
+}
+
+.adm-inline-form input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+  color: var(--adm-ink);
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line-strong);
+  border-radius: 10px;
+}
+
+.adm-inline-form input:focus-visible {
+  outline: 2px solid var(--adm-focus);
+  outline-offset: 1px;
+}
+
+.adm-inline-form .adm-btn {
+  flex: 0 0 auto;
+}
+
+.adm-catalog-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
+.adm-catalog-filters .adm-search {
+  flex: 1 1 260px;
+  width: auto;
+  max-width: 360px;
+}
+
+.adm-catalog-filters select {
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+  color: var(--adm-ink);
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line-strong);
+  border-radius: 10px;
+}
+
+.adm-catalog-filters .adm-link {
+  font-size: 0.8rem;
+}
+
+@media (max-width: 1000px) {
+  .adm-catalog-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .adm-inline-form {
+    flex-direction: column;
+  }
+
+  .adm-inline-form .adm-btn {
+    width: 100%;
+  }
+
+  .adm-catalog-filters {
+    align-items: stretch;
+  }
+
+  .adm-catalog-filters .adm-search {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .adm-catalog-filters select {
+    flex: 1 1 140px;
+    width: 100%;
+  }
+}

@@ -112,6 +112,24 @@ const taxTotal = receipt
       color: var(--adm-muted);
       font-size: 0.8rem;
     }
+    .tkt-table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (max-width: 640px) {
+      .tkt-page {
+        padding: 1.25rem 1rem 3rem;
+      }
+      .tkt {
+        padding: 1.1rem;
+      }
+      .tkt table {
+        min-width: 460px;
+      }
+      .tkt-actions {
+        flex-wrap: wrap;
+      }
+    }
     @media print {
       .tkt-actions {
         display: none;
@@ -150,26 +168,28 @@ const taxTotal = receipt
             </p>
           </header>
 
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Producto</th>
-                <th scope="col" class="num">Cant.</th>
-                <th scope="col" class="num">Precio</th>
-                <th scope="col" class="num">Importe</th>
-              </tr>
-            </thead>
-            <tbody>
-              {receipt.items.map((item) => (
+          <div class="tkt-table-wrap">
+            <table>
+              <thead>
                 <tr>
-                  <td>{item.sku} · {item.name}</td>
-                  <td class="num">{item.quantity}</td>
-                  <td class="num">{formatMoney(item.unitPrice)}</td>
-                  <td class="num">{formatMoney(item.lineTotal)}</td>
+                  <th scope="col">Producto</th>
+                  <th scope="col" class="num">Cant.</th>
+                  <th scope="col" class="num">Precio</th>
+                  <th scope="col" class="num">Importe</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {receipt.items.map((item) => (
+                  <tr>
+                    <td>{item.sku} · {item.name}</td>
+                    <td class="num">{item.quantity}</td>
+                    <td class="num">{formatMoney(item.unitPrice)}</td>
+                    <td class="num">{formatMoney(item.lineTotal)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <div class="tkt-totals">
             <p class="row"><span>Subtotal</span><span>{formatMoney(receipt.subtotal)}</span></p>

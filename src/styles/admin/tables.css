@@ -2,7 +2,8 @@
 .adm-table-wrap {
   border: 1px solid var(--adm-line);
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 table.adm-table {
