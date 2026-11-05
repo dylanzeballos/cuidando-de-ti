@@ -17,7 +17,8 @@
 }
 
 .adm-field input,
-.adm-field select {
+.adm-field select,
+.adm-field textarea {
   width: 100%;
   padding: 0.55rem 0.65rem;
   font: inherit;
@@ -28,8 +29,13 @@
   transition: border-color 140ms var(--adm-ease-out), box-shadow 140ms var(--adm-ease-out);
 }
 
+.adm-field textarea {
+  resize: vertical;
+}
+
 .adm-field input:focus,
-.adm-field select:focus {
+.adm-field select:focus,
+.adm-field textarea:focus {
   outline: none;
   border-color: var(--adm-link);
   box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.16);

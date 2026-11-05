@@ -6,7 +6,8 @@ farmacia antes de integrar la facturación.
 ## Implementado
 
 - **Identidad**: sesión BFF, usuarios, roles y permisos, refresh de token.
-- **Catálogo**: categorías, productos, precios, impuesto y filtros.
+- **Catálogo**: categorías, productos, precios, impuesto y filtros; edición de
+  producto en modal, activar/desactivar productos y categorías.
 - **Inventario**: sucursales, stock por sucursal, movimientos (entrada, salida,
   ajuste), transferencias entre sucursales, filtros por estado y stock bajo.
 - **Ventas y caja**: turnos, punto de venta, historial, detalle, anulación,
@@ -17,15 +18,7 @@ farmacia antes de integrar la facturación.
 
 ## Próximos cambios (en orden)
 
-### 1. Catálogo editable
-
-- **Backend**: ya expone `PATCH /api/v1/catalog/products/{id}` y
-  `PATCH /api/v1/catalog/categories/{id}`.
-- **Frontend**: editar nombre, precio, impuesto, categoría y estado; desactivar
-  productos/categorías con confirmación y mensajes de error.
-- **OpenSpec**: `empresa-catalog-edit`.
-
-### 2. Compras y proveedores
+### 1. Compras y proveedores
 
 - **Backend**: nuevo módulo de compras (proveedor, orden de compra, recepción,
   costo de compra). Hoy no existe.
@@ -33,13 +26,13 @@ farmacia antes de integrar la facturación.
   y actualiza costo vigente.
 - **Dependencia**: endpoint de compras y contrato publicado.
 
-### 3. Clientes y CRM
+### 2. Clientes y CRM
 
 - **Backend**: módulo de clientes, contacto, historial y crédito. Hoy el módulo
   es un placeholder.
 - **Frontend**: directorio, ficha, historial de compras y saldos.
 
-### 4. Facturación
+### 3. Facturación
 
 - **Backend**: contrato fiscal (facturas, notas de crédito, series, impuestos).
 - **Frontend**: emisión desde ventas, consulta de documentos y estados fiscales.

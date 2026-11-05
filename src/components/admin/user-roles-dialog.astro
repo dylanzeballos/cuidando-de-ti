@@ -20,7 +20,7 @@ const dialogId = `roles-${user.id}`;
         <h2 id={`${dialogId}-title`}>Roles de {user.displayName}</h2>
         <p>{user.email}</p>
       </div>
-      <button class="adm-modal-close" type="button" data-role-dialog-close aria-label="Cerrar">
+      <button class="adm-modal-close" type="button" data-dialog-close aria-label="Cerrar">
         <svg
           width="16"
           height="16"
@@ -57,42 +57,8 @@ const dialogId = `roles-${user.id}`;
     </div>
 
     <footer class="adm-modal-foot">
-      <button class="adm-btn adm-btn--ghost" type="button" data-role-dialog-close>Cancelar</button>
+      <button class="adm-btn adm-btn--ghost" type="button" data-dialog-close>Cancelar</button>
       <button class="adm-btn" type="submit">Guardar roles</button>
     </footer>
   </form>
 </dialog>
-
-<script>
-  const updateScrollLock = (): void => {
-    const open = document.querySelector('dialog.adm-modal[open]') !== null;
-    document.documentElement.classList.toggle('adm-modal-open', open);
-  };
-
-  document.querySelectorAll<HTMLButtonElement>('[data-role-dialog]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const dialog = document.getElementById(button.dataset.roleDialog ?? '');
-      if (dialog instanceof HTMLDialogElement) {
-        document.querySelectorAll<HTMLDialogElement>('dialog.adm-modal[open]').forEach((open) => {
-          open.close();
-        });
-        dialog.showModal();
-        updateScrollLock();
-      }
-    });
-  });
-
-  document.querySelectorAll<HTMLElement>('[data-role-dialog-close]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const dialog = button.closest('dialog');
-      if (dialog instanceof HTMLDialogElement) dialog.close();
-    });
-  });
-
-  document.querySelectorAll<HTMLDialogElement>('dialog.adm-modal').forEach((dialog) => {
-    dialog.addEventListener('click', (event) => {
-      if (event.target === dialog) dialog.close();
-    });
-    dialog.addEventListener('close', updateScrollLock);
-  });
-</script>

@@ -1,0 +1,67 @@
+---
+// Controlador compartido de diálogos modales y confirmaciones del panel.
+// Se incluye una sola vez en admin-shell para todas las páginas.
+---
+
+<script>
+  const syncScrollLock = (): void => {
+    const open = document.querySelector('dialog.adm-modal[open]') !== null;
+    document.documentElement.classList.toggle('adm-modal-open', open);
+  };
+
+  const closeDialog = (dialog: HTMLDialogElement): void => {
+    dialog.close();
+    syncScrollLock();
+  };
+
+  // Delegación: cualquier botón con data-dialog-target abre su diálogo.
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    const opener = target.closest<HTMLElement>('[data-dialog-target]');
+    if (opener) {
+      const dialog = document.getElementById(opener.dataset.dialogTarget ?? '');
+      if (dialog instanceof HTMLDialogElement) {
+        document
+          .querySelectorAll<HTMLDialogElement>('dialog.adm-modal[open]')
+          .forEach((open) => open.close());
+        dialog.showModal();
+        syncScrollLock();
+      }
+      return;
+    }
+
+    const closer = target.closest<HTMLElement>('[data-dialog-close]');
+    if (closer) {
+      const dialog = closer.closest('dialog');
+      if (dialog instanceof HTMLDialogElement) closeDialog(dialog);
+    }
+  });
+
+  // Cerrar al hacer clic fuera de la tarjeta (backdrop) o con Escape.
+  document.querySelectorAll<HTMLDialogElement>('dialog.adm-modal').forEach((dialog) => {
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) closeDialog(dialog);
+    });
+    dialog.addEventListener('close', syncScrollLock);
+    dialog.addEventListener('cancel', syncScrollLock);
+  });
+
+  // Reabrir el diálogo que falló al enviar su formulario.
+  const autoOpen = document.querySelector<HTMLDialogElement>('dialog[data-dialog-auto-open]');
+  if (autoOpen && !autoOpen.open) {
+    autoOpen.showModal();
+    syncScrollLock();
+  }
+
+  // Confirmación opcional en formularios destructivos: <form data-confirm="…">.
+  document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    const message = form.dataset.confirm;
+    if (message && !window.confirm(message)) {
+      event.preventDefault();
+    }
+  });
+</script>

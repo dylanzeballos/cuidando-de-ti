@@ -16,6 +16,14 @@
   background: rgba(15, 23, 42, 0.5);
 }
 
+.adm-modal--wide {
+  width: min(92vw, 680px);
+}
+
+.adm-modal-body.adm-form {
+  margin: 0;
+}
+
 .adm-modal[open] {
   animation: adm-modal-in 200ms var(--adm-ease-out) both;
 }

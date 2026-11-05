@@ -1,13 +1,16 @@
 ---
 import type { Category, Product } from '@/lib/admin/catalog-api';
 import { formatMoney } from '@/lib/sales/cart';
+import ProductEditDialog from '@/components/admin/product-edit-dialog.astro';
 
 interface Props {
   products: Product[];
   categories: Category[];
+  /** Producto cuyo diálogo de edición debe abrirse al cargar (tras un error). */
+  openProductId?: string;
 }
 
-const { products, categories } = Astro.props;
+const { products, categories, openProductId } = Astro.props;
 const categoryName = new Map(categories.map((category) => [category.id, category.name]));
 
 const unitLabels: Record<string, string> = {
@@ -27,31 +30,67 @@ const unitLabels: Record<string, string> = {
         <th scope="col">Precio</th>
         <th scope="col">Impuesto</th>
         <th scope="col">Estado</th>
+        <th scope="col">Acciones</th>
       </tr>
     </thead>
     <tbody>
-      {products.map((product) => (
-        <tr>
-          <td data-label="Producto">
-            <strong>{product.name}</strong>
-            <div class="adm-cell-muted">
-              {product.sku} · {unitLabels[product.unit] ?? product.unit}
-            </div>
-          </td>
-          <td data-label="Categoría">
-            {product.categoryId === null
-              ? '—'
-              : (categoryName.get(product.categoryId) ?? '—')}
-          </td>
-          <td data-label="Precio" class="adm-num">{formatMoney(product.unitPrice)}</td>
-          <td data-label="Impuesto" class="adm-num">{product.taxRate.toFixed(1)} %</td>
-          <td data-label="Estado">
-            <span class={`adm-badge ${product.active ? 'adm-badge--on' : 'adm-badge--off'}`}>
-              {product.active ? 'Activo' : 'Inactivo'}
-            </span>
-          </td>
-        </tr>
-      ))}
+      {products.map((product) => {
+        const dialogId = `product-${product.id}`;
+        return (
+          <tr>
+            <td data-label="Producto">
+              <strong>{product.name}</strong>
+              <div class="adm-cell-muted">
+                {product.sku} · {unitLabels[product.unit] ?? product.unit}
+              </div>
+            </td>
+            <td data-label="Categoría">
+              {product.categoryId === null
+                ? '—'
+                : (categoryName.get(product.categoryId) ?? '—')}
+            </td>
+            <td data-label="Precio" class="adm-num">{formatMoney(product.unitPrice)}</td>
+            <td data-label="Impuesto" class="adm-num">{product.taxRate.toFixed(1)} %</td>
+            <td data-label="Estado">
+              <span class={`adm-badge ${product.active ? 'adm-badge--on' : 'adm-badge--off'}`}>
+                {product.active ? 'Activo' : 'Inactivo'}
+              </span>
+            </td>
+            <td data-label="Acciones">
+              <div class="adm-row-actions">
+                <button
+                  class="adm-btn adm-btn--small adm-btn--ghost"
+                  type="button"
+                  data-dialog-target={dialogId}
+                >
+                  Editar
+                </button>
+                <form method="post">
+                  <input type="hidden" name="action" value="product-status" />
+                  <input type="hidden" name="productId" value={product.id} />
+                  <input type="hidden" name="active" value={product.active ? 'false' : 'true'} />
+                  <button
+                    class={`adm-btn adm-btn--small ${product.active ? 'adm-btn--ghost' : ''}`}
+                    type="submit"
+                    data-confirm={
+                      product.active
+                        ? `¿Desactivar “${product.name}”? Dejará de estar disponible para la venta.`
+                        : undefined
+                    }
+                  >
+                    {product.active ? 'Desactivar' : 'Activar'}
+                  </button>
+                </form>
+              </div>
+              <ProductEditDialog
+                product={product}
+                categories={categories}
+                open={openProductId === product.id}
+              />
+            </td>
+          </tr>
+        );
+      })}
     </tbody>
   </table>
 </div>

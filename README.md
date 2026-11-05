@@ -254,6 +254,6 @@ periodos.
 
 ## Roadmap del ERP
 
-El estado del panel y los próximos bloques (catálogo editable, compras, clientes y facturación) están en [docs/erp-roadmap.md](docs/erp-roadmap.md).
+El estado del panel y los próximos bloques (compras, clientes y facturación) están en [docs/erp-roadmap.md](docs/erp-roadmap.md).
 
-El cambio de inventario con transferencias y filtros está registrado en OpenSpec: openspec/changes/empresa-inventory-operations. 
+Los cambios de inventario y catálogo editable están registrados en OpenSpec: openspec/changes/empresa-inventory-operations y openspec/changes/empresa-catalog-edit. 

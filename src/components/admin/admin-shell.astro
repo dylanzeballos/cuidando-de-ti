@@ -2,6 +2,7 @@
 import '@/styles/admin.css';
 import BaseLayout from '@/layouts/base-layout.astro';
 import BrandLogo from '@/components/brand-logo.astro';
+import DialogController from '@/components/admin/dialog-controller.astro';
 import ModuleIcon from '@/components/module-icon.astro';
 import { buildModuleViews, groupModuleViews } from '@/lib/module-catalog';
 import { getWorkspace } from '@/lib/workspaces';
@@ -366,6 +367,7 @@ const today = new Intl.DateTimeFormat('es-BO', {
       <slot />
     </main>
   </div>
+  <DialogController />
 </BaseLayout>
 
 <script>

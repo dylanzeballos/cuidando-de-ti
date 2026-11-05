@@ -1,92 +1,21 @@
 import type { FetchLike } from '@/lib/site-client';
+import type {
+  AdminResult,
+  Branch,
+  Category,
+  CreateBranchInput,
+  CreateProductInput,
+  Product,
+  ProductPage,
+  RegisterMovementInput,
+  Stock,
+  Transfer,
+  TransferInput,
+  UpdateProductInput,
+} from './catalog-types';
 
-export type Category = {
-  id: string;
-  name: string;
-  active: boolean;
-};
+export type * from './catalog-types';
 
-export type Product = {
-  id: string;
-  sku: string;
-  barcode: string | null;
-  name: string;
-  description: string | null;
-  unit: string;
-  unitPrice: number;
-  costPrice: number | null;
-  taxRate: number;
-  categoryId: string | null;
-  active: boolean;
-};
-
-export type ProductPage = {
-  items: Product[];
-  page: number;
-  size: number;
-  total: number;
-};
-
-export type Branch = {
-  id: string;
-  code: string;
-  name: string;
-  address: string | null;
-  active: boolean;
-};
-
-export type Stock = {
-  branchId: string;
-  productId: string;
-  quantity: number;
-};
-
-export type AdminResult<T> =
-  | { status: 'ok'; data: T }
-  | { status: 'validation'; message: string }
-  | { status: 'conflict'; message: string }
-  | { status: 'unauthorized'; message: string }
-  | { status: 'notFound'; message: string }
-  | { status: 'unavailable'; message: string };
-
-export type CreateProductInput = {
-  sku: string;
-  name: string;
-  unit: string;
-  unitPrice: number;
-  taxRate: number;
-  barcode?: string | null;
-  categoryId?: string | null;
-};
-
-export type CreateBranchInput = {
-  code: string;
-  name: string;
-  address?: string | null;
-};
-
-export type RegisterMovementInput = {
-  type: 'ENTRY' | 'EXIT' | 'ADJUSTMENT';
-  branchId: string;
-  productId: string;
-  quantity: number;
-  reason?: string | null;
-};
-
-export type TransferInput = {
-  fromBranchId: string;
-  toBranchId: string;
-  productId: string;
-  quantity: number;
-};
-
-export type Transfer = {
-  transferId: string;
-  fromBranchId: string;
-  toBranchId: string;
-  productId: string;
-  quantity: number;
-};
 
 export type AdminClientOptions = {
   /** URL base del backend, por ejemplo `http://localhost:8080/api/v1`. */
@@ -156,6 +85,14 @@ export function createAdminClient(options: AdminClientOptions) {
     });
   }
 
+  function patchJson<T>(path: string, body: unknown): Promise<AdminResult<T>> {
+    return request<T>(path, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  }
+
   return {
     listCategories: () => request<Category[]>('/catalog/categories'),
     createCategory: (name: string) => postJson<Category>('/catalog/categories', { name }),
@@ -168,6 +105,10 @@ export function createAdminClient(options: AdminClientOptions) {
       return request<ProductPage>(`/catalog/products?${search.toString()}`);
     },
     createProduct: (input: CreateProductInput) => postJson<Product>('/catalog/products', input),
+    updateProduct: (productId: string, input: UpdateProductInput) =>
+      patchJson<Product>(`/catalog/products/${encodeURIComponent(productId)}`, input),
+    updateCategory: (categoryId: string, active: boolean) =>
+      patchJson<Category>(`/catalog/categories/${encodeURIComponent(categoryId)}`, { active }),
     listBranches: () => request<Branch[]>('/inventory/branches'),
     createBranch: (input: CreateBranchInput) => postJson<Branch>('/inventory/branches', input),
     getStock: (branchId: string, productId: string) =>

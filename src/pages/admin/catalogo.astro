@@ -9,6 +9,7 @@ import EmptyState from '@/components/primitives/empty-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
 import { API_BASE_URL } from 'astro:env/server';
 import { createAdminClient, type Category, type Product } from '@/lib/admin/catalog-api';
+import { handleCatalogPost } from '@/lib/admin/catalog-page';
 import { redirectWith } from '@/lib/admin/redirect';
 import { INSTALLATION } from '@/lib/installation';
 
@@ -36,44 +37,12 @@ const back = (params: Record<string, string>) =>
 
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
-  const action = String(form.get('action') ?? '');
-
-  if (action === 'category') {
-    const name = String(form.get('name') ?? '').trim();
-    if (name.length === 0) return back({ error: 'Escribe el nombre de la categoría.' });
-    const result = await client.createCategory(name);
-    if (result.status === 'ok') return back({ ok: 'Categoría creada.' });
-    return back({ error: result.message });
-  }
-
-  if (action === 'product') {
-    const sku = String(form.get('sku') ?? '').trim();
-    const name = String(form.get('name') ?? '').trim();
-    const unitPrice = Number(form.get('unitPrice') ?? '0');
-    const taxRate = Number(form.get('taxRate') ?? '0');
-    if (sku.length === 0 || name.length === 0) {
-      return back({ error: 'El SKU y el nombre del producto son obligatorios.' });
-    }
-    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
-      return back({ error: 'El precio debe ser un número mayor o igual a cero.' });
-    }
-    if (!Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100) {
-      return back({ error: 'El impuesto debe estar entre 0 y 100.' });
-    }
-    const result = await client.createProduct({
-      sku,
-      name,
-      unit: String(form.get('unit') ?? 'UNIT'),
-      unitPrice,
-      taxRate,
-      barcode: String(form.get('barcode') ?? '').trim() || null,
-      categoryId: String(form.get('categoryId') ?? '').trim() || null,
-    });
-    if (result.status === 'ok') return back({ ok: 'Producto creado.' });
-    return back({ error: result.message });
-  }
-
-  return back({ error: 'Acción no reconocida.' });
+  const result = await handleCatalogPost(form, client);
+  if (result.status === 'ok') return back({ ok: result.message });
+  return back({
+    error: result.message,
+    ...(result.productId ? { openProductId: result.productId } : {}),
+  });
 }
 
 let categories: Category[] = [];
@@ -152,11 +121,31 @@ const status = empresa === null ? 'loading' : empresa.status;
             ) : (
               <ul class="adm-list" role="list">
                 {categories.map((category) => (
-                  <li>
-                    <span class="adm-chip">
+                  <li class="adm-list-row">
+                    <span class={`adm-badge ${category.active ? 'adm-badge--on' : 'adm-badge--off'}`}>
                       {category.name}
                       {!category.active ? ' · inactiva' : ''}
                     </span>
+                    <form method="post">
+                      <input type="hidden" name="action" value="category-status" />
+                      <input type="hidden" name="categoryId" value={category.id} />
+                      <input
+                        type="hidden"
+                        name="active"
+                        value={category.active ? 'false' : 'true'}
+                      />
+                      <button
+                        class="adm-btn adm-btn--small adm-btn--ghost"
+                        type="submit"
+                        data-confirm={
+                          category.active
+                            ? `¿Desactivar la categoría “${category.name}”? Sus productos no se eliminan.`
+                            : undefined
+                        }
+                      >
+                        {category.active ? 'Desactivar' : 'Activar'}
+                      </button>
+                    </form>
                   </li>
                 ))}
               </ul>
@@ -186,7 +175,11 @@ const status = empresa === null ? 'loading' : empresa.status;
                 }
               />
             ) : (
-              <ProductsTable products={products} categories={categories} />
+              <ProductsTable
+                products={products}
+                categories={categories}
+                openProductId={Astro.url.searchParams.get('openProductId') ?? undefined}
+              />
             )}
           </section>
         </div>
