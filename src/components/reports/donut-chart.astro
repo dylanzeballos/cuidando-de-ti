@@ -1,0 +1,101 @@
+---
+interface Segment {
+  label: string;
+  value: number;
+}
+
+interface Props {
+  segments: Segment[];
+  centerValue: string;
+  centerLabel: string;
+  kind?: 'money' | 'number' | 'percent';
+  label?: string;
+}
+
+const { segments, centerValue, centerLabel, kind = 'money', label = 'Distribución' } = Astro.props;
+
+const total = segments.reduce((sum, segment) => sum + segment.value, 0);
+const radius = 56;
+const stroke = 16;
+const size = 160;
+const center = size / 2;
+const circumference = 2 * Math.PI * radius;
+const palette = ['var(--rep-c1)', 'var(--rep-c2)', 'var(--rep-c3)', 'var(--rep-c4)', 'var(--rep-c5)'];
+
+let offset = 0;
+const arcs = segments.map((segment, index) => {
+  const fraction = total > 0 ? segment.value / total : 0;
+  const length = fraction * circumference;
+  const arc = {
+    color: palette[index % palette.length],
+    length,
+    offset,
+    fraction,
+  };
+  offset += length;
+  return { ...segment, ...arc };
+});
+
+function formatValue(value: number): string {
+  if (kind === 'percent') return `${value.toFixed(1)} %`;
+  if (kind === 'number') return new Intl.NumberFormat('es-BO').format(value);
+  return `Bs ${value.toFixed(2)}`;
+}
+---
+
+<div class="rep-donut">
+  <svg viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${label}. ${centerLabel}: ${centerValue}`}>
+    <circle
+      cx={center}
+      cy={center}
+      r={radius}
+      fill="none"
+      stroke="var(--adm-paper)"
+      stroke-width={stroke}
+    />
+    {total > 0 &&
+      arcs.map((arc) => (
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={arc.color}
+          stroke-width={stroke}
+          stroke-dasharray={`${arc.length} ${circumference - arc.length}`}
+          stroke-dashoffset={-arc.offset}
+          transform={`rotate(-90 ${center} ${center})`}
+        >
+          <title>{`${arc.label}: ${formatValue(arc.value)} (${Math.round(arc.fraction * 100)}%)`}</title>
+        </circle>
+      ))}
+    <text
+      class="rep-donut-center-value"
+      x={center}
+      y={center - 1}
+      text-anchor="middle"
+      dominant-baseline="middle"
+    >
+      {centerValue}
+    </text>
+    <text
+      class="rep-donut-center-label"
+      x={center}
+      y={center + 16}
+      text-anchor="middle"
+      dominant-baseline="middle"
+    >
+      {centerLabel}
+    </text>
+  </svg>
+
+  <ul class="rep-legend" aria-label={label}>
+    {segments.map((segment, index) => (
+      <li style={`--rep-color: ${palette[index % palette.length]}`}>
+        <span class="rep-swatch" aria-hidden="true"></span>
+        <span class="rep-legend-label">{segment.label}</span>
+        <span class="rep-legend-value">{formatValue(segment.value)}</span>
+      </li>
+    ))}
+  </ul>
+</div>

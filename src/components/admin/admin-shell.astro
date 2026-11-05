@@ -33,18 +33,45 @@ const currentView = views.find((view) => view.route !== null && isActive(view.ro
 const isHome = currentRoute === '/admin' || currentRoute.length === 0;
 
 const documentTitle = `${title} · ${INSTALLATION.name}`;
+const today = new Intl.DateTimeFormat('es-BO', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+}).format(new Date());
 ---
 
 <BaseLayout title={documentTitle} noindex>
   <a class="adm-skip" href="#contenido">Saltar al contenido</a>
-  <div class="adm-shell">
+  <div class="adm-shell" id="adm-shell">
     <aside class="adm-sidebar">
       <header class="adm-brand">
-        <BrandLogo size={38} />
+        <BrandLogo size={34} />
         <span class="adm-brand-text">
           <strong>{INSTALLATION.name}</strong>
           <small>{INSTALLATION.sector}</small>
         </span>
+        <button
+          class="adm-rail-toggle"
+          type="button"
+          aria-label="Contraer menú"
+          aria-expanded="true"
+          title="Contraer menú"
+          data-adm-collapse
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m15 18-6-6 6-6"></path>
+          </svg>
+        </button>
       </header>
 
       <nav class="adm-nav" aria-label="Secciones">
@@ -53,27 +80,47 @@ const documentTitle = `${title} · ${INSTALLATION.name}`;
             <p class="adm-nav-empty">No hay módulos habilitados.</p>
           ) : (
             groups.map((group) => (
-              <div class="adm-nav-group">
-                <p class="adm-nav-group-label">{group.label}</p>
-                {group.views.map((view) =>
-                  view.route ? (
-                    <a
-                      href={view.route}
-                      class="adm-nav-link"
-                      aria-current={isActive(view.route) ? 'page' : undefined}
-                    >
-                      <ModuleIcon name={view.icon} class="adm-nav-icon" />
-                      <span class="adm-nav-text">{view.name}</span>
-                    </a>
-                  ) : (
-                    <span class="adm-nav-item">
-                      <ModuleIcon name={view.icon} class="adm-nav-icon" />
-                      <span class="adm-nav-text">{view.name}</span>
-                      <span class="adm-nav-soon">Próximamente</span>
-                    </span>
-                  ),
-                )}
-              </div>
+              <details class="adm-nav-group" data-group={group.id} open>
+                <summary class="adm-nav-group-label">
+                  <span>{group.label}</span>
+                  <svg
+                    class="adm-nav-chevron"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m6 9 6 6 6-6"></path>
+                  </svg>
+                </summary>
+                <div class="adm-nav-items">
+                  {group.views.map((view) =>
+                    view.route ? (
+                      <a
+                        href={view.route}
+                        class="adm-nav-link"
+                        title={view.name}
+                        aria-current={isActive(view.route) ? 'page' : undefined}
+                      >
+                        <ModuleIcon name={view.icon} class="adm-nav-icon" />
+                        <span class="adm-nav-text">{view.name}</span>
+                        {view.code === 'reports' && <span class="adm-nav-dot" aria-hidden="true" />}
+                      </a>
+                    ) : (
+                      <span class="adm-nav-item" title={view.name}>
+                        <ModuleIcon name={view.icon} class="adm-nav-icon" />
+                        <span class="adm-nav-text">{view.name}</span>
+                        <span class="adm-nav-soon">Pronto</span>
+                      </span>
+                    ),
+                  )}
+                </div>
+              </details>
             ))
           )
         }
@@ -89,7 +136,7 @@ const documentTitle = `${title} · ${INSTALLATION.name}`;
           </span>
         </div>
         <form method="post" action="/api/auth/logout">
-          <button class="adm-logout" type="submit">
+          <button class="adm-logout" type="submit" title="Cerrar sesión">
             <svg
               class="adm-logout-icon"
               width="16"
@@ -106,31 +153,83 @@ const documentTitle = `${title} · ${INSTALLATION.name}`;
               <path d="m16 17 5-5-5-5" />
               <path d="M21 12H9" />
             </svg>
-            Cerrar sesión
+            <span>Cerrar sesión</span>
           </button>
         </form>
       </footer>
     </aside>
 
     <main class="adm-main" id="contenido">
-      <nav class="adm-crumbs" aria-label="Ruta de navegación">
-        {
-          isHome ? (
-            <span aria-current="page">Inicio</span>
-          ) : (
-            <>
-              <a href="/admin">Inicio</a>
-              {currentView && (
-                <>
-                  <span class="adm-crumbs-sep" aria-hidden="true">/</span>
-                  <span aria-current="page">{currentView.name}</span>
-                </>
-              )}
-            </>
-          )
-        }
-      </nav>
+      <div class="adm-topbar">
+        <nav class="adm-crumbs" aria-label="Ruta de navegación">
+          {
+            isHome ? (
+              <span aria-current="page">Inicio</span>
+            ) : (
+              <>
+                <a href="/admin">Inicio</a>
+                {currentView && (
+                  <>
+                    <span class="adm-crumbs-sep" aria-hidden="true">/</span>
+                    <span aria-current="page">{currentView.name}</span>
+                  </>
+                )}
+              </>
+            )
+          }
+        </nav>
+        <span class="adm-date">{today}</span>
+      </div>
       <slot />
     </main>
   </div>
 </BaseLayout>
+
+<script>
+  const shell = document.getElementById('adm-shell');
+  if (shell) {
+    const RAIL_KEY = 'cuidando:sidebar-rail';
+
+    const applyRail = (rail: boolean) => {
+      shell.classList.toggle('adm-shell--rail', rail);
+      const button = shell.querySelector<HTMLButtonElement>('[data-adm-collapse]');
+      if (button) {
+        button.setAttribute('aria-expanded', String(!rail));
+        const label = rail ? 'Expandir menú' : 'Contraer menú';
+        button.setAttribute('aria-label', label);
+        button.setAttribute('title', label);
+      }
+      if (rail) {
+        shell.querySelectorAll('details.adm-nav-group').forEach((group) => {
+          group.setAttribute('open', '');
+        });
+      }
+    };
+
+    try {
+      applyRail(localStorage.getItem(RAIL_KEY) === 'rail');
+
+      const button = shell.querySelector<HTMLButtonElement>('[data-adm-collapse]');
+      button?.addEventListener('click', () => {
+        const rail = !shell.classList.contains('adm-shell--rail');
+        applyRail(rail);
+        localStorage.setItem(RAIL_KEY, rail ? 'rail' : 'full');
+      });
+
+      const isDesktop = window.matchMedia('(min-width: 861px)').matches;
+      shell.querySelectorAll<HTMLDetailsElement>('details.adm-nav-group').forEach((group) => {
+        if (isDesktop) {
+          const key = `cuidando:nav:${group.dataset.group ?? ''}`;
+          if (localStorage.getItem(key) === 'closed') group.open = false;
+          group.addEventListener('toggle', () => {
+            localStorage.setItem(key, group.open ? 'open' : 'closed');
+          });
+        } else {
+          group.open = true;
+        }
+      });
+    } catch {
+      // Sin almacenamiento disponible: el menú funciona con los valores por defecto.
+    }
+  }
+</script>

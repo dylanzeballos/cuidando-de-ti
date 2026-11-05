@@ -6,7 +6,12 @@ Un frontend Astro de administración (ERP/CRM) reutilizable, configurable por em
 
 ## Dirección visual
 
-Claridad antes que decoración: jerarquía tipográfica marcada, espaciado consistente, superficies sobrias, color funcional y estados visibles. La inspiración de Apple se interpreta como precisión, respuesta inmediata y movimiento discreto, sin copiar su identidad visual.
+Minimalismo operativo: una sola familia tipográfica (Inter Variable), papel frío
+y superficies blancas con hairlines, jerarquía por peso y espacio, y el color de
+marca concentrado en el sidebar y las acciones. La inspiración de dashboards
+analíticos se interpreta como densidad escaneable: KPIs compactos, visuales SVG
+en servidor y cero decoración que no comunique estado. No se copia la identidad
+visual de Apple ni de ninguna herramienta de BI.
 
 ## Sistema
 
@@ -14,8 +19,9 @@ Claridad antes que decoración: jerarquía tipográfica marcada, espaciado consi
 - Astro renderiza páginas y contenido público. React se reserva para componentes shadcn/ui e interacciones que lo requieran; los componentes estáticos se renderizan en servidor sin hidratación.
 - Tailwind CSS v4 y los tokens de `src/styles/global.css` definen el tema. Los cambios de marca por empresa se aplicarán mediante tokens, no mediante copias de componentes.
 - Tokens para color, tipografía, espaciado, radios y estados. El tema de la empresa es una segunda capa de tokens (`--empresa-*`) aplicada por `src/layouts/base-layout.astro` desde la configuración validada; un tema inseguro degrada al tema por defecto (`src/lib/theme.ts`).
-- Primitivas de layout y estados en `src/components/primitives/` (contenedor, encabezado de sección, panel, carga, vacío y error), compartidas por sitio público y administración y sin datos de empresa incrustados.
-- El shell de administración y su panel de inicio se generan desde los módulos habilitados de la empresa (`src/lib/module-catalog.ts`), agrupados por bloque de navegación (Operación, Finanzas, Administración); activar o desactivar un módulo es configuración, no código.
+- El shell de administración usa el color principal de la empresa en el sidebar, agrupa la navegación en secciones colapsables (`<details>`) y ofrece un modo riel de solo iconos. El estado se recuerda en `localStorage` con un script mínimo; no hay islas de framework para la navegación.
+- El panel de inicio se genera desde los módulos habilitados (`src/lib/module-catalog.ts`), agrupados por bloque (Operación, Analítica, Finanzas, Administración); activar o desactivar un módulo es configuración, no código.
+- El módulo `reports` (`/admin/reportes`) es un panel de analítica de solo lectura: KPIs, series mensuales, mix de cobro, top de productos, gastos, margen por producto y stock bajo. Los visuales son SVG renderizados en servidor en `src/components/reports/`; los cálculos puros viven en `src/lib/admin/reports.ts`.
 - Componentes reutilizables sin datos de una empresa incrustados.
 - Marca, textos, moneda y módulos visibles provienen de configuración validada. La marca del panel y del inicio de sesión (nombre, sector y logo) vive en la identidad de la instalación (`src/lib/installation.ts`), editable por cliente; la configuración del servidor aporta tema y módulos.
 - La raíz (`/`) redirige a `/admin`; no hay portada pública. El 404 y el 503 son páginas neutras del sistema.

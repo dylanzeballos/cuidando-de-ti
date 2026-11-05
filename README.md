@@ -24,9 +24,14 @@ npm run build   # compila el servidor SSR
 
 ## Sistema de diseño
 
+- **Tipografía**: Inter Variable (`@fontsource-variable/inter`), una sola familia para
+  títulos, datos y controles, con cifras tabulares en importes.
 - **Tokens globales** en `src/styles/global.css`: color, tipografía, espaciado,
   radios y estados (éxito, aviso, información, error). Los componentes consumen
   tokens, nunca valores literales.
+- **Shell de administración**: sidebar con el color principal de la empresa,
+  grupos de navegación colapsables (`<details>`) y modo riel para dejar solo
+  iconos. El estado se recuerda en `localStorage`, sin hidratar frameworks.
 - **Tema por empresa mediante tokens**: `src/layouts/base-layout.astro` aplica la
   segunda capa de tokens (`--empresa-primary`, `--empresa-background`,
   `--empresa-foreground`) desde la configuración validada. Un tema con colores no
@@ -205,3 +210,27 @@ local con la forma del contrato (productos con precio, costos por sucursal y
 gastos por periodo). Se usa **solo en desarrollo y con activación explícita**
 (`COSTS_FIXTURE=true`); en cualquier otro caso la aplicación consume el contrato
 real y, ante un fallo, muestra un estado neutro sin datos.
+
+### Reportes
+
+El módulo `reports` habilita `/admin/reportes`, un panel analítico que resume la
+operación de la farmacia con KPIs y visuales:
+
+- Ingresos, ventas, ticket promedio, margen de catálogo, gastos del mes, stock
+  bajo, productos activos y cobertura de costos.
+- Barras de ingresos por mes, mix de cobro por método de pago, top de productos,
+  gastos por categoría, margen por producto, inventario bajo y cobertura de
+  costos.
+- Selector de periodo (`3`, `6` o `12` meses) resuelto por URL, sin hidratación:
+  todo el HTML y los SVG se generan en el servidor.
+
+Las lecturas usan las APIs reales del backend hermano: `GET /api/v1/sales`,
+`/api/v1/catalog/**`, `/api/v1/inventory/**`, `/api/v1/costs/margins` y
+`/api/v1/costs/expenses/totals`. Los cálculos viven en
+`src/lib/admin/reports.ts` (funciones puras) y las consultas en
+`src/lib/admin/reports-service.ts`; el navegador nunca recibe el token. Si una
+fuente falla, el panel muestra el resto y un aviso de carga parcial.
+
+`reports` es un módulo de presentación: no tiene permiso propio. Las pantallas
+siguen protegidas por los permisos de ventas, catálogo, inventario y costos que
+ya valida el backend.

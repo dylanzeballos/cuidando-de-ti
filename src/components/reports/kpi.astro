@@ -1,0 +1,61 @@
+---
+type KpiKind =
+  | 'revenue'
+  | 'sales'
+  | 'ticket'
+  | 'margin'
+  | 'expenses'
+  | 'stock'
+  | 'products'
+  | 'coverage';
+
+interface Props {
+  kind: KpiKind;
+  label: string;
+  value: string;
+  note?: string;
+  tone?: 'teal' | 'blue' | 'amber' | 'violet' | 'rose' | 'slate';
+}
+
+const { kind, label, value, note, tone = 'teal' } = Astro.props;
+
+const icons: Record<KpiKind, string> = {
+  revenue:
+    '<path d="M4 7h16M4 12h16M4 17h10" /><circle cx="18" cy="17" r="2.2" />',
+  sales:
+    '<path d="M4 5h16l-1.5 14H5.5z" /><path d="M8.5 5a3.5 3.5 0 0 1 7 0" />',
+  ticket:
+    '<path d="M5 4h14v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" /><path d="M9 12v8l3-2 3 2v-8" />',
+  margin:
+    '<path d="M5 19 19 5" /><circle cx="7.5" cy="7.5" r="2.5" /><circle cx="16.5" cy="16.5" r="2.5" />',
+  expenses:
+    '<circle cx="12" cy="12" r="8" /><path d="M12 7.5v9" /><path d="M9.4 10.2h4.3a1.8 1.8 0 0 1 0 3.6H9.4" />',
+  stock:
+    '<path d="M4 8l8-4 8 4-8 4z" /><path d="M4 8v8l8 4 8-4V8" /><path d="M12 12v8" />',
+  products:
+    '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />',
+  coverage:
+    '<path d="M4 19V9" /><path d="M10 19V5" /><path d="M16 19v-7" /><path d="M22 19H2" />',
+};
+---
+
+<li class="rep-kpi">
+  <span class:list={['rep-kpi-icon', `rep-kpi-icon--${tone}`]} aria-hidden="true">
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.9"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      set:html={icons[kind]}
+    />
+  </span>
+  <span class="rep-kpi-text">
+    <small>{label}</small>
+    <strong>{value}</strong>
+    {note && <em>{note}</em>}
+  </span>
+</li>

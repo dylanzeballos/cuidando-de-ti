@@ -32,3 +32,11 @@ UPDATE user_account
 SET email = 'admin@cuidando-de-ti.test',
     display_name = 'Administrador Farmacia'
 WHERE email = 'admin@acme.test';
+
+-- Habilita el panel de reportes en la navegación de la empresa.
+INSERT INTO empresa_module (id, empresa_id, module_code, enabled)
+VALUES ('11111111-1111-1111-1111-1111111111c7',
+        '11111111-1111-1111-1111-111111111111',
+        'reports',
+        TRUE)
+ON CONFLICT (empresa_id, module_code) DO UPDATE SET enabled = TRUE;

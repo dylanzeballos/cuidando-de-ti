@@ -9,14 +9,16 @@ export type ModuleIconName =
   | 'commerce'
   | 'customers'
   | 'identity'
+  | 'reports'
   | 'generic';
 
 /** Bloque de navegación al que pertenece un módulo en el shell de administración. */
-export type ModuleGroup = 'operacion' | 'finanzas' | 'administracion' | 'otros';
+export type ModuleGroup = 'operacion' | 'analitica' | 'finanzas' | 'administracion' | 'otros';
 
 /** Orden y etiqueta de los bloques de navegación. Solo presentación. */
 export const MODULE_GROUP_ORDER: readonly ModuleGroup[] = [
   'operacion',
+  'analitica',
   'finanzas',
   'administracion',
   'otros',
@@ -24,6 +26,7 @@ export const MODULE_GROUP_ORDER: readonly ModuleGroup[] = [
 
 export const MODULE_GROUP_LABELS: Record<ModuleGroup, string> = {
   operacion: 'Operación',
+  analitica: 'Analítica',
   finanzas: 'Finanzas',
   administracion: 'Administración',
   otros: 'Otros',
@@ -77,6 +80,13 @@ const CATALOG: Record<string, Omit<ModulePresentation, 'code'>> = {
     icon: 'billing',
     group: 'finanzas',
     route: '/admin/facturacion',
+  },
+  reports: {
+    name: 'Reportes',
+    description: 'Indicadores de ventas, margen, gastos e inventario.',
+    icon: 'reports',
+    group: 'analitica',
+    route: '/admin/reportes',
   },
   commerce: {
     name: 'Comercio',
