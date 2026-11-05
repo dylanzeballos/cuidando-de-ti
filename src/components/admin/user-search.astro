@@ -1,0 +1,28 @@
+---
+interface Props {
+  query: string;
+  statusParam: string | null;
+}
+
+const { query, statusParam } = Astro.props;
+---
+
+<form class="adm-search" method="get" role="search">
+  <label class="adm-sr" for="user-search">Buscar usuarios</label>
+  <span class="adm-search-icon" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <circle cx="11" cy="11" r="7"></circle>
+      <path d="m20 20-3.5-3.5"></path>
+    </svg>
+  </span>
+  <input
+    id="user-search"
+    type="search"
+    name="q"
+    value={query}
+    placeholder="Buscar por nombre o correo…"
+    maxlength="120"
+  />
+  {statusParam && <input type="hidden" name="estado" value={statusParam} />}
+  <button type="submit">Buscar</button>
+</form>

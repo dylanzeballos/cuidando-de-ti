@@ -1,0 +1,98 @@
+---
+import type { Role, UserAccount } from '@/lib/admin/identity-api';
+
+interface Props {
+  user: UserAccount;
+  roles: Role[];
+}
+
+const { user, roles } = Astro.props;
+const dialogId = `roles-${user.id}`;
+---
+
+<dialog id={dialogId} class="adm-modal" aria-labelledby={`${dialogId}-title`}>
+  <form method="post">
+    <input type="hidden" name="action" value="roles" />
+    <input type="hidden" name="userId" value={user.id} />
+
+    <header class="adm-modal-head">
+      <div>
+        <h2 id={`${dialogId}-title`}>Roles de {user.displayName}</h2>
+        <p>{user.email}</p>
+      </div>
+      <button class="adm-modal-close" type="button" data-role-dialog-close aria-label="Cerrar">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
+
+    <div class="adm-modal-body">
+      <fieldset class="adm-modal-fieldset">
+        <legend class="adm-sr">Roles asignados</legend>
+        <div class="adm-role-grid">
+          {roles.map((role) => (
+            <span class="adm-check">
+              <input
+                id={`${dialogId}-role-${role.id}`}
+                name="roleIds"
+                type="checkbox"
+                value={role.id}
+                checked={user.roles.includes(role.name)}
+              />
+              <label for={`${dialogId}-role-${role.id}`}>{role.name}</label>
+            </span>
+          ))}
+        </div>
+      </fieldset>
+    </div>
+
+    <footer class="adm-modal-foot">
+      <button class="adm-btn adm-btn--ghost" type="button" data-role-dialog-close>Cancelar</button>
+      <button class="adm-btn" type="submit">Guardar roles</button>
+    </footer>
+  </form>
+</dialog>
+
+<script>
+  const updateScrollLock = (): void => {
+    const open = document.querySelector('dialog.adm-modal[open]') !== null;
+    document.documentElement.classList.toggle('adm-modal-open', open);
+  };
+
+  document.querySelectorAll<HTMLButtonElement>('[data-role-dialog]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const dialog = document.getElementById(button.dataset.roleDialog ?? '');
+      if (dialog instanceof HTMLDialogElement) {
+        document.querySelectorAll<HTMLDialogElement>('dialog.adm-modal[open]').forEach((open) => {
+          open.close();
+        });
+        dialog.showModal();
+        updateScrollLock();
+      }
+    });
+  });
+
+  document.querySelectorAll<HTMLElement>('[data-role-dialog-close]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const dialog = button.closest('dialog');
+      if (dialog instanceof HTMLDialogElement) dialog.close();
+    });
+  });
+
+  document.querySelectorAll<HTMLDialogElement>('dialog.adm-modal').forEach((dialog) => {
+    dialog.addEventListener('click', (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('close', updateScrollLock);
+  });
+</script>

@@ -2,6 +2,7 @@
 import AdminShell from '@/components/admin/admin-shell.astro';
 import UserForm from '@/components/admin/user-form.astro';
 import UsersTable from '@/components/admin/users-table.astro';
+import UserSearch from '@/components/admin/user-search.astro';
 import LoadingState from '@/components/primitives/loading-state.astro';
 import EmptyState from '@/components/primitives/empty-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
@@ -142,18 +143,7 @@ const activeOnPage = users.filter((user) => user.active).length;
             </a>
           </nav>
 
-          <form class="adm-search" method="get" role="search">
-            <input
-              type="search"
-              name="q"
-              value={query}
-              placeholder="Buscar por nombre o correo…"
-              aria-label="Buscar usuarios"
-              maxlength="120"
-            />
-            {statusParam && <input type="hidden" name="estado" value={statusParam} />}
-            <button class="adm-btn adm-btn--ghost adm-btn--small" type="submit">Buscar</button>
-          </form>
+          <UserSearch query={query} statusParam={statusParam} />
         </div>
 
         <dl class="adm-metrics" aria-label="Resumen de usuarios">

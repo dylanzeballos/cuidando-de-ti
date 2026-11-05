@@ -1,0 +1,105 @@
+/* Modal de roles */
+.adm-modal {
+  width: min(92vw, 540px);
+  max-height: min(88vh, 640px);
+  padding: 0;
+  overflow: auto;
+  color: var(--adm-ink);
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: 16px;
+  box-shadow: 0 30px 80px -30px rgba(15, 23, 42, 0.55);
+}
+
+.adm-modal::backdrop {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.adm-modal[open] {
+  animation: adm-modal-in 200ms var(--adm-ease-out) both;
+}
+
+@keyframes adm-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.adm-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.adm-modal-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.adm-modal-head p {
+  margin: 0.2rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.8rem;
+}
+
+.adm-modal-close {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--adm-muted);
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.adm-modal-close:hover {
+  color: var(--adm-ink);
+  border-color: var(--adm-line-strong);
+}
+
+.adm-modal-body {
+  padding: 1.15rem 1.25rem;
+}
+
+.adm-modal-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.adm-modal .adm-role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.5rem 0.9rem;
+}
+
+.adm-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--adm-line);
+}
+
+.adm-modal-open {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm-modal[open] {
+    animation: none;
+  }
+}

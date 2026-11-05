@@ -16,6 +16,7 @@
 @import './admin/tables.css';
 @import './admin/identity.css';
 @import './admin/roles.css';
+@import './admin/modal.css';
 @import './admin/feedback.css';
 @import './admin/modules.css';
 @import './admin/reports.css';

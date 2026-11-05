@@ -1,5 +1,6 @@
 ---
 import type { Role, UserAccount } from '@/lib/admin/identity-api';
+import UserRolesDialog from '@/components/admin/user-roles-dialog.astro';
 
 interface Props {
   users: UserAccount[];
@@ -76,30 +77,16 @@ const initials = (name: string): string =>
                 </form>
 
                 {roles.length > 0 && (
-                  <details class="adm-row-details">
-                    <summary>Editar roles</summary>
-                    <form method="post">
-                      <input type="hidden" name="action" value="roles" />
-                      <input type="hidden" name="userId" value={user.id} />
-                      <div class="adm-role-grid">
-                        {roles.map((role) => (
-                          <span class="adm-check">
-                            <input
-                              id={`user-${user.id}-role-${role.id}`}
-                              name="roleIds"
-                              type="checkbox"
-                              value={role.id}
-                              checked={user.roles.includes(role.name)}
-                            />
-                            <label for={`user-${user.id}-role-${role.id}`}>{role.name}</label>
-                          </span>
-                        ))}
-                      </div>
-                      <button class="adm-btn adm-btn--small adm-btn--ghost" type="submit">
-                        Guardar roles
-                      </button>
-                    </form>
-                  </details>
+                  <>
+                    <button
+                      class="adm-btn adm-btn--small adm-btn--ghost"
+                      type="button"
+                      data-role-dialog={`roles-${user.id}`}
+                    >
+                      Editar roles
+                    </button>
+                    <UserRolesDialog user={user} roles={roles} />
+                  </>
                 )}
               </div>
             </td>

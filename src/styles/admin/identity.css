@@ -1,24 +1,58 @@
-/* Búsqueda, detalles plegables y celdas de usuario/rol. */
+/* Búsqueda y celdas de usuario/rol. */
 .adm-search {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  width: min(100%, 380px);
+  padding: 0.3rem 0.35rem 0.3rem 0.75rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line-strong);
+  border-radius: 999px;
+  transition: border-color 150ms var(--adm-ease-out), box-shadow 150ms var(--adm-ease-out);
+}
+
+.adm-search:focus-within {
+  border-color: var(--adm-focus);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--adm-focus) 16%, transparent);
+}
+
+.adm-search-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--adm-muted);
 }
 
 .adm-search input {
-  min-width: 220px;
-  padding: 0.5rem 0.65rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.35rem 0;
   font: inherit;
   color: var(--adm-ink);
-  background: var(--adm-surface);
-  border: 1px solid var(--adm-line-strong);
-  border-radius: 10px;
+  background: transparent;
+  border: 0;
+  outline: none;
 }
 
-.adm-search input:focus-visible {
-  outline: 2px solid var(--adm-focus);
-  outline-offset: 1px;
+.adm-search input::placeholder {
+  color: var(--adm-muted);
+}
+
+.adm-search button {
+  flex: 0 0 auto;
+  padding: 0.38rem 0.72rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--adm-link);
+  background: var(--adm-brand-soft);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.adm-search button:hover {
+  background: color-mix(in oklab, var(--adm-brand-soft) 75%, var(--adm-brand));
 }
 
 .adm-details > summary {
@@ -95,26 +129,6 @@
   white-space: nowrap;
 }
 
-.adm-row-details > summary {
-  color: var(--adm-link);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  list-style: none;
-}
-
-.adm-row-details > summary::-webkit-details-marker {
-  display: none;
-}
-
-.adm-row-details[open] > summary {
-  margin-bottom: 0.55rem;
-}
-
-.adm-row-details .adm-role-grid {
-  margin: 0.35rem 0 0.65rem;
-}
-
 /* Acciones de fila en tablas */
 .adm-row-actions {
   display: flex;
@@ -126,25 +140,4 @@
 
 .adm-row-actions form {
   margin: 0;
-}
-
-.adm-row-actions .adm-row-details > summary {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.38rem 0.65rem;
-  color: var(--adm-link);
-  background: var(--adm-surface);
-  border: 1px solid var(--adm-line);
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.adm-row-actions .adm-row-details[open] {
-  flex: 1 1 100%;
-}
-
-.adm-row-actions .adm-row-details[open] > summary {
-  margin-bottom: 0.4rem;
-  border-color: var(--adm-focus);
 }
