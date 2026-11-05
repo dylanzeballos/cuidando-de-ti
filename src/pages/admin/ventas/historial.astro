@@ -34,7 +34,7 @@ const paymentSummary = (sale: Sale): string => {
   <header class="adm-page-head">
     <h1>Historial de ventas</h1>
     <p class="adm-sub">Ventas registradas de {empresaName}.</p>
-    <p class="adm-sub"><a href="/admin/ventas">Ir al punto de venta</a></p>
+    <p class="adm-sub"><a href="/admin/ventas">Ir al registro de venta</a></p>
   </header>
 
   {loadError && <p class="adm-banner adm-banner--error" role="alert">{loadError}</p>}
@@ -61,7 +61,7 @@ const paymentSummary = (sale: Sale): string => {
           <table class="adm-table">
             <thead>
               <tr>
-                <th scope="col">Folio</th>
+                <th scope="col">N.º</th>
                 <th scope="col">Fecha</th>
                 <th scope="col">Total</th>
                 <th scope="col">Pago</th>

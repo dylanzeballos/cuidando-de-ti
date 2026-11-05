@@ -1,67 +1,236 @@
 ---
 import AdminShell from '@/components/admin/admin-shell.astro';
-import SectionHeading from '@/components/primitives/section-heading.astro';
-import Panel from '@/components/primitives/panel.astro';
+import BarList from '@/components/reports/bar-list.astro';
+import DonutChart from '@/components/reports/donut-chart.astro';
+import Kpi from '@/components/reports/kpi.astro';
+import MiniChart from '@/components/dashboard/mini-chart.astro';
 import LoadingState from '@/components/primitives/loading-state.astro';
-import EmptyState from '@/components/primitives/empty-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
-import ModuleIcon from '@/components/module-icon.astro';
-import { buildModuleViews, groupModuleViews } from '@/lib/module-catalog';
+import { buildReportView, LOW_STOCK_THRESHOLD } from '@/lib/admin/reports';
+import { loadReportsData } from '@/lib/admin/reports-service';
+import { formatMoney } from '@/lib/sales/cart';
+import { INSTALLATION } from '@/lib/installation';
+
+const auth = await Astro.session?.get('auth');
+if (!auth) {
+  return Astro.redirect('/entrar?redirect=%2Fadmin', 303);
+}
 
 // La empresa y sus módulos los adjunta el middleware desde el servidor; nunca
-// se leen de `query` ni `body`. Sin configuración resuelta no se muestra nada.
+// se leen de `query` ni `body`.
 const empresa = Astro.locals.empresa;
 const status = empresa === null ? 'loading' : empresa.status;
-const views = empresa !== null && empresa.status === 'ok' ? buildModuleViews(empresa.modules) : [];
-const groups = groupModuleViews(views);
+
+const data = status === 'ok' ? await loadReportsData(auth.accessToken, 6) : null;
+const view =
+  data === null
+    ? null
+    : buildReportView({
+        sales: data.sales,
+        products: data.products,
+        categories: data.categories,
+        branches: data.branches,
+        margins: data.margins,
+        expenses: data.expenses,
+        previousExpenses: data.previousExpenses,
+        stockByProduct: data.stockByProduct,
+        months: 6,
+      });
+
+const hour = new Date().getHours();
+const greeting = hour < 12 ? 'Buen día' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+const accountName = (Astro.locals.account?.email ?? '').split('@')[0] ?? '';
+const displayName = accountName.length > 0 ? accountName.charAt(0).toUpperCase() + accountName.slice(1) : 'equipo';
+
+const money = (value: number | null | undefined): string =>
+  value === null || value === undefined ? '—' : formatMoney(value);
+const percent = (value: number | null): string =>
+  value === null ? '—' : `${value.toFixed(1)} %`;
+const number = (value: number): string => new Intl.NumberFormat('es-BO').format(value);
+
+const chartSeries = view
+  ? [
+      {
+        id: 'revenue',
+        label: 'Ingresos',
+        unit: 'money' as const,
+        points: view.monthly.map((point) => ({ label: point.label, value: point.revenue })),
+      },
+      {
+        id: 'sales',
+        label: 'Ventas',
+        unit: 'number' as const,
+        points: view.monthly.map((point) => ({ label: point.label, value: point.sales })),
+      },
+    ]
+  : [];
+
+const hasStockData = data !== null && Object.keys(data.stockByProduct).length > 0;
 ---
 
 <AdminShell title="Inicio" active="/admin">
-  <header class="adm-page-head">
-    <SectionHeading title="Inicio" level={1} />
-    <p class="adm-sub">Accesos rápidos a los módulos habilitados para esta empresa.</p>
-  </header>
-
   {
     status === 'loading' ? (
       <LoadingState label="Cargando la configuración de la empresa…" />
-    ) : status === 'unavailable' ? (
-      <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
-    ) : groups.length === 0 ? (
-      <EmptyState
-        title="Aún no hay módulos habilitados"
-        message="Activa módulos en la configuración de la empresa para verlos aquí."
-      />
+    ) : status === 'unavailable' || view === null ? (
+      <ErrorState message="No pudimos cargar el panel. Inténtalo de nuevo en unos minutos." />
     ) : (
-      groups.map((group) => (
-        <section class="adm-dash-group" aria-labelledby={`grupo-${group.id}`}>
-          <h2 id={`grupo-${group.id}`} class="adm-dash-group-title">
-            {group.label}
-          </h2>
-          <ul class="adm-dashboard" role="list">
-            {group.views.map((view) => (
-              <li class="adm-dashboard-item">
-                <Panel labelledby={`mod-${view.code}`} class="adm-dashboard-card">
-                  <span class="adm-dashboard-icon" aria-hidden="true">
-                    <ModuleIcon name={view.icon} size={20} />
-                  </span>
-                  <h3 id={`mod-${view.code}`} class="adm-dashboard-title">
-                    {view.name}
-                  </h3>
-                  {view.description && <p class="adm-dashboard-desc">{view.description}</p>}
-                  {view.route ? (
-                    <a class="adm-dashboard-link" href={view.route}>
-                      Abrir sección
-                    </a>
-                  ) : (
-                    <span class="adm-chip">Próximamente</span>
-                  )}
-                </Panel>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))
+      <>
+        <header class="dash-hero">
+          <h1>
+            {greeting}, {displayName}
+          </h1>
+          <p>Este es el pulso de {INSTALLATION.name} en los últimos 6 meses.</p>
+        </header>
+
+        <ul class="rep-kpis" aria-label="Resumen de la farmacia">
+          <Kpi kind="revenue" label="Ingresos" value={money(view.stats.revenue)} tone="teal" />
+          <Kpi
+            kind="sales"
+            label="Ventas"
+            value={number(view.stats.salesCount)}
+            note={view.stats.annulledCount > 0 ? `${view.stats.annulledCount} anulada(s)` : 'Sin anuladas'}
+            tone="blue"
+          />
+          <Kpi
+            kind="ticket"
+            label="Venta promedio"
+            value={money(view.stats.averageTicket)}
+            tone="violet"
+          />
+          <Kpi
+            kind="margin"
+            label="Margen catálogo"
+            value={percent(view.stats.catalogMarginPct)}
+            note={`${view.stats.productsWithCost} con costo`}
+            tone="amber"
+          />
+          <Kpi
+            kind="expenses"
+            label="Gastos del mes"
+            value={money(view.stats.expensesTotal)}
+            tone="rose"
+          />
+          <Kpi
+            kind="stock"
+            label="Existencias bajas"
+            value={number(view.stats.lowStockCount)}
+            note={`≤ ${LOW_STOCK_THRESHOLD} u.`}
+            tone="slate"
+          />
+        </ul>
+
+        <div class="rep-grid">
+          <section class="rep-tile rep-tile--8" aria-labelledby="dash-activity">
+            <div class="rep-tile-head">
+              <h2 id="dash-activity">Actividad de la farmacia</h2>
+              <a class="rep-inline-link" href="/admin/reportes">Ver reportes completos</a>
+            </div>
+            <div class="rep-tile-body">
+              <MiniChart series={chartSeries} label="Métrica de la actividad" />
+            </div>
+          </section>
+
+          <section class="rep-tile rep-tile--4" aria-labelledby="dash-payments">
+            <div class="rep-tile-head">
+              <h2 id="dash-payments">Mix de cobro</h2>
+              <span>{view.stats.salesCount} ventas</span>
+            </div>
+            <div class="rep-tile-body">
+              {
+                view.paymentMix.length > 0 ? (
+                  <DonutChart
+                    segments={view.paymentMix.map((item) => ({ label: item.label, value: item.value }))}
+                    centerValue={money(view.stats.revenue).replace('Bs ', '')}
+                    centerLabel="Total cobrado"
+                    label="Cobros por método de pago"
+                  />
+                ) : (
+                  <div class="rep-empty">
+                    <strong>Sin cobros todavía</strong>
+                    <span>Registra una venta para ver el desglose por método de pago.</span>
+                    <a href="/admin/ventas">Nueva venta</a>
+                  </div>
+                )
+              }
+            </div>
+          </section>
+
+          <section class="rep-tile rep-tile--5" aria-labelledby="dash-top">
+            <div class="rep-tile-head">
+              <h2 id="dash-top">Top productos</h2>
+              <span>Por ingreso</span>
+            </div>
+            <div class="rep-tile-body">
+              {
+                view.topProducts.length > 0 ? (
+                  <BarList items={view.topProducts} label="Productos con más ingresos" />
+                ) : (
+                  <div class="rep-empty">
+                    <strong>Aún no hay productos vendidos</strong>
+                    <span>Cuando vendas, verás aquí los que sostienen la facturación.</span>
+                  </div>
+                )
+              }
+            </div>
+          </section>
+
+          <section class="rep-tile rep-tile--4" aria-labelledby="dash-stock">
+            <div class="rep-tile-head">
+              <h2 id="dash-stock">Inventario bajo</h2>
+              <span>≤ {LOW_STOCK_THRESHOLD} u.</span>
+            </div>
+            <div class="rep-tile-body">
+              {
+                view.lowStock.length > 0 ? (
+                  <ul class="rep-stock" aria-label="Productos con existencias bajas">
+                    {view.lowStock.slice(0, 5).map((row) => (
+                      <li>
+                        <span class="rep-stock-name">
+                          <strong>{row.name}</strong>
+                          <small>{row.sku}</small>
+                        </span>
+                        <span class="rep-stock-qty">{row.stock} u.</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div class="rep-empty">
+                    <strong>{hasStockData ? 'Sin alertas de existencias' : 'Sin datos de existencias'}</strong>
+                    <span>
+                      {hasStockData
+                        ? `Todos los productos superan las ${LOW_STOCK_THRESHOLD} unidades.`
+                        : 'Registra movimientos de inventario para activar esta alerta.'}
+                    </span>
+                    <a href="/admin/inventario">Revisar inventario</a>
+                  </div>
+                )
+              }
+            </div>
+          </section>
+
+          <section class="rep-tile rep-tile--3" aria-labelledby="dash-expenses">
+            <div class="rep-tile-head">
+              <h2 id="dash-expenses">Gastos del mes</h2>
+              <span>{money(view.stats.expensesTotal)}</span>
+            </div>
+            <div class="rep-tile-body">
+              {
+                view.expenseBreakdown.length > 0 ? (
+                  <BarList items={view.expenseBreakdown} colors label="Gastos por categoría" />
+                ) : (
+                  <div class="rep-empty">
+                    <strong>Sin gastos este mes</strong>
+                    <span>Registra gastos operativos para ver su peso en el resultado.</span>
+                    <a href="/admin/gastos">Registrar un gasto</a>
+                  </div>
+                )
+              }
+            </div>
+          </section>
+        </div>
+
+      </>
     )
   }
 </AdminShell>

@@ -24,7 +24,7 @@ export type IdentityFixture = {
 /** Módulos de la empresa del fixture: `billing` queda deshabilitado a propósito. */
 export function createIdentityFixtureStore(): IdentityFixture {
   const roles: Role[] = [
-    { id: 'role-vendedor', name: 'Vendedor', description: 'Atiende ventas', permissions: ['commerce.manage'] },
+    { id: 'role-vendedor', name: 'Farmacéutico', description: 'Atiende el registro de ventas', permissions: ['commerce.manage'] },
     { id: 'role-almacen', name: 'Almacén', description: 'Controla stock', permissions: ['inventory.manage'] },
   ];
   const users: UserAccount[] = [
@@ -42,7 +42,7 @@ export function createIdentityFixtureStore(): IdentityFixture {
     {
       moduleCode: 'commerce',
       enabled: true,
-      permissions: [{ code: 'commerce.manage', description: 'Operar el comercio' }],
+      permissions: [{ code: 'commerce.manage', description: 'Operar el catálogo de la farmacia' }],
     },
     {
       moduleCode: 'inventory',

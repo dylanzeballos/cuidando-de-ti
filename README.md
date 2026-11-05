@@ -145,14 +145,14 @@ Pasos para probar en local:
 3. Ejecuta `npm run dev` y abre `http://localhost:4321/entrar`.
 4. Inicia sesión; serás redirigido a `/admin`.
 
-### Ventas y caja (punto de venta)
+### Ventas y caja (registro de venta)
 
 El módulo `sales` habilita la operación de caja y ventas:
 
 - `/admin/caja` abre y cierra el **turno de caja** de una sucursal con su resumen
   (ventas, totales por método de pago, efectivo esperado, monto contado y
   diferencia). Sin turno abierto no se pueden registrar ventas.
-- `/admin/ventas` es el **punto de venta**: busca productos del catálogo, agrega
+- `/admin/ventas` es el **registro de venta**: busca productos del catálogo, agrega
   líneas, ajusta cantidades, ve el total recalculado y elige el método de pago.
   Guía a abrir la caja si no hay turno abierto.
 - `/admin/ventas/historial` lista las ventas (folio, fecha, total, método de pago
@@ -161,7 +161,7 @@ El módulo `sales` habilita la operación de caja y ventas:
   es el comprobante imprimible.
 
 El armado de venta es la **única isla React hidratada** (`client:load`); el
-historial, el detalle, el ticket y la caja se renderizan en servidor sin
+historial, el detalle, el comprobante y la caja se renderizan en servidor sin
 hidratación. La isla no habla con el backend directamente: llama al endpoint
 interno `POST /admin/ventas/registrar`, que lee `Astro.session`, resuelve la
 empresa de la instalación y usa el cliente de servidor. El navegador nunca recibe
@@ -169,7 +169,7 @@ tokens ni el identificador de la empresa. El registro es idempotente
 (`Idempotency-Key`) y un conflicto de stock (`409`) o una validación (`400`) se
 muestran sin registrar la venta.
 
-Los cálculos del carrito son funciones puras compartidas
+Los cálculos del detalle de venta son funciones puras compartidas
 (`src/lib/sales/cart.ts`). El total registrado lo dicta el backend
 (`subtotal − discountTotal`); el impuesto se muestra solo como desglose incluido a
 partir de `taxRate` del catálogo, sin alterar el total. El contrato es

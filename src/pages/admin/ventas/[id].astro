@@ -99,7 +99,7 @@ const loadError = current.status === 'unavailable' ? current.message : null;
     <h1>{sale ? `Venta #${sale.number}` : 'Detalle de venta'}</h1>
     <p class="adm-sub">
       <a href="/admin/ventas/historial">Volver al historial</a>
-      {sale && <> · <a href={`/admin/ventas/${sale.id}/ticket`}>Ver ticket</a></>}
+      {sale && <> · <a href={`/admin/ventas/${sale.id}/ticket`}>Ver comprobante</a></>}
     </p>
   </header>
 
@@ -126,7 +126,7 @@ const loadError = current.status === 'unavailable' ? current.message : null;
             </span>
           </div>
           <dl class="svc-summary">
-            <div><dt>Folio</dt><dd>#{sale.number}</dd></div>
+            <div><dt>N.º de venta</dt><dd>#{sale.number}</dd></div>
             <div><dt>Fecha</dt><dd>{new Date(sale.createdAt).toLocaleString('es-BO')}</dd></div>
             <div><dt>Subtotal</dt><dd>{formatMoney(sale.subtotal)}</dd></div>
             <div><dt>Descuentos</dt><dd>{formatMoney(sale.discountTotal)}</dd></div>

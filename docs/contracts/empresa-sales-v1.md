@@ -80,14 +80,14 @@ insuficiente).
   (turno, venta, devolución y ticket). Se usa solo en desarrollo y con activación
   explícita (`SALES_FIXTURE=true`); en cualquier otro caso la aplicación consume el
   contrato real y ante un fallo muestra un estado neutro sin datos.
-- `src/lib/sales/cart.ts` concentra los cálculos del carrito (total por línea,
+- `src/lib/sales/cart.ts` concentra los cálculos del detalle de venta (total por línea,
   impuestos y total) como funciones puras, compartidas por la isla del POS y por
   la validación del servidor.
 - La isla React del POS (`src/components/sales/`) hidrata solo el armado de la
   venta. Llama a `POST /admin/ventas/registrar`, un endpoint de Astro que lee
   `Astro.session`, resuelve la empresa de la instalación y usa el cliente de
   servidor; el navegador nunca recibe el token ni elige la empresa.
-- El historial, el detalle, el ticket y la caja se renderizan en servidor sin
+- El historial, el detalle, el comprobante y la caja se renderizan en servidor sin
   hidratación, con `Cache-Control: no-store` y `noindex` (middleware de
   `/admin/**`).
 

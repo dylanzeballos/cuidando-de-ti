@@ -46,7 +46,7 @@ const taxTotal = receipt
   : 0;
 ---
 
-<BaseLayout title={receipt ? `Ticket #${receipt.number}` : 'Ticket'} noindex>
+<BaseLayout title={receipt ? `Comprobante N.º ${receipt.number}` : 'Comprobante'} noindex>
   <style>
     .tkt-page {
       max-width: 46rem;
@@ -132,7 +132,7 @@ const taxTotal = receipt
     {
       receipt === null ? (
         <ErrorState
-          title={receiptResult.status === 'notFound' ? 'Ticket no encontrado' : 'No se pudo cargar el ticket'}
+          title={receiptResult.status === 'notFound' ? 'Comprobante no encontrado' : 'No se pudo cargar el comprobante'}
           message={
             receiptResult.status === 'notFound'
               ? 'La venta no existe o pertenece a otra instalación.'
@@ -145,7 +145,7 @@ const taxTotal = receipt
             {empresaName && <p class="tkt-muted">{empresaName}</p>}
             <h1 id="tkt-title">Comprobante interno de venta</h1>
             <p class="tkt-muted">
-              Folio #{receipt.number} · {new Date(receipt.createdAt).toLocaleString('es-BO')} ·
+              Comprobante N.º #{receipt.number} · {new Date(receipt.createdAt).toLocaleString('es-BO')} ·
               {receipt.status === 'ANNULLED' ? ' ANULADA' : ' COMPLETADA'}
             </p>
           </header>

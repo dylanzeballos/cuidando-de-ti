@@ -29,8 +29,29 @@ const groups = groupModuleViews(views);
 // gastos, roles, historial) comparten la del módulo para no perder el contexto.
 const currentRoute = active ?? '';
 const isActive = (route: string) => currentRoute === route || currentRoute.startsWith(`${route}/`);
-const currentView = views.find((view) => view.route !== null && isActive(view.route)) ?? null;
 const isHome = currentRoute === '/admin' || currentRoute.length === 0;
+
+// Pestañas de acceso rápido: solo se muestran las secciones realmente
+// habilitadas, para que el header no ofrezca destinos que no existen.
+const QUICK_ROUTES = [
+  '/admin',
+  '/admin/ventas',
+  '/admin/catalogo',
+  '/admin/inventario',
+  '/admin/reportes',
+  '/admin/costos',
+] as const;
+const nameByRoute = new Map<string, string>();
+for (const view of views) {
+  if (view.route !== null) nameByRoute.set(view.route, view.name);
+}
+const quickTabs = QUICK_ROUTES.flatMap((route) => {
+  if (route === '/admin') return [{ route, name: 'Inicio' }];
+  const name = nameByRoute.get(route);
+  return name === undefined ? [] : [{ route, name }];
+});
+const salesEnabled = nameByRoute.has('/admin/ventas');
+const isTabActive = (route: string) => (route === '/admin' ? isHome : isActive(route));
 
 const documentTitle = `${title} · ${INSTALLATION.name}`;
 const today = new Intl.DateTimeFormat('es-BO', {
@@ -75,6 +96,16 @@ const today = new Intl.DateTimeFormat('es-BO', {
       </header>
 
       <nav class="adm-nav" aria-label="Secciones">
+        <a
+          href="/admin"
+          class="adm-nav-link adm-nav-home"
+          title="Inicio"
+          aria-current={isHome ? 'page' : undefined}
+        >
+          <ModuleIcon name="home" size={20} class="adm-nav-icon" />
+          <span class="adm-nav-text">Inicio</span>
+        </a>
+
         {
           groups.length === 0 ? (
             <p class="adm-nav-empty">No hay módulos habilitados.</p>
@@ -107,13 +138,13 @@ const today = new Intl.DateTimeFormat('es-BO', {
                         title={view.name}
                         aria-current={isActive(view.route) ? 'page' : undefined}
                       >
-                        <ModuleIcon name={view.icon} class="adm-nav-icon" />
+                        <ModuleIcon name={view.icon} size={20} class="adm-nav-icon" />
                         <span class="adm-nav-text">{view.name}</span>
                         {view.code === 'reports' && <span class="adm-nav-dot" aria-hidden="true" />}
                       </a>
                     ) : (
                       <span class="adm-nav-item" title={view.name}>
-                        <ModuleIcon name={view.icon} class="adm-nav-icon" />
+                        <ModuleIcon name={view.icon} size={20} class="adm-nav-icon" />
                         <span class="adm-nav-text">{view.name}</span>
                         <span class="adm-nav-soon">Pronto</span>
                       </span>
@@ -160,26 +191,43 @@ const today = new Intl.DateTimeFormat('es-BO', {
     </aside>
 
     <main class="adm-main" id="contenido">
-      <div class="adm-topbar">
-        <nav class="adm-crumbs" aria-label="Ruta de navegación">
+      <header class="adm-header">
+        <nav class="adm-tabs" aria-label="Navegación rápida">
           {
-            isHome ? (
-              <span aria-current="page">Inicio</span>
-            ) : (
-              <>
-                <a href="/admin">Inicio</a>
-                {currentView && (
-                  <>
-                    <span class="adm-crumbs-sep" aria-hidden="true">/</span>
-                    <span aria-current="page">{currentView.name}</span>
-                  </>
-                )}
-              </>
-            )
+            quickTabs.map((tab) => (
+              <a
+                href={tab.route}
+                class="adm-tab"
+                aria-current={isTabActive(tab.route) ? 'page' : undefined}
+              >
+                {tab.name}
+              </a>
+            ))
           }
         </nav>
-        <span class="adm-date">{today}</span>
-      </div>
+        <div class="adm-header-actions">
+          <span class="adm-date">{today}</span>
+          {
+            salesEnabled && (
+              <a class="adm-btn adm-btn--small" href="/admin/ventas">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Nueva venta
+              </a>
+            )
+          }
+        </div>
+      </header>
       <slot />
     </main>
   </div>

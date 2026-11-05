@@ -24,7 +24,7 @@ Restricciones vigentes: el navegador nunca recibe tokens ni la empresa; la empre
 
 ### Isla React solo para el armado de la venta
 
-El POS necesita estado en cliente (carrito, cantidades, total recalculado y método de pago) con respuesta inmediata, así que el componente de armado se implementa como isla React con shadcn/ui (`src/components/ui`) e hidratación `client:load`. El historial, el detalle, el ticket y la caja son de solo lectura y se renderizan en servidor sin directiva `client:*`. Alternativa descartada: formularios HTML con recarga por cada línea, que degradan la operación de caja y obligan a viajes al servidor por interacción. Alternativa descartada: hidratar el módulo completo, que carga JavaScript innecesario en pantallas estáticas.
+El registro de venta necesita estado en cliente (detalle de venta, cantidades, total recalculado y método de pago) con respuesta inmediata, así que el componente de armado se implementa como isla React con shadcn/ui (`src/components/ui`) e hidratación `client:load`. El historial, el detalle, el comprobante y la caja son de solo lectura y se renderizan en servidor sin directiva `client:*`. Alternativa descartada: formularios HTML con recarga por cada línea, que degradan la operación de caja y obligan a viajes al servidor por interacción. Alternativa descartada: hidratar el módulo completo, que carga JavaScript innecesario en pantallas estáticas.
 
 ### La isla del POS no habla con el backend directamente
 
@@ -38,13 +38,13 @@ Se añade `src/lib/sales/sales-api.ts` siguiendo el patrón de `src/lib/admin/ca
 
 `docs/contracts/empresa-sales-v1.md` se redacta alineado con la forma esperada (turnos, ventas, pagos, anulación y devoluciones) y, mientras el backend no lo publique, `src/lib/sales/fixtures.ts` replica esa forma con datos de servidor. Las pruebas usan ese fixture inyectando un `fetch`. Sustituirlo por el cliente real es reemplazar el `baseUrl`/`fetchImpl`, no las páginas. Alternativa descartada: acoplar las páginas a datos de ejemplo incrustados, que impiden la sustitución.
 
-### Cálculos del carrito como funciones puras
+### Cálculos del detalle de venta como funciones puras
 
 El total por línea, los impuestos y el total de la venta se calculan con funciones puras en `src/lib/sales/cart.ts` (probadas con Vitest), separadas de la isla. Así el mismo cálculo se reutiliza en el servidor para validar y en el cliente para mostrar, y se evita divergencia entre lo mostrado y lo registrado.
 
-### Estado del carrito solo en memoria
+### Estado del detalle de venta solo en memoria
 
-El carrito del POS vive en el estado de React de la isla y no se persiste en `localStorage` ni cookies: el navegador no es autoridad de una venta. Una recarga descarta el armado en curso. Alternativa descartada: persistir el carrito en el cliente, que permitiría manipular precios o la empresa fuera del servidor.
+El detalle de venta vive en el estado de React de la isla y no se persiste en `localStorage` ni cookies: el navegador no es autoridad de una venta. Una recarga descarta el armado en curso. Alternativa descartada: persistir el detalle de venta en el cliente, que permitiría manipular precios o la empresa fuera del servidor.
 
 ### SSR, caché y resolución de dominio
 

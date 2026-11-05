@@ -14,6 +14,7 @@ const messages: Record<string, string> = {
   email: 'Escribe un correo válido.',
   password: 'Escribe tu contraseña.',
   invalid: 'Correo o contraseña incorrectos.',
+  session: 'Tu sesión expiró. Vuelve a iniciar sesión.',
   unavailable: 'El servicio de inicio de sesión no está disponible por ahora. Inténtalo más tarde.',
 };
 const message = error ? (messages[error] ?? 'No se pudo iniciar sesión.') : null;

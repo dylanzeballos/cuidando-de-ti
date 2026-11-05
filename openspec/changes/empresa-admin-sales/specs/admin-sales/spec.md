@@ -126,7 +126,7 @@ La aplicación MUST permitir registrar devoluciones parciales o totales de una v
 
 ### Requirement: Interacción del POS y render en servidor
 
-La aplicación MUST hidratar React únicamente en el armado de la venta (buscador, carrito, cantidades, total y método de pago) y MUST renderizar en servidor, sin hidratación, el historial, el detalle y la caja.
+La aplicación MUST hidratar React únicamente en el armado de la venta (buscador, detalle de venta, cantidades, total y método de pago) y MUST renderizar en servidor, sin hidratación, el historial, el detalle y la caja.
 
 #### Scenario: El POS es una isla hidratada
 
@@ -152,7 +152,7 @@ El POS MUST usar HTML semántico, MUST asociar las etiquetas a sus controles, MU
 
 #### Scenario: Total y errores anunciados
 
-- **GIVEN** un cambio en el carrito o un error de la API
+- **GIVEN** un cambio en el detalle de venta o un error de la API
 - **WHEN** el total se actualiza o se produce el error
 - **THEN** el cambio de total y el mensaje de error se anuncian a la tecnología de asistencia
 

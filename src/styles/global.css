@@ -149,9 +149,17 @@
     }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
     }
   html {
     @apply font-sans;
+    }
+  h1, h2, h3, h4, h5, h6,
+  button,
+  input,
+  select,
+  textarea {
+    font-family: var(--font-sans);
     }
   /* Movimiento reducido: sin animaciones ni transiciones no esenciales. */
   @media (prefers-reduced-motion: reduce) {

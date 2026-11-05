@@ -10,6 +10,8 @@ export type ModuleIconName =
   | 'customers'
   | 'identity'
   | 'reports'
+  | 'home'
+  | 'medicine'
   | 'generic';
 
 /** Bloque de navegación al que pertenece un módulo en el shell de administración. */
@@ -48,21 +50,21 @@ export type ModulePresentation = {
 const CATALOG: Record<string, Omit<ModulePresentation, 'code'>> = {
   catalog: {
     name: 'Catálogo',
-    description: 'Productos y categorías de la empresa.',
+    description: 'Medicamentos, productos y categorías de la farmacia.',
     icon: 'catalog',
     group: 'operacion',
     route: '/admin/catalogo',
   },
   inventory: {
     name: 'Inventario',
-    description: 'Sucursales, stock y movimientos de producto.',
+    description: 'Sucursales, existencias y movimientos de productos.',
     icon: 'inventory',
     group: 'operacion',
     route: '/admin/inventario',
   },
   sales: {
     name: 'Ventas',
-    description: 'Caja, punto de venta, tickets y devoluciones.',
+    description: 'Caja, registro de ventas, comprobantes y devoluciones.',
     icon: 'sales',
     group: 'operacion',
     route: '/admin/ventas',
@@ -89,15 +91,15 @@ const CATALOG: Record<string, Omit<ModulePresentation, 'code'>> = {
     route: '/admin/reportes',
   },
   commerce: {
-    name: 'Comercio',
-    description: 'Catálogo, pedidos y una tienda adaptable a cada marca.',
-    icon: 'commerce',
+    name: 'Productos',
+    description: 'Catálogo, precios y disponibilidad de la farmacia.',
+    icon: 'medicine',
     group: 'operacion',
     route: '/admin/catalogo',
   },
   crm: {
-    name: 'Gestión de clientes',
-    description: 'Ventas, inventario y relaciones con clientes.',
+    name: 'Pacientes y clientes',
+    description: 'Datos de pacientes, clientes y su historial.',
     icon: 'customers',
     group: 'operacion',
     route: '/admin/clientes',

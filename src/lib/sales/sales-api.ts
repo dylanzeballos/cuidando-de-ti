@@ -4,7 +4,7 @@ import type { FetchLike } from '@/lib/site-client';
  * Cliente de servidor del contrato `empresa-sales-v1`
  * (ver ../plataforma-core-api/docs/contracts/empresa-sales-v1.md).
  *
- * Opera el punto de venta y la caja de la empresa de la instalación. La empresa
+ * Opera el registro de ventas y la caja de la empresa de la instalación. La empresa
  * es implícita: nunca se envía identificador ni cabecera de selección. Nunca
  * lanza: traduce las respuestas a un resultado discriminado para que la página
  * elija el mensaje.
@@ -177,7 +177,7 @@ export type SalesClientOptions = {
   timeoutMs?: number;
 };
 
-const UNAVAILABLE_MESSAGE = 'El punto de venta no está disponible por ahora.';
+const UNAVAILABLE_MESSAGE = 'El registro de venta no está disponible por ahora.';
 
 async function readMessage(response: Response, fallback: string): Promise<string> {
   try {

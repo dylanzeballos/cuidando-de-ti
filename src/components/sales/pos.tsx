@@ -46,7 +46,7 @@ interface Props {
 
 /**
  * Isla React del armado de venta. Habla con un endpoint de Astro (BFF): el
- * navegador nunca recibe el token ni elige la empresa. El carrito vive solo en
+ * navegador nunca recibe el token ni elige la empresa. El detalle de venta vive solo en
  * memoria; una recarga descarta el armado en curso.
  */
 export default function PosIsland({ branchId, registerEndpoint, products }: Props) {
@@ -174,7 +174,7 @@ export default function PosIsland({ branchId, registerEndpoint, products }: Prop
                   variant="outline"
                   className="justify-start"
                   onClick={() => addProduct(product)}
-                  aria-label={`Agregar ${product.name} al carrito`}
+                  aria-label={`Agregar ${product.name} al detalle de venta`}
                 >
                   <span className="truncate">
                     {product.sku} · {product.name} — {formatMoney(product.unitPrice)}
@@ -186,13 +186,13 @@ export default function PosIsland({ branchId, registerEndpoint, products }: Prop
         </ul>
       </section>
 
-      <section className="rounded-xl border border-border bg-card p-4" aria-labelledby="pos-carrito">
-        <h2 id="pos-carrito" className="m-0 mb-3 text-lg font-medium">
-          Carrito
+      <section className="rounded-xl border border-border bg-card p-4" aria-labelledby="pos-detalle">
+        <h2 id="pos-detalle" className="m-0 mb-3 text-lg font-medium">
+          Detalle de venta
         </h2>
         {items.length === 0 ? (
           <p className="m-0 text-sm text-muted-foreground">
-            Agrega productos para armar la venta.
+            Agrega productos para preparar la venta.
           </p>
         ) : (
           <Table>
@@ -231,7 +231,7 @@ export default function PosIsland({ branchId, registerEndpoint, products }: Prop
                       variant="ghost"
                       size="sm"
                       onClick={() => removeLine(line.productId)}
-                      aria-label={`Quitar ${line.name} del carrito`}
+                      aria-label={`Quitar ${line.name} del detalle de venta`}
                     >
                       Quitar
                     </Button>
@@ -302,7 +302,7 @@ export default function PosIsland({ branchId, registerEndpoint, products }: Prop
             </p>
             <p className="m-0 mt-1 flex gap-3 text-sm">
               <a className="text-primary underline-offset-4 hover:underline" href={`/admin/ventas/${created.id}/ticket`}>
-                Ver ticket
+                Ver comprobante
               </a>
               <a className="text-primary underline-offset-4 hover:underline" href="/admin/ventas/historial">
                 Ir al historial

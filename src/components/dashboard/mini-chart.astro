@@ -1,0 +1,161 @@
+---
+interface SeriesPoint {
+  label: string;
+  value: number;
+}
+
+interface Series {
+  id: string;
+  label: string;
+  unit: 'money' | 'number';
+  points: SeriesPoint[];
+}
+
+interface Props {
+  series: Series[];
+  label: string;
+}
+
+const { series, label } = Astro.props;
+const first = series[0];
+const points = first?.points ?? [];
+---
+
+<figure class="dash-chart" data-mini-chart>
+  <div class="dash-chart-bar">
+    <div class="dash-series-tabs" role="tablist" aria-label={label}>
+      {
+        series.map((item, index) => (
+          <button
+            type="button"
+            role="tab"
+            data-series={item.id}
+            aria-selected={index === 0 ? 'true' : 'false'}
+          >
+            {item.label}
+          </button>
+        ))
+      }
+    </div>
+    <span class="dash-chart-total" data-mini-total aria-live="polite"></span>
+  </div>
+
+  <ol class="dash-bars" data-mini-bars>
+    {
+      points.map((point, index) => (
+        <li class="dash-bar" data-bar={index} style={`--i:${index}`}>
+          <span class="dash-bar-value" data-bar-value></span>
+          <span class="dash-bar-track" aria-hidden="true">
+            <span class="dash-bar-fill" data-bar-fill></span>
+          </span>
+          <span class="dash-bar-label" data-bar-label>
+            {point.label}
+          </span>
+        </li>
+      ))
+    }
+  </ol>
+
+  <figcaption class="dash-chart-caption">
+    {series.length > 1
+      ? 'La serie cambia cada pocos segundos; también puedes elegirla arriba.'
+      : 'Datos del periodo seleccionado.'}
+  </figcaption>
+
+  <script type="application/json" data-mini-data set:html={JSON.stringify(series)} />
+</figure>
+
+<script>
+  interface MiniSeries {
+    id: string;
+    label: string;
+    unit: 'money' | 'number';
+    points: { label: string; value: number }[];
+  }
+
+  const numberFormat = new Intl.NumberFormat('es-BO', { maximumFractionDigits: 0 });
+
+  const format = (value: number, unit: MiniSeries['unit']): string =>
+    unit === 'money' ? `Bs ${numberFormat.format(value)}` : numberFormat.format(value);
+
+  document.querySelectorAll<HTMLElement>('[data-mini-chart]').forEach((chart) => {
+    const dataNode = chart.querySelector<HTMLScriptElement>('[data-mini-data]');
+    if (!dataNode?.textContent) return;
+
+    let series: MiniSeries[];
+    try {
+      series = JSON.parse(dataNode.textContent) as MiniSeries[];
+    } catch {
+      return;
+    }
+    if (series.length === 0) return;
+
+    const buttons = Array.from(chart.querySelectorAll<HTMLButtonElement>('[data-series]'));
+    const bars = Array.from(chart.querySelectorAll<HTMLElement>('[data-bar]'));
+    const fills = Array.from(chart.querySelectorAll<HTMLElement>('[data-bar-fill]'));
+    const values = Array.from(chart.querySelectorAll<HTMLElement>('[data-bar-value]'));
+    const labels = Array.from(chart.querySelectorAll<HTMLElement>('[data-bar-label]'));
+    const total = chart.querySelector<HTMLElement>('[data-mini-total]');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let active = 0;
+    let timer: number | undefined;
+
+    const render = (index: number): void => {
+      const current = series[index];
+      if (!current) return;
+
+      const max = Math.max(...current.points.map((point) => point.value), 1);
+      current.points.forEach((point, position) => {
+        const height = point.value > 0 ? Math.max((point.value / max) * 100, 3) : 0;
+        const fill = fills[position];
+        const value = values[position];
+        const bar = bars[position];
+        const labelNode = labels[position];
+
+        if (fill) fill.style.height = `${height}%`;
+        if (value) value.textContent = format(point.value, current.unit);
+        if (labelNode) labelNode.textContent = point.label;
+        if (bar) {
+          bar.title = `${point.label}: ${format(point.value, current.unit)}`;
+        }
+      });
+
+      if (total) {
+        const sum = current.points.reduce((accumulator, point) => accumulator + point.value, 0);
+        total.textContent = `${current.label}: ${format(sum, current.unit)}`;
+      }
+
+      buttons.forEach((button, position) => {
+        button.setAttribute('aria-selected', String(position === index));
+      });
+      active = index;
+    };
+
+    const stop = (): void => {
+      if (timer !== undefined) window.clearInterval(timer);
+      timer = undefined;
+    };
+
+    const start = (): void => {
+      if (reduceMotion || series.length < 2) return;
+      stop();
+      timer = window.setInterval(() => render((active + 1) % series.length), 7000);
+    };
+
+    buttons.forEach((button, index) => {
+      button.addEventListener('click', () => {
+        render(index);
+        start();
+      });
+    });
+
+    chart.addEventListener('pointerenter', stop);
+    chart.addEventListener('pointerleave', start);
+    chart.addEventListener('focusin', stop);
+    chart.addEventListener('focusout', start);
+
+    render(0);
+    start();
+  });
+</script>

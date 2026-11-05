@@ -1,8 +1,8 @@
-# Punto de venta: caja, ventas, tickets, anulación y devoluciones
+# Registro de venta: caja, ventas, comprobantes, anulación y devoluciones
 
 ## Why
 
-Con el catálogo, el inventario y la fundación de la aplicación ya definidos, a la farmacia "Cuidando de Ti" todavía le falta la operación comercial esencial: cobrar. Sin un punto de venta (POS) que abra la caja, arme una venta, cobre, emita el ticket y permita anular o devolver, la plataforma no puede reemplazar la caja actual ni generar los datos que después consumirán la facturación y la contabilidad. Este cambio cierra ese hueco reutilizando el shell, la sesión y el sistema de diseño de `empresa-app-foundation`.
+Con el catálogo, el inventario y la fundación de la aplicación ya definidos, a la farmacia "Cuidando de Ti" todavía le falta la operación comercial esencial: cobrar. Sin un registro de venta que abra la caja, arme una venta, cobre, emita el comprobante y permita anular o devolver, la plataforma no puede reemplazar la caja actual ni generar los datos que después consumirán la facturación y la contabilidad. Este cambio cierra ese hueco reutilizando el shell, la sesión y el sistema de diseño de `empresa-app-foundation`.
 
 ## What Changes
 
@@ -11,7 +11,7 @@ Con el catálogo, el inventario y la fundación de la aplicación ya definidos, 
 - **Emitir un ticket/comprobante** de cada venta registrada, imprimible o consultable, con folio, líneas, impuestos, total y método de pago.
 - Añadir el **historial de ventas** con filtros por fecha, caja y estado, y el **detalle** de cada venta.
 - Añadir **anulación** de una venta registrada y **registro de devoluciones** parciales o totales que reintegran stock.
-- **Isla React con shadcn/ui hidratada solo en el POS** (armado de venta) porque requiere estado en cliente (carrito, cantidades, total y método de pago); el resto de las pantallas de ventas se renderizan en servidor sin hidratación.
+- **Isla React con shadcn/ui hidratada solo en el registro de venta** (armado de venta) porque requiere estado en cliente (detalle de venta, cantidades, total y método de pago); el resto de las pantallas de ventas se renderizan en servidor sin hidratación.
 - Modelo sin tenant: la empresa es la de la instalación y sus operaciones se resuelven desde la sesión de servidor, nunca desde un valor enviado por el navegador.
 
 ## Capabilities
@@ -31,7 +31,7 @@ Con el catálogo, el inventario y la fundación de la aplicación ya definidos, 
 - Nuevo cliente de servidor tipado para el contrato de ventas (turnos, ventas, pagos, anulación y devoluciones) que consume la sesión de `empresa-app-foundation`; el navegador nunca recibe tokens (patrón BFF).
 - Reutiliza el catálogo de productos (`src/lib/admin/catalog-api.ts`) para buscar y agregar líneas, y el shell/sesión/middleware de `empresa-app-foundation`.
 - Nuevo módulo `sales` en el catálogo de presentación de módulos para que la navegación lo muestre solo cuando la empresa lo tenga habilitado.
-- Nuevas pruebas Vitest para los cálculos del carrito, la traducción de estados de la API y la generación del ticket; verificación de accesibilidad por teclado y foco visible.
+- Nuevas pruebas Vitest para los cálculos del detalle de venta, la traducción de estados de la API y la generación del comprobante; verificación de accesibilidad por teclado y foco visible.
 
 ### Exclusiones
 

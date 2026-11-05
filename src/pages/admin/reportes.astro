@@ -115,7 +115,7 @@ const periodHref = (value: ReportPeriod): string => `/admin/reportes?periodo=${v
     />
     <Kpi
       kind="ticket"
-      label="Ticket promedio"
+      label="Venta promedio"
       value={money(view.stats.averageTicket)}
       note="Por venta completada"
       tone="violet"
@@ -136,7 +136,7 @@ const periodHref = (value: ReportPeriod): string => `/admin/reportes?periodo=${v
     />
     <Kpi
       kind="stock"
-      label="Stock bajo"
+      label="Existencias bajas"
       value={number(view.stats.lowStockCount)}
       note={`≤ ${LOW_STOCK_THRESHOLD} unidades`}
       tone="slate"
@@ -177,7 +177,7 @@ const periodHref = (value: ReportPeriod): string => `/admin/reportes?periodo=${v
           ) : (
             <div class="rep-empty">
               <strong>Aún no hay ventas en este periodo</strong>
-              <span>Las barras se dibujan con las ventas que registres en el punto de venta.</span>
+              <span>Las barras se dibujan con las ventas que registres en el registro de venta.</span>
               <a href="/admin/ventas">Registrar una venta</a>
             </div>
           )
@@ -269,7 +269,7 @@ const periodHref = (value: ReportPeriod): string => `/admin/reportes?periodo=${v
             </ul>
           ) : (
             <div class="rep-empty">
-              <strong>{hasStockData ? 'Sin alertas de stock' : 'Sin datos de existencias'}</strong>
+              <strong>{hasStockData ? 'Sin alertas de existencias' : 'Sin datos de existencias'}</strong>
               <span>
                 {hasStockData
                   ? `Todos los productos superan las ${LOW_STOCK_THRESHOLD} unidades.`
@@ -298,7 +298,7 @@ const periodHref = (value: ReportPeriod): string => `/admin/reportes?periodo=${v
                     <th scope="col" class="rep-num">Precio</th>
                     <th scope="col" class="rep-num">Costo</th>
                     <th scope="col" class="rep-num">Margen</th>
-                    <th scope="col" class="rep-num">Stock</th>
+                    <th scope="col" class="rep-num">Existencias</th>
                   </tr>
                 </thead>
                 <tbody>
