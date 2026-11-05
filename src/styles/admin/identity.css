@@ -114,3 +114,37 @@
 .adm-row-details .adm-role-grid {
   margin: 0.35rem 0 0.65rem;
 }
+
+/* Acciones de fila en tablas */
+.adm-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.adm-row-actions form {
+  margin: 0;
+}
+
+.adm-row-actions .adm-row-details > summary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.38rem 0.65rem;
+  color: var(--adm-link);
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.adm-row-actions .adm-row-details[open] {
+  flex: 1 1 100%;
+}
+
+.adm-row-actions .adm-row-details[open] > summary {
+  margin-bottom: 0.4rem;
+  border-color: var(--adm-focus);
+}

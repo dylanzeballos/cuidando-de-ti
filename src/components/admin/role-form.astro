@@ -57,37 +57,45 @@ const selected = new Set(editingRole?.permissions ?? []);
       </p>
     )}
 
-    <fieldset class="adm-roles">
-      <legend>Permisos por módulo habilitado</legend>
+    <div class="adm-permissions">
+      <div class="adm-permissions-head">
+        <h3 id="permissions-title">Permisos por módulo</h3>
+        <p>Marca lo que puede hacer este rol. Solo se ofrecen módulos habilitados.</p>
+      </div>
+
       {permissionsGroups.length === 0 ? (
         <p class="adm-note">
           No hay módulos con permisos habilitados. Activa módulos en la configuración de la
           empresa para asignar permisos.
         </p>
       ) : (
-        permissionsGroups.map((group) => (
-          <div class="adm-role-group">
-            <p class="adm-role-group-title">{describeModule(group.moduleCode).name}</p>
-            <div class="adm-role-grid">
-              {group.permissions.map((permission) => (
-                <span class="adm-check">
+        <ul class="adm-permission-list" aria-labelledby="permissions-title">
+          {permissionsGroups.map((group) =>
+            group.permissions.map((permission) => (
+              <li>
+                <label class="adm-permission">
                   <input
-                    id={`perm-${permission.code}`}
-                    name="permissions"
                     type="checkbox"
+                    name="permissions"
                     value={permission.code}
                     checked={selected.has(permission.code)}
                   />
-                  <label for={`perm-${permission.code}`}>
-                    {permission.description || permission.code}
-                  </label>
-                </span>
-              ))}
-            </div>
-          </div>
-        ))
+                  <span class="adm-permission-check" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m5 13 4 4L19 7" />
+                    </svg>
+                  </span>
+                  <span class="adm-permission-text">
+                    <strong>{describeModule(group.moduleCode).name}</strong>
+                    <small>{permission.description || 'Acceso al módulo'}</small>
+                  </span>
+                </label>
+              </li>
+            )),
+          )}
+        </ul>
       )}
-    </fieldset>
+    </div>
 
     <div class="adm-actions">
       <button class="adm-btn" type="submit">{editingRole ? 'Guardar rol' : 'Crear rol'}</button>

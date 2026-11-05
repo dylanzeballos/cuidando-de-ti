@@ -3,10 +3,14 @@ import type { Role } from '@/lib/admin/identity-api';
 
 interface Props {
   roles: Role[];
-  permissionLabels: Map<string, string>;
+  permissionModules: Map<string, string>;
 }
 
-const { roles, permissionLabels } = Astro.props;
+const { roles, permissionModules } = Astro.props;
+
+const moduleNames = (role: Role): string[] => [
+  ...new Set(role.permissions.map((code) => permissionModules.get(code) ?? code)),
+];
 ---
 
 <section class="adm-card" aria-labelledby="lista-roles-title">
@@ -20,7 +24,7 @@ const { roles, permissionLabels } = Astro.props;
       <thead>
         <tr>
           <th scope="col">Rol</th>
-          <th scope="col">Permisos</th>
+          <th scope="col">Módulos</th>
           <th scope="col">Acciones</th>
         </tr>
       </thead>
@@ -36,14 +40,14 @@ const { roles, permissionLabels } = Astro.props;
                 <span class="adm-chip">Sin permisos</span>
               ) : (
                 <ul class="adm-list" role="list">
-                  {role.permissions.map((code) => (
-                    <li><span class="adm-chip">{permissionLabels.get(code) ?? code}</span></li>
+                  {moduleNames(role).map((name) => (
+                    <li><span class="adm-chip">{name}</span></li>
                   ))}
                 </ul>
               )}
             </td>
             <td>
-              <div class="adm-actions-cell">
+              <div class="adm-row-actions">
                 <a class="adm-btn adm-btn--small adm-btn--ghost" href={`/admin/roles?edit=${role.id}`}>
                   Editar
                 </a>

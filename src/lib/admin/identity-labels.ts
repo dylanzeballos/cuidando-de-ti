@@ -1,11 +1,15 @@
+import { describeModule } from '@/lib/module-catalog';
 import type { PermissionGroup } from '@/lib/admin/identity-api';
 
-/** Etiquetas legibles por código de permiso y conteo para la pantalla de roles. */
-export function buildPermissionLabels(groups: readonly PermissionGroup[]): Map<string, string> {
+/** Nombre del módulo al que pertenece cada permiso (Facturación, Productos…). */
+export function buildPermissionModuleLabels(
+  groups: readonly PermissionGroup[],
+): Map<string, string> {
   const labels = new Map<string, string>();
   for (const group of groups) {
+    const moduleName = describeModule(group.moduleCode).name;
     for (const permission of group.permissions) {
-      labels.set(permission.code, permission.description || permission.code);
+      labels.set(permission.code, moduleName);
     }
   }
   return labels;

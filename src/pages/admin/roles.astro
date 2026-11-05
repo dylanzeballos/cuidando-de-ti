@@ -7,7 +7,7 @@ import EmptyState from '@/components/primitives/empty-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
 import { resolveIdentityClient } from '@/lib/admin/identity-service';
 import { validateRoleName } from '@/lib/admin/identity-validation';
-import { buildPermissionLabels, countPermissions } from '@/lib/admin/identity-labels';
+import { buildPermissionModuleLabels, countPermissions } from '@/lib/admin/identity-labels';
 import { redirectWith } from '@/lib/admin/redirect';
 import {
   filterSelectablePermissions,
@@ -107,8 +107,8 @@ const selectableCodes = permissionsResult.status === 'ok'
   ? selectablePermissionCodes(permissionsResult.data, modules)
   : new Set<string>();
 
-const permissionLabels = permissionsResult.status === 'ok'
-  ? buildPermissionLabels(permissionsResult.data)
+const permissionModules = permissionsResult.status === 'ok'
+  ? buildPermissionModuleLabels(permissionsResult.data)
   : new Map<string, string>();
 
 const okMessage = Astro.url.searchParams.get('ok');
@@ -192,7 +192,7 @@ const status = empresa === null ? 'loading' : empresa.status;
             message="Crea el primero para asignar permisos a tus usuarios."
           />
         ) : (
-          <RolesTable roles={roles} permissionLabels={permissionLabels} />
+          <RolesTable roles={roles} permissionModules={permissionModules} />
         )}
       </>
     )

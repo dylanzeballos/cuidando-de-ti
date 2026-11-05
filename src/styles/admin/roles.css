@@ -1,0 +1,109 @@
+/* Permisos como tarjetas seleccionables */
+.adm-permissions {
+  margin: 0 0 1.25rem;
+}
+
+.adm-permissions-head {
+  margin-bottom: 0.7rem;
+}
+
+.adm-permissions-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+}
+
+.adm-permissions-head p {
+  margin: 0.2rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.8rem;
+}
+
+.adm-permission-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-permission {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 150ms var(--adm-ease-out), border-color 150ms var(--adm-ease-out);
+}
+
+.adm-permission:hover {
+  background: var(--adm-surface-hover);
+  border-color: var(--adm-line-strong);
+}
+
+.adm-permission input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  opacity: 0;
+}
+
+.adm-permission-check {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 0.05rem;
+  color: #fff;
+  background: var(--adm-surface);
+  border: 1.5px solid var(--adm-line-strong);
+  border-radius: 6px;
+  transition: background-color 140ms var(--adm-ease-out), border-color 140ms var(--adm-ease-out);
+}
+
+.adm-permission-check svg {
+  width: 13px;
+  height: 13px;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 140ms var(--adm-ease-out), transform 140ms var(--adm-ease-out);
+}
+
+.adm-permission input:checked + .adm-permission-check {
+  background: var(--adm-brand);
+  border-color: var(--adm-brand);
+}
+
+.adm-permission input:checked + .adm-permission-check svg {
+  opacity: 1;
+  transform: none;
+}
+
+.adm-permission input:focus-visible + .adm-permission-check {
+  outline: 2px solid var(--adm-focus);
+  outline-offset: 2px;
+}
+
+.adm-permission-text {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.adm-permission-text strong {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.adm-permission-text small {
+  color: var(--adm-muted);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
