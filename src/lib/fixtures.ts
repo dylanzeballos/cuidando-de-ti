@@ -8,7 +8,7 @@ export const RAW_SITES: Record<string, unknown> = {
   'cuidando-de-ti.test': {
     siteName: 'Cuidando de Ti',
     description: 'Farmacia: catálogo, inventario, ventas, caja, costos e identidad.',
-    theme: { primary: '#0d9488', background: '#ffffff', foreground: '#0f1f1c' },
+    theme: { primary: '#0f766e', background: '#ffffff', foreground: '#0f1f1c' },
     modules: ['catalog', 'inventory', 'sales', 'costs', 'identity', 'billing', 'crm'],
   },
   'acme.test': {
