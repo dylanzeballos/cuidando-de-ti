@@ -115,7 +115,7 @@ const filterHref = (value: SaleStatus | null): string =>
                 <span class="adm-chip">{rows.length} listadas</span>
               </div>
               <div class="adm-table-wrap">
-                <table class="adm-table">
+                <table class="adm-table adm-table--cards">
                   <thead>
                     <tr>
                       <th scope="col">N.º</th>
@@ -129,18 +129,18 @@ const filterHref = (value: SaleStatus | null): string =>
                   <tbody>
                     {rows.map((sale) => (
                       <tr>
-                        <td>#{sale.number}</td>
-                        <td>
+                        <td data-label="N.º">#{sale.number}</td>
+                        <td data-label="Fecha">
                           {new Date(sale.createdAt).toLocaleString('es-BO')}
                         </td>
-                        <td class="adm-num">{formatMoney(sale.total)}</td>
-                        <td>{paymentSummary(sale)}</td>
-                        <td>
+                        <td data-label="Total" class="adm-num">{formatMoney(sale.total)}</td>
+                        <td data-label="Pago">{paymentSummary(sale)}</td>
+                        <td data-label="Estado">
                           <span class={`adm-badge ${sale.status === 'ANNULLED' ? 'adm-badge--off' : 'adm-badge--on'}`}>
                             {sale.status === 'ANNULLED' ? 'Anulada' : 'Completada'}
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Acciones">
                           <a class="adm-link" href={`/admin/ventas/${sale.id}`}>Ver detalle</a>
                         </td>
                       </tr>

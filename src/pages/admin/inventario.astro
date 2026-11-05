@@ -233,7 +233,7 @@ const status = empresa === null ? 'loading' : empresa.status;
               />
             ) : (
               <div class="adm-table-wrap">
-                <table class="adm-table">
+                <table class="adm-table adm-table--cards">
                   <thead>
                     <tr>
                       <th scope="col">SKU</th>
@@ -247,12 +247,12 @@ const status = empresa === null ? 'loading' : empresa.status;
                       const quantity = stockByProduct.get(product.id);
                       return (
                         <tr>
-                          <td>{product.sku}</td>
-                          <td><strong>{product.name}</strong></td>
-                          <td class="adm-num">
+                          <td data-label="SKU">{product.sku}</td>
+                          <td data-label="Producto"><strong>{product.name}</strong></td>
+                          <td data-label="Existencias" class="adm-num">
                             {quantity === undefined ? '—' : `${quantity} u.`}
                           </td>
-                          <td>
+                          <td data-label="Estado">
                             {quantity === undefined ? (
                               <span class="adm-chip">Sin registro</span>
                             ) : quantity <= lowStockThreshold ? (

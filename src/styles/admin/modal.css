@@ -1,6 +1,7 @@
 /* Modal de roles */
 .adm-modal {
   width: min(92vw, 540px);
+  margin: auto;
   max-height: min(88vh, 640px);
   padding: 0;
   overflow: auto;
@@ -102,4 +103,8 @@
   .adm-modal[open] {
     animation: none;
   }
+}
+
+.adm-modal input[type="checkbox"] {
+  accent-color: var(--adm-brand);
 }

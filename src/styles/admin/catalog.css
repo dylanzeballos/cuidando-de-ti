@@ -6,6 +6,10 @@
   gap: 1rem;
 }
 
+.adm-catalog-grid > * {
+  min-width: 0;
+}
+
 .adm-inline-form {
   display: flex;
   gap: 0.45rem;

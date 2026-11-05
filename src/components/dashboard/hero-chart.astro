@@ -33,7 +33,7 @@ const initialHeights = points.map((point) =>
 );
 ---
 
-<section class="hero-chart" data-hero-chart>
+<section class:list={['hero-chart', initialTotal === 0 ? 'is-empty' : '']} data-hero-chart>
   <div class="hero-chart-head">
     <div class="hero-tabs" role="tablist" aria-label="Métrica del panel">
       {
@@ -55,12 +55,10 @@ const initialHeights = points.map((point) =>
   <p class="hero-value" data-hero-value aria-live="polite">{initialValue}</p>
   <p class="hero-note" data-hero-note>{first?.note ?? ''}</p>
 
-  {initialTotal === 0 && (
-    <p class="hero-empty">
-      Aún no hay movimientos en el periodo. <a href="/admin/ventas">Registra una venta</a> para
-      empezar a ver la actividad.
-    </p>
-  )}
+  <p class="hero-empty" data-hero-empty>
+    Aún no hay movimientos en el periodo. <a href="/admin/ventas">Registra una venta</a> para
+    empezar a ver la actividad.
+  </p>
 
   <ol class="hero-bars" data-hero-bars>
     {
@@ -135,6 +133,7 @@ const initialHeights = points.map((point) =>
 
       if (valueNode) valueNode.textContent = format(total, current.unit);
       if (noteNode) noteNode.textContent = current.note;
+      chart.classList.toggle('is-empty', total === 0);
 
       buttons.forEach((button, position) => {
         button.setAttribute('aria-selected', String(position === index));

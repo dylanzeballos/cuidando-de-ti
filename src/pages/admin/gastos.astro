@@ -241,7 +241,7 @@ const periodLabel = new Intl.DateTimeFormat('es-BO', { month: 'long', year: 'num
             />
           ) : (
             <div class="adm-table-wrap">
-              <table class="adm-table">
+              <table class="adm-table adm-table--cards">
                 <thead>
                   <tr>
                     <th scope="col">Fecha</th>
@@ -253,17 +253,17 @@ const periodLabel = new Intl.DateTimeFormat('es-BO', { month: 'long', year: 'num
                 <tbody>
                   {entries.map((entry) => (
                     <tr>
-                      <td>{new Date(`${entry.expenseDate}T12:00:00`).toLocaleDateString('es-BO')}</td>
-                      <td><span class="adm-chip">{entry.category}</span></td>
-                      <td>{entry.description}</td>
-                      <td class="adm-num">{formatMoney(entry.amount)}</td>
+                      <td data-label="Fecha">{new Date(`${entry.expenseDate}T12:00:00`).toLocaleDateString('es-BO')}</td>
+                      <td data-label="Categoría"><span class="adm-chip">{entry.category}</span></td>
+                      <td data-label="Descripción">{entry.description}</td>
+                      <td data-label="Monto" class="adm-num">{formatMoney(entry.amount)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr>
                     <th scope="row" colspan="3">Total del periodo</th>
-                    <td class="adm-num">{formatMoney(total)}</td>
+                    <td data-label="Total" class="adm-num">{formatMoney(total)}</td>
                   </tr>
                 </tfoot>
               </table>

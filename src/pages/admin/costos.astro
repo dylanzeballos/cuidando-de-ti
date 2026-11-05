@@ -220,7 +220,7 @@ const unitLabels: Record<string, string> = {
           </div>
 
           <div class="adm-table-wrap">
-            <table class="adm-table">
+            <table class="adm-table adm-table--cards">
               <thead>
                 <tr>
                   <th scope="col">Producto</th>
@@ -233,24 +233,24 @@ const unitLabels: Record<string, string> = {
               <tbody>
                 {rows.map(({ product, margin }) => (
                   <tr>
-                    <td>
+                    <td data-label="Producto">
                       <strong>{product.name}</strong>
                       <div class="adm-cell-muted">
                         {product.sku} · {unitLabels[product.unit] ?? product.unit}
                       </div>
                     </td>
-                    <td class="adm-num">{formatMoney(product.unitPrice)}</td>
-                    <td class="adm-num">
+                    <td data-label="Precio" class="adm-num">{formatMoney(product.unitPrice)}</td>
+                    <td data-label="Costo" class="adm-num">
                       {margin === null ? (
                         <span class="adm-chip">Sin costo</span>
                       ) : (
                         formatMoney(margin.costPrice)
                       )}
                     </td>
-                    <td class={`adm-num ${margin !== null && margin.marginAmount < 0 ? 'adm-negative' : ''}`}>
+                    <td data-label="Margen" class={`adm-num ${margin !== null && margin.marginAmount < 0 ? 'adm-negative' : ''}`}>
                       {margin === null ? '—' : formatMoney(margin.marginAmount)}
                     </td>
-                    <td class="adm-num">
+                    <td data-label="Margen %" class="adm-num">
                       {margin?.marginPercent === null || margin?.marginPercent === undefined
                         ? '—'
                         : `${margin.marginPercent.toFixed(1)} %`}

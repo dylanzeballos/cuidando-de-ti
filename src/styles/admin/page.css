@@ -18,6 +18,7 @@
 
 /* ---------- Tarjetas ---------- */
 .adm-card {
+  min-width: 0;
   background: var(--adm-surface);
   border: 1px solid var(--adm-line);
   border-radius: var(--adm-radius);

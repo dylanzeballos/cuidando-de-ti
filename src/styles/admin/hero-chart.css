@@ -92,6 +92,14 @@
   list-style: none;
 }
 
+.hero-chart.is-empty .hero-bars {
+  display: none;
+}
+
+.hero-chart:not(.is-empty) .hero-empty {
+  display: none;
+}
+
 .hero-bar {
   display: flex;
   flex-direction: column;
@@ -146,7 +154,7 @@
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 380px) {
   .dash-hero-stats {
     grid-template-columns: 1fr;
   }

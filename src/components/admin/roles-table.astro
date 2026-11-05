@@ -20,7 +20,7 @@ const moduleNames = (role: Role): string[] => [
   </div>
 
   <div class="adm-table-wrap">
-    <table class="adm-table">
+    <table class="adm-table adm-table--cards">
       <thead>
         <tr>
           <th scope="col">Rol</th>
@@ -31,11 +31,11 @@ const moduleNames = (role: Role): string[] => [
       <tbody>
         {roles.map((role) => (
           <tr>
-            <td>
+            <td data-label="Rol">
               <strong>{role.name}</strong>
               {role.description && <div class="adm-cell-muted">{role.description}</div>}
             </td>
-            <td>
+            <td data-label="Módulos">
               {role.permissions.length === 0 ? (
                 <span class="adm-chip">Sin permisos</span>
               ) : (
@@ -46,7 +46,7 @@ const moduleNames = (role: Role): string[] => [
                 </ul>
               )}
             </td>
-            <td>
+            <td data-label="Acciones">
               <div class="adm-row-actions">
                 <a class="adm-btn adm-btn--small adm-btn--ghost" href={`/admin/roles?edit=${role.id}`}>
                   Editar

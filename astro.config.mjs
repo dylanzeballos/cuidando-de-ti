@@ -15,6 +15,8 @@ const allowedDomains = (process.env.SITE_ALLOWED_DOMAINS ?? 'localhost,127.0.0.1
 
 export default defineConfig({
   output: 'server',
+  // El panel de desarrollo de Astro tapa contenido en móvil; se usa el del navegador.
+  devToolbar: { enabled: false },
   adapter: node({ mode: 'standalone' }),
   security: { allowedDomains },
   integrations: [react()],

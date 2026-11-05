@@ -4,172 +4,171 @@
   .rep-tile-head {
     flex-wrap: wrap;
   }
-
   .adm-page-head h1,
   .adm-greeting,
   .hero-value {
     overflow-wrap: anywhere;
   }
-
   .adm-context {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .adm-brand-text {
     min-width: 0;
   }
-
   .adm-brand-text strong {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-
   .adm-metrics > div {
     min-width: 0;
   }
-
   .adm-metrics dd,
   .rep-kpi-text strong {
     overflow-wrap: anywhere;
   }
-
   .rep-kpi {
     max-width: 100%;
   }
-
   .rep-kpi-text {
     min-width: 0;
   }
-
   .pos-catalog-head,
   .pos-sale-head {
     flex-wrap: wrap;
   }
-
   .adm-table {
     min-width: 560px;
   }
-
   .rep-table {
     min-width: 520px;
   }
 }
-
 @media (max-width: 640px) {
   .adm-header {
     gap: 0.5rem;
   }
-
   .adm-greeting-block {
     min-width: 0;
   }
-
   .adm-greeting {
     font-size: 1.25rem;
   }
-
   .adm-context {
     font-size: 0.72rem;
   }
-
   .adm-search {
     width: 100%;
     max-width: none;
   }
-
   .adm-toolbar .adm-search {
     flex: 1 1 100%;
   }
-
   .adm-card {
     padding: 1.15rem 1.1rem 1.3rem;
   }
-
   .adm-page-head {
     margin-bottom: 1.5rem;
   }
-
   .adm-form {
     grid-template-columns: 1fr;
   }
-
   .adm-form .adm-actions {
     width: 100%;
   }
-
   .adm-form .adm-actions .adm-btn {
     width: 100%;
   }
-
   .rep-tile {
     padding: 1rem 1rem 1.15rem;
   }
-
   .dash-hero-panel {
     padding: 1.15rem 1.1rem 1.3rem;
   }
-
+  .rep-col-cost,
+  .rep-col-stock {
+    display: none;
+  }
+  .rep-table {
+    min-width: 0;
+  }
+  .rep-donut {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .rep-donut svg {
+    width: 128px;
+    height: 128px;
+  }
+  .rep-legend {
+    flex: 1 1 auto;
+    width: 100%;
+  }
   .hero-bars {
     gap: 0.35rem;
   }
-
   .rep-axis {
     font-size: 20px;
   }
-
   .hero-bar-fill {
     max-width: 44px;
   }
-
   .pos-catalog,
   .pos-sale {
     padding: 1rem;
   }
-
   .adm-modal {
     width: 94vw;
   }
-
   .adm-modal-head,
   .adm-modal-body,
   .adm-modal-foot {
     padding-inline: 1rem;
   }
-
   .adm-modal-foot {
     flex-wrap: wrap;
   }
-
   .adm-modal-foot .adm-btn {
     flex: 1 1 140px;
   }
 }
-
 @media (max-width: 440px) {
   .adm-greeting {
     font-size: 1.15rem;
   }
-
-  .adm-metrics {
-    grid-template-columns: 1fr;
-  }
-
   .adm-search button {
     padding-inline: 0.55rem;
   }
-
   .adm-catalog-filters select {
     flex-basis: 100%;
   }
-
   .hero-bars {
     height: 160px;
   }
-
   .pos-line-actions {
     flex-wrap: wrap;
+  }
+}
+@media (max-width: 360px) {
+  .adm-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .rep-kpis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rep-kpi {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .rep-kpis {
+    grid-template-columns: 1fr;
   }
 }

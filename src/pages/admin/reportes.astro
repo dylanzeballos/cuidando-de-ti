@@ -296,9 +296,9 @@ const periodHref = (value: ReportPeriod): string => `/admin/reportes?periodo=${v
                   <tr>
                     <th scope="col">Producto</th>
                     <th scope="col" class="rep-num">Precio</th>
-                    <th scope="col" class="rep-num">Costo</th>
+                    <th scope="col" class="rep-num rep-col-cost">Costo</th>
                     <th scope="col" class="rep-num">Margen</th>
-                    <th scope="col" class="rep-num">Existencias</th>
+                    <th scope="col" class="rep-num rep-col-stock">Existencias</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -309,14 +309,14 @@ const periodHref = (value: ReportPeriod): string => `/admin/reportes?periodo=${v
                         <div class="rep-muted">{row.sku}</div>
                       </td>
                       <td class="rep-num">{money(row.unitPrice)}</td>
-                      <td class="rep-num">{money(row.cost)}</td>
+                      <td class="rep-num rep-col-cost">{money(row.cost)}</td>
                       <td class={`rep-num ${row.margin < 0 ? 'rep-negative' : ''}`}>
                         {money(row.margin)}
                         {row.marginPct !== null && (
                           <div class="rep-muted">{row.marginPct.toFixed(1)} %</div>
                         )}
                       </td>
-                      <td class="rep-num">{row.stock === null ? '—' : `${row.stock} u.`}</td>
+                      <td class="rep-num rep-col-stock">{row.stock === null ? '—' : `${row.stock} u.`}</td>
                     </tr>
                   ))}
                 </tbody>

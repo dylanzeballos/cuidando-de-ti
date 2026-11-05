@@ -1,5 +1,7 @@
 /* ---------- Tablas ---------- */
 .adm-table-wrap {
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid var(--adm-line);
   border-radius: 12px;
   overflow-x: auto;

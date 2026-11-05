@@ -19,7 +19,7 @@ const unitLabels: Record<string, string> = {
 ---
 
 <div class="adm-table-wrap">
-  <table class="adm-table">
+  <table class="adm-table adm-table--cards">
     <thead>
       <tr>
         <th scope="col">Producto</th>
@@ -32,20 +32,20 @@ const unitLabels: Record<string, string> = {
     <tbody>
       {products.map((product) => (
         <tr>
-          <td>
+          <td data-label="Producto">
             <strong>{product.name}</strong>
             <div class="adm-cell-muted">
               {product.sku} · {unitLabels[product.unit] ?? product.unit}
             </div>
           </td>
-          <td>
+          <td data-label="Categoría">
             {product.categoryId === null
               ? '—'
               : (categoryName.get(product.categoryId) ?? '—')}
           </td>
-          <td class="adm-num">{formatMoney(product.unitPrice)}</td>
-          <td class="adm-num">{product.taxRate.toFixed(1)} %</td>
-          <td>
+          <td data-label="Precio" class="adm-num">{formatMoney(product.unitPrice)}</td>
+          <td data-label="Impuesto" class="adm-num">{product.taxRate.toFixed(1)} %</td>
+          <td data-label="Estado">
             <span class={`adm-badge ${product.active ? 'adm-badge--on' : 'adm-badge--off'}`}>
               {product.active ? 'Activo' : 'Inactivo'}
             </span>

@@ -1,0 +1,80 @@
+/* Tablas como tarjetas apiladas en móvil. */
+@media (max-width: 640px) {
+  .adm-table--cards {
+    min-width: 0;
+  }
+
+  .adm-table--cards thead {
+    display: none;
+  }
+
+  .adm-table--cards,
+  .adm-table--cards tbody,
+  .adm-table--cards tr,
+  .adm-table--cards td {
+    display: block;
+    width: 100%;
+  }
+
+  .adm-table--cards tr {
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--adm-line);
+  }
+
+  .adm-table--cards tr:last-child {
+    border-bottom: 0;
+  }
+
+  .adm-table--cards td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.28rem 0;
+    border: 0;
+  }
+
+  .adm-table--cards td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    color: var(--adm-muted);
+    font-size: 0.68rem;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .adm-table--cards td:first-child {
+    display: block;
+    padding: 0.1rem 0 0.4rem;
+  }
+
+  .adm-table--cards td:first-child::before {
+    display: none;
+  }
+
+  .adm-table--cards td[data-label="Acciones"] {
+    display: block;
+    padding-top: 0.5rem;
+  }
+
+  .adm-table--cards td[data-label="Acciones"]::before {
+    display: none;
+  }
+
+  .adm-table--cards td > * {
+    min-width: 0;
+  }
+
+  .adm-table--cards .adm-list {
+    justify-content: flex-end;
+  }
+
+  .adm-table--cards .adm-row-actions {
+    justify-content: flex-end;
+  }
+
+  .adm-table--cards tfoot {
+    display: none;
+  }
+}

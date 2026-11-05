@@ -25,7 +25,7 @@ const initials = (name: string): string =>
   </div>
 
   <div class="adm-table-wrap">
-    <table class="adm-table">
+    <table class="adm-table adm-table--cards">
       <thead>
         <tr>
           <th scope="col">Usuario</th>
@@ -37,7 +37,7 @@ const initials = (name: string): string =>
       <tbody>
         {users.map((user) => (
           <tr>
-            <td>
+            <td data-label="Usuario">
               <div class="adm-user-cell">
                 <span class="adm-avatar" aria-hidden="true">{initials(user.displayName)}</span>
                 <span class="adm-user-name">
@@ -46,12 +46,12 @@ const initials = (name: string): string =>
                 </span>
               </div>
             </td>
-            <td>
+            <td data-label="Estado">
               <span class={`adm-badge ${user.active ? 'adm-badge--on' : 'adm-badge--off'}`}>
                 {user.active ? 'Activo' : 'Inactivo'}
               </span>
             </td>
-            <td>
+            <td data-label="Roles">
               {user.roles.length === 0 ? (
                 <span class="adm-chip">Sin rol</span>
               ) : (
@@ -62,7 +62,7 @@ const initials = (name: string): string =>
                 </ul>
               )}
             </td>
-            <td>
+            <td data-label="Acciones">
               <div class="adm-row-actions">
                 <form method="post">
                   <input type="hidden" name="action" value="status" />
