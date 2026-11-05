@@ -1,13 +1,17 @@
 /* Catálogo: filtros, formulario de categoría y grilla responsive. */
 .adm-catalog-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 1rem;
 }
 
 .adm-catalog-grid > * {
   min-width: 0;
+}
+
+.adm-catalog-grid .adm-inline-form {
+  max-width: 460px;
 }
 
 .adm-inline-form {

@@ -24,7 +24,7 @@ const { products, stockByProduct, threshold, branchId } = Astro.props;
         <th scope="col">Producto</th>
         <th scope="col">Existencias</th>
         <th scope="col">Estado</th>
-        <th scope="col">Acciones</th>
+        <th scope="col" class="adm-col-actions">Acciones</th>
       </tr>
     </thead>
     <tbody>
@@ -41,7 +41,7 @@ const { products, stockByProduct, threshold, branchId } = Astro.props;
             <td data-label="Estado">
               <span class={STOCK_STATUS_BADGE[stock]}>{STOCK_STATUS_LABELS[stock]}</span>
             </td>
-            <td data-label="Acciones">
+            <td data-label="Acciones" class="adm-col-actions">
               <div class="adm-row-actions">
                 <button
                   class="adm-icon-btn adm-icon-btn--add"

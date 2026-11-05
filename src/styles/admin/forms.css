@@ -178,9 +178,8 @@
   vertical-align: top;
 }
 
-/* Columna de acciones compacta y centrada. */
+/* Columna de acciones centrada. */
 .adm-table .adm-col-actions {
-  width: 1%;
   text-align: center;
   white-space: nowrap;
 }
