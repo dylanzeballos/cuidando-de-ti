@@ -1,0 +1,47 @@
+---
+import type { MarginStatus } from '@/lib/admin/costs-ui';
+
+interface Props {
+  query: string;
+  status: MarginStatus;
+  branchId: string;
+}
+
+const { query, status, branchId } = Astro.props;
+const hasFilters = query.length > 0 || status !== 'todos';
+const clearHref = branchId
+  ? `/admin/costos?branchId=${encodeURIComponent(branchId)}`
+  : '/admin/costos';
+---
+
+<form class="adm-catalog-filters" method="get">
+  <input type="hidden" name="branchId" value={branchId} />
+  <div class="adm-search">
+    <label class="adm-sr" for="cost-search">Buscar productos</label>
+    <span class="adm-search-icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m20 20-3.5-3.5"></path>
+      </svg>
+    </span>
+    <input
+      id="cost-search"
+      type="search"
+      name="q"
+      value={query}
+      placeholder="Buscar por nombre o SKU…"
+      maxlength="120"
+    />
+    <button type="submit">Filtrar</button>
+  </div>
+
+  <label class="adm-sr" for="cost-status">Estado del costo</label>
+  <select id="cost-status" name="estado">
+    <option value="todos" selected={status === 'todos'}>Todos</option>
+    <option value="con-costo" selected={status === 'con-costo'}>Con costo</option>
+    <option value="sin-costo" selected={status === 'sin-costo'}>Sin costo</option>
+    <option value="negativo" selected={status === 'negativo'}>Margen negativo</option>
+  </select>
+
+  {hasFilters && <a class="adm-link" href={clearHref}>Limpiar</a>}
+</form>

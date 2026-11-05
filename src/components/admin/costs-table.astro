@@ -1,0 +1,83 @@
+---
+import type { CostRow } from '@/lib/admin/costs-ui';
+import { formatMoney } from '@/lib/sales/cart';
+
+interface Props {
+  rows: CostRow[];
+  branchId: string;
+  unitLabels: Record<string, string>;
+}
+
+const { rows, branchId, unitLabels } = Astro.props;
+---
+
+<div class="adm-table-wrap">
+  <table class="adm-table adm-table--cards">
+    <thead>
+      <tr>
+        <th scope="col">Producto</th>
+        <th scope="col">Precio de venta</th>
+        <th scope="col">Costo</th>
+        <th scope="col">Margen</th>
+        <th scope="col">Margen %</th>
+        <th scope="col">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map(({ product, margin }) => (
+        <tr>
+          <td data-label="Producto">
+            <strong>{product.name}</strong>
+            <div class="adm-cell-muted">
+              {product.sku} · {unitLabels[product.unit] ?? product.unit}
+            </div>
+          </td>
+          <td data-label="Precio" class="adm-num">{formatMoney(product.unitPrice)}</td>
+          <td data-label="Costo" class="adm-num">
+            {margin === null ? (
+              <span class="adm-chip">Sin costo</span>
+            ) : (
+              formatMoney(margin.costPrice)
+            )}
+          </td>
+          <td
+            data-label="Margen"
+            class={`adm-num ${margin !== null && margin.marginAmount < 0 ? 'adm-negative' : ''}`}
+          >
+            {margin === null ? '—' : formatMoney(margin.marginAmount)}
+          </td>
+          <td data-label="Margen %" class="adm-num">
+            {margin?.marginPercent === null || margin?.marginPercent === undefined
+              ? '—'
+              : `${margin.marginPercent.toFixed(1)} %`}
+          </td>
+          <td data-label="Acciones">
+            <div class="adm-row-actions">
+              <button
+                class="adm-icon-btn adm-icon-btn--add"
+                type="button"
+                data-dialog-target="cost-dialog"
+                data-dialog-set={JSON.stringify({ productId: product.id, branchId })}
+                title={margin === null ? 'Registrar costo' : 'Registrar nuevo costo'}
+                aria-label={`Registrar costo de ${product.name}`}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>

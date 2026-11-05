@@ -1,0 +1,47 @@
+---
+import type { ExpenseEntry } from '@/lib/admin/costs-live-api';
+import { formatMoney } from '@/lib/sales/cart';
+
+interface Props {
+  entries: ExpenseEntry[];
+  branchName: Map<string, string>;
+  total: number;
+}
+
+const { entries, branchName, total } = Astro.props;
+---
+
+<div class="adm-table-wrap">
+  <table class="adm-table adm-table--cards">
+    <thead>
+      <tr>
+        <th scope="col">Fecha</th>
+        <th scope="col">Categoría</th>
+        <th scope="col">Descripción</th>
+        <th scope="col">Sucursal</th>
+        <th scope="col">Monto</th>
+      </tr>
+    </thead>
+    <tbody>
+      {entries.map((entry) => (
+        <tr>
+          <td data-label="Fecha">
+            {new Date(`${entry.expenseDate}T12:00:00`).toLocaleDateString('es-BO')}
+          </td>
+          <td data-label="Categoría"><span class="adm-chip">{entry.category}</span></td>
+          <td data-label="Descripción">{entry.description}</td>
+          <td data-label="Sucursal">
+            {entry.branchId === null ? '—' : (branchName.get(entry.branchId) ?? '—')}
+          </td>
+          <td data-label="Monto" class="adm-num">{formatMoney(entry.amount)}</td>
+        </tr>
+      ))}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th scope="row" colspan="4">Total del periodo</th>
+        <td data-label="Total" class="adm-num">{formatMoney(total)}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>

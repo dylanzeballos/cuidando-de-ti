@@ -1,0 +1,22 @@
+---
+import BranchPicker from '@/components/admin/branch-picker.astro';
+import type { Branch } from '@/lib/admin/catalog-api';
+
+interface Props {
+  branches: Branch[];
+  selectedBranchId: string;
+}
+
+const { branches, selectedBranchId } = Astro.props;
+---
+
+<section class="adm-card" aria-labelledby="sucursal-title">
+  <div class="adm-card-head">
+    <h2 id="sucursal-title">Sucursal</h2>
+    <div class="adm-card-head-side">
+      <span class="adm-chip">{branches.length}</span>
+      <a class="adm-link" href="/admin/inventario">Inventario</a>
+    </div>
+  </div>
+  <BranchPicker branches={branches} selectedId={selectedBranchId} />
+</section>

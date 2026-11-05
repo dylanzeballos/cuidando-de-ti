@@ -1,0 +1,54 @@
+---
+import type { Branch } from '@/lib/admin/catalog-api';
+
+interface Props {
+  period: string;
+  category: string;
+  branchId: string;
+  branches: Branch[];
+  suggestions: string[];
+}
+
+const { period, category, branchId, branches, suggestions } = Astro.props;
+const hasFilters = category.length > 0 || branchId.length > 0;
+---
+
+<form class="adm-catalog-filters" method="get">
+  <div class="adm-field adm-field--inline">
+    <label for="expense-period">Mes</label>
+    <input id="expense-period" name="period" type="month" value={period} required />
+  </div>
+
+  <div class="adm-field adm-field--inline">
+    <label for="expense-category-filter">Categoría</label>
+    <input
+      id="expense-category-filter"
+      name="category"
+      value={category}
+      list="expense-filter-categories"
+      maxlength="40"
+      placeholder="Todas"
+      autocomplete="off"
+    />
+    <datalist id="expense-filter-categories">
+      {suggestions.map((item) => <option value={item} />)}
+    </datalist>
+  </div>
+
+  <div class="adm-field adm-field--inline">
+    <label for="expense-branch-filter">Sucursal</label>
+    <select id="expense-branch-filter" name="branchId">
+      <option value="" selected={branchId.length === 0}>Todas</option>
+      {branches.map((branch) => (
+        <option value={branch.id} selected={branch.id === branchId}>
+          {branch.code} · {branch.name}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  <button class="adm-btn adm-btn--small adm-btn--ghost" type="submit">Aplicar</button>
+  {hasFilters && (
+    <a class="adm-link" href={`/admin/gastos?period=${encodeURIComponent(period)}`}>Limpiar</a>
+  )}
+</form>

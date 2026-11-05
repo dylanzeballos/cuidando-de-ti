@@ -73,6 +73,11 @@ export type CreateExpenseInput = {
   expenseDate: string;
 };
 
+export type ExpenseFilter = {
+  category?: string;
+  branchId?: string;
+};
+
 export type CostsLiveClientOptions = {
   baseUrl: string;
   token: string;
@@ -144,6 +149,19 @@ export function createCostsLiveClient(options: CostsLiveClientOptions) {
     });
   }
 
+  function expenseQuery(
+    from: string,
+    to: string,
+    filters: ExpenseFilter = {},
+    paginated = true,
+  ): string {
+    const search = new URLSearchParams({ from, to });
+    if (paginated) search.set('size', '100');
+    if (filters.category) search.set('category', filters.category);
+    if (filters.branchId) search.set('branchId', filters.branchId);
+    return search.toString();
+  }
+
   return {
     /** Márgenes vigentes; el backend solo devuelve productos con costo. */
     listMargins: (branchId: string) =>
@@ -151,16 +169,12 @@ export function createCostsLiveClient(options: CostsLiveClientOptions) {
         `/costs/margins?branchId=${encodeURIComponent(branchId)}&size=100`,
       ),
     createCost: (input: CreateCostInput) => sendJson<unknown>('/costs', 'POST', input),
-    listExpenses: (from: string, to: string) =>
-      request<ExpensePage>(
-        `/costs/expenses?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&size=100`,
-      ),
+    listExpenses: (from: string, to: string, filters: ExpenseFilter = {}) =>
+      request<ExpensePage>(`/costs/expenses?${expenseQuery(from, to, filters)}`),
     createExpense: (input: CreateExpenseInput) =>
       sendJson<ExpenseEntry>('/costs/expenses', 'POST', input),
-    expenseTotals: (from: string, to: string) =>
-      request<ExpenseTotals>(
-        `/costs/expenses/totals?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
-      ),
+    expenseTotals: (from: string, to: string, filters: ExpenseFilter = {}) =>
+      request<ExpenseTotals>(`/costs/expenses/totals?${expenseQuery(from, to, filters, false)}`),
   };
 }
 

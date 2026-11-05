@@ -1,0 +1,102 @@
+---
+import type { Branch } from '@/lib/admin/catalog-api';
+
+interface Props {
+  branches: Branch[];
+  defaultDate: string;
+  defaultBranchId: string;
+  suggestions: string[];
+  open: boolean;
+}
+
+const { branches, defaultDate, defaultBranchId, suggestions, open } = Astro.props;
+---
+
+<dialog
+  id="expense-dialog"
+  class="adm-modal"
+  aria-labelledby="expense-dialog-title"
+  data-dialog-auto-open={open ? '' : undefined}
+>
+  <form method="post">
+    <input type="hidden" name="action" value="expense" />
+
+    <header class="adm-modal-head">
+      <div>
+        <h2 id="expense-dialog-title">Registrar gasto</h2>
+        <p>Categoría, descripción, monto y fecha del gasto.</p>
+      </div>
+      <button class="adm-modal-close" type="button" data-dialog-close aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
+
+    <div class="adm-modal-body adm-form">
+      <div class="adm-field">
+        <label for="expense-category">Categoría</label>
+        <input
+          id="expense-category"
+          name="category"
+          required
+          maxlength="40"
+          list="expense-categories"
+          autocomplete="off"
+          placeholder="ARRIENDO"
+        />
+        <datalist id="expense-categories">
+          {suggestions.map((category) => <option value={category} />)}
+        </datalist>
+      </div>
+      <div class="adm-field">
+        <label for="expense-amount">Monto (Bs)</label>
+        <input
+          id="expense-amount"
+          name="amount"
+          type="number"
+          min="0"
+          step="0.01"
+          required
+          autocomplete="off"
+        />
+      </div>
+      <div class="adm-field adm-field--full">
+        <label for="expense-description">Descripción</label>
+        <input
+          id="expense-description"
+          name="description"
+          required
+          maxlength="240"
+          autocomplete="off"
+          placeholder="Alquiler del local"
+        />
+      </div>
+      <div class="adm-field">
+        <label for="expense-date">Fecha</label>
+        <input id="expense-date" name="expenseDate" type="date" value={defaultDate} required />
+      </div>
+      <div class="adm-field">
+        <label for="expense-branch">Sucursal</label>
+        <select id="expense-branch" name="branchId">
+          <option value="" selected={defaultBranchId.length === 0}>Sin sucursal</option>
+          {branches.map((branch) => (
+            <option value={branch.id} selected={branch.id === defaultBranchId}>
+              {branch.code} · {branch.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+
+    <footer class="adm-modal-foot">
+      <button class="adm-btn adm-btn--ghost" type="button" data-dialog-close>Cancelar</button>
+      <button class="adm-btn" type="submit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Guardar gasto
+      </button>
+    </footer>
+  </form>
+</dialog>

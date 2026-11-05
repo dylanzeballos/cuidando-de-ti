@@ -1,0 +1,28 @@
+---
+interface Props {
+  empresaName: string;
+  canOperate: boolean;
+}
+
+const { empresaName, canOperate } = Astro.props;
+---
+
+<header class="adm-page-head adm-page-head--row">
+  <div>
+    <h1>Costos y márgenes</h1>
+    <p class="adm-sub">
+      Costo de compra vigente por producto y sucursal de {empresaName}. El margen se calcula en
+      el servidor frente al precio de venta.
+    </p>
+  </div>
+  {canOperate && (
+    <div class="adm-page-actions">
+      <button class="adm-btn adm-btn--small" type="button" data-dialog-target="cost-dialog">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Registrar costo
+      </button>
+    </div>
+  )}
+</header>

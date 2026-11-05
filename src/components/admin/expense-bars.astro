@@ -1,0 +1,32 @@
+---
+import type { ExpenseCategoryTotal } from '@/lib/admin/costs-live-api';
+import { formatMoney } from '@/lib/sales/cart';
+
+interface Props {
+  byCategory: ExpenseCategoryTotal[];
+  total: number;
+}
+
+const { byCategory, total } = Astro.props;
+---
+
+<section class="adm-card" aria-labelledby="categorias-title">
+  <div class="adm-card-head">
+    <h2 id="categorias-title">Gastos por categoría</h2>
+    <span class="adm-chip">{byCategory.length}</span>
+  </div>
+  <ul class="rep-bars" aria-label="Gastos por categoría">
+    {byCategory.map((entry) => (
+      <li class="rep-bar">
+        <span class="rep-bar-label">{entry.category}</span>
+        <span class="rep-bar-value">{formatMoney(entry.total)}</span>
+        <span class="rep-bar-track" aria-hidden="true">
+          <span
+            class="rep-bar-fill"
+            style={`width:${total > 0 ? Math.max((entry.total / total) * 100, 2) : 0}%`}
+          />
+        </span>
+      </li>
+    ))}
+  </ul>
+</section>

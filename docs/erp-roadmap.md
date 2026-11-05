@@ -12,7 +12,8 @@ farmacia antes de integrar la facturación.
   ajuste), transferencias entre sucursales, filtros por estado y stock bajo.
 - **Ventas y caja**: turnos, punto de venta, historial, detalle, anulación,
   devoluciones y comprobante.
-- **Costos y gastos**: costo vigente por producto, márgenes, gastos por periodo.
+- **Costos y gastos**: costo vigente por producto y sucursal, márgenes, métricas y
+  filtros; gastos por periodo con filtros por categoría/sucursal y modales de alta.
 - **Reportes**: KPIs, series, cobros, top productos, inventario y márgenes.
 - **Responsive**: drawer móvil, tablas en tarjetas y formularios apilados.
 

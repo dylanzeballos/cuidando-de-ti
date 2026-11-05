@@ -1,0 +1,84 @@
+---
+import type { Branch, Product } from '@/lib/admin/catalog-api';
+
+interface Props {
+  branches: Branch[];
+  products: Product[];
+  selectedBranchId: string;
+  today: string;
+  open: boolean;
+}
+
+const { branches, products, selectedBranchId, today, open } = Astro.props;
+---
+
+<dialog
+  id="cost-dialog"
+  class="adm-modal"
+  aria-labelledby="cost-dialog-title"
+  data-dialog-auto-open={open ? '' : undefined}
+>
+  <form method="post">
+    <input type="hidden" name="action" value="cost" />
+
+    <header class="adm-modal-head">
+      <div>
+        <h2 id="cost-dialog-title">Registrar costo</h2>
+        <p>Costo de compra vigente por producto y sucursal.</p>
+      </div>
+      <button class="adm-modal-close" type="button" data-dialog-close aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
+
+    <div class="adm-modal-body adm-form">
+      <div class="adm-field adm-field--full">
+        <label for="cost-product">Producto</label>
+        <select id="cost-product" name="productId" required>
+          <option value="">Elige un producto</option>
+          {products.map((product) => (
+            <option value={product.id}>{product.sku} · {product.name}</option>
+          ))}
+        </select>
+      </div>
+      <div class="adm-field">
+        <label for="cost-branch">Sucursal</label>
+        <select id="cost-branch" name="branchId" required>
+          {branches.map((branch) => (
+            <option value={branch.id} selected={branch.id === selectedBranchId}>
+              {branch.code} · {branch.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div class="adm-field">
+        <label for="cost-amount">Costo de compra (Bs)</label>
+        <input
+          id="cost-amount"
+          name="amount"
+          type="number"
+          min="0"
+          step="0.01"
+          required
+          autocomplete="off"
+        />
+      </div>
+      <div class="adm-field">
+        <label for="cost-valid-from">Vigente desde</label>
+        <input id="cost-valid-from" name="validFrom" type="date" value={today} required />
+      </div>
+    </div>
+
+    <footer class="adm-modal-foot">
+      <button class="adm-btn adm-btn--ghost" type="button" data-dialog-close>Cancelar</button>
+      <button class="adm-btn" type="submit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Guardar costo
+      </button>
+    </footer>
+  </form>
+</dialog>

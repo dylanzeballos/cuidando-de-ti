@@ -1,0 +1,32 @@
+---
+import type { CostMetrics } from '@/lib/admin/costs-ui';
+
+interface Props {
+  metrics: CostMetrics;
+}
+
+const { metrics } = Astro.props;
+---
+
+<dl class="adm-metrics" aria-label="Resumen de costos">
+  <div>
+    <dt>Productos</dt>
+    <dd>{metrics.products}</dd>
+  </div>
+  <div>
+    <dt>Con costo</dt>
+    <dd>{metrics.withCost}</dd>
+  </div>
+  <div>
+    <dt>Sin costo</dt>
+    <dd>{metrics.withoutCost}</dd>
+  </div>
+  <div>
+    <dt>Margen promedio</dt>
+    <dd>
+      {metrics.averageMarginPercent === null
+        ? '—'
+        : `${metrics.averageMarginPercent.toFixed(1)} %`}
+    </dd>
+  </div>
+</dl>

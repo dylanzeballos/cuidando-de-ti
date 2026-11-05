@@ -1,0 +1,29 @@
+---
+import type { ExpenseMetrics } from '@/lib/admin/costs-ui';
+import { formatMoney } from '@/lib/sales/cart';
+
+interface Props {
+  metrics: ExpenseMetrics;
+}
+
+const { metrics } = Astro.props;
+---
+
+<dl class="adm-metrics" aria-label="Resumen de gastos">
+  <div>
+    <dt>Total del periodo</dt>
+    <dd>{formatMoney(metrics.total)}</dd>
+  </div>
+  <div>
+    <dt>Gastos</dt>
+    <dd>{metrics.count}</dd>
+  </div>
+  <div>
+    <dt>Promedio</dt>
+    <dd>{formatMoney(metrics.average)}</dd>
+  </div>
+  <div>
+    <dt>Categorías</dt>
+    <dd>{metrics.categories}</dd>
+  </div>
+</dl>
