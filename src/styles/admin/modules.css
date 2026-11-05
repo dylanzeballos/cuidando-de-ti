@@ -1,0 +1,83 @@
+/* ---------- Módulo por habilitar ---------- */
+.adm-placeholder {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: var(--adm-radius);
+}
+
+.adm-placeholder-copy {
+  display: grid;
+  justify-items: start;
+  gap: 0.7rem;
+}
+
+.adm-placeholder-copy h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.adm-placeholder-copy p {
+  margin: 0;
+  max-width: 52ch;
+  color: var(--adm-muted);
+  line-height: 1.6;
+}
+
+.adm-placeholder-list-wrap {
+  padding-left: 1.5rem;
+  border-left: 1px solid var(--adm-line);
+}
+
+.adm-placeholder-label {
+  margin: 0 0 0.7rem;
+  color: var(--adm-muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.adm-placeholder-list {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm-placeholder-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  color: var(--adm-ink);
+  font-size: 0.88rem;
+}
+
+.adm-placeholder-list li span {
+  color: var(--adm-brand);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 800px) {
+  .adm-placeholder {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .adm-placeholder-list-wrap {
+    padding: 1.25rem 0 0;
+    border-top: 1px solid var(--adm-line);
+    border-left: 0;
+  }
+}
+

@@ -1,0 +1,189 @@
+/* ---------- Avisos ---------- */
+.adm-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  animation: adm-pop 320ms var(--adm-ease-out) both;
+
+  @starting-style {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+.adm-banner--ok {
+  background: var(--adm-ok-bg);
+  border-color: var(--adm-ok-line);
+  color: #0f766e;
+}
+
+.adm-banner--error {
+  background: var(--adm-err-bg);
+  border-color: var(--adm-err-line);
+  color: #8f2f24;
+}
+
+.adm-banner--warn {
+  background: #fdf4e3;
+  border-color: #ecd9a8;
+  color: #7a5a12;
+}
+
+/* ---------- Estados compartidos ---------- */
+.adm-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.adm-skeleton {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1.5rem 0;
+}
+
+.adm-skeleton-line {
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--adm-line) 25%, #f7fafb 50%, var(--adm-line) 75%);
+  background-size: 200% 100%;
+  animation: adm-shimmer 1.4s linear infinite;
+}
+
+.adm-skeleton-label {
+  margin-top: 0.2rem;
+  color: var(--adm-muted);
+  font-size: 0.8rem;
+}
+
+@keyframes adm-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm-skeleton-line {
+    animation: none;
+  }
+}
+
+.adm-empty-state {
+  display: grid;
+  gap: 0.4rem;
+  justify-items: start;
+  padding: 1.5rem;
+  color: var(--adm-muted);
+  background: var(--adm-surface);
+  border: 1px dashed var(--adm-line-strong);
+  border-radius: 12px;
+}
+
+.adm-empty-state strong {
+  color: var(--adm-ink);
+  font-size: 0.95rem;
+}
+
+.adm-empty-state p {
+  margin: 0;
+  max-width: 60ch;
+}
+
+.adm-error-state {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem 1.15rem;
+  color: #8f2f24;
+  background: var(--adm-err-bg);
+  border: 1px solid var(--adm-err-line);
+  border-radius: 12px;
+}
+
+.adm-error-state strong {
+  font-size: 0.92rem;
+}
+
+.adm-error-state p {
+  margin: 0;
+}
+
+/* Utilidades compartidas por las pantallas */
+.adm-link {
+  color: var(--adm-brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .adm-link:hover {
+    text-decoration: underline;
+  }
+}
+
+.adm-cell-muted {
+  color: var(--adm-muted);
+  font-size: 0.78rem;
+}
+
+.adm-note {
+  margin: 0.9rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.78rem;
+}
+
+.adm-total {
+  color: var(--adm-muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-negative {
+  color: var(--adm-danger);
+  font-weight: 600;
+}
+
+/* Cifras alineadas en columnas de importes. */
+.adm-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Estado vacío ---------- */
+.adm-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1.5rem 0.5rem;
+  color: var(--adm-muted);
+}
+
+.adm-empty strong {
+  color: var(--adm-ink);
+  font-weight: 600;
+}
+
+.adm-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.adm-list a {
+  text-decoration: none;
+}
+

@@ -2,8 +2,7 @@
 import AdminShell from '@/components/admin/admin-shell.astro';
 import BarList from '@/components/reports/bar-list.astro';
 import DonutChart from '@/components/reports/donut-chart.astro';
-import Kpi from '@/components/reports/kpi.astro';
-import MiniChart from '@/components/dashboard/mini-chart.astro';
+import HeroChart from '@/components/dashboard/hero-chart.astro';
 import LoadingState from '@/components/primitives/loading-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
 import { buildReportView, LOW_STOCK_THRESHOLD } from '@/lib/admin/reports';
@@ -49,12 +48,20 @@ const chartSeries = view
         id: 'revenue',
         label: 'Ingresos',
         unit: 'money' as const,
+        note:
+          view.stats.revenueDeltaPct === null
+            ? 'Sin periodo anterior comparable'
+            : `${view.stats.revenueDeltaPct > 0 ? '+' : ''}${view.stats.revenueDeltaPct.toFixed(1)} % vs periodo anterior`,
         points: view.monthly.map((point) => ({ label: point.label, value: point.revenue })),
       },
       {
         id: 'sales',
         label: 'Ventas',
         unit: 'number' as const,
+        note:
+          view.stats.annulledCount > 0
+            ? `${view.stats.annulledCount} anulada${view.stats.annulledCount === 1 ? '' : 's'} en el periodo`
+            : 'Sin ventas anuladas en el periodo',
         points: view.monthly.map((point) => ({ label: point.label, value: point.sales })),
       },
     ]
@@ -73,54 +80,72 @@ const hasStockData = data !== null && Object.keys(data.stockByProduct).length > 
       <>
         <h1 class="adm-sr">Inicio</h1>
 
-        <ul class="rep-kpis" aria-label="Resumen de la farmacia">
-          <Kpi kind="revenue" label="Ingresos" value={money(view.stats.revenue)} tone="teal" />
-          <Kpi
-            kind="sales"
-            label="Ventas"
-            value={number(view.stats.salesCount)}
-            note={view.stats.annulledCount > 0 ? `${view.stats.annulledCount} anulada(s)` : 'Sin anuladas'}
-            tone="blue"
-          />
-          <Kpi
-            kind="ticket"
-            label="Venta promedio"
-            value={money(view.stats.averageTicket)}
-            tone="violet"
-          />
-          <Kpi
-            kind="margin"
-            label="Margen catálogo"
-            value={percent(view.stats.catalogMarginPct)}
-            note={`${view.stats.productsWithCost} con costo`}
-            tone="amber"
-          />
-          <Kpi
-            kind="expenses"
-            label="Gastos del mes"
-            value={money(view.stats.expensesTotal)}
-            tone="rose"
-          />
-          <Kpi
-            kind="stock"
-            label="Existencias bajas"
-            value={number(view.stats.lowStockCount)}
-            note={`≤ ${LOW_STOCK_THRESHOLD} u.`}
-            tone="slate"
-          />
-        </ul>
-
-        <div class="rep-grid">
-          <section class="rep-tile rep-tile--8" aria-labelledby="dash-activity">
-            <div class="rep-tile-head">
-              <h2 id="dash-activity">Actividad de la farmacia</h2>
-              <a class="rep-inline-link" href="/admin/reportes">Ver reportes completos</a>
+        <div class="dash-hero-grid">
+          <section class="dash-hero-panel" aria-labelledby="dash-pulse-title">
+            <div class="dash-panel-head">
+              <h2 id="dash-pulse-title">Pulso de la farmacia</h2>
+              <a class="rep-inline-link" href="/admin/reportes">Ver reportes</a>
             </div>
-            <div class="rep-tile-body">
-              <MiniChart series={chartSeries} label="Métrica de la actividad" />
-            </div>
+            <HeroChart series={chartSeries} caption="Últimos 6 meses" />
           </section>
 
+          <div class="dash-hero-stats">
+            <article class="dash-stat">
+              <span class="dash-stat-icon dash-stat-icon--violet" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 4h14v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" />
+                  <path d="M9 12v8l3-2 3 2v-8" />
+                </svg>
+              </span>
+              <p class="dash-stat-label">Venta promedio</p>
+              <p class="dash-stat-value">{money(view.stats.averageTicket)}</p>
+              <p class="dash-stat-note">Por venta completada</p>
+            </article>
+
+            <article class="dash-stat">
+              <span class="dash-stat-icon dash-stat-icon--amber" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 19 19 5" />
+                  <circle cx="7.5" cy="7.5" r="2.5" />
+                  <circle cx="16.5" cy="16.5" r="2.5" />
+                </svg>
+              </span>
+              <p class="dash-stat-label">Margen catálogo</p>
+              <p class="dash-stat-value">{percent(view.stats.catalogMarginPct)}</p>
+              <p class="dash-stat-note">
+                {view.stats.productsWithCost} de {view.stats.activeProducts} productos con costo
+              </p>
+            </article>
+
+            <article class="dash-stat">
+              <span class="dash-stat-icon dash-stat-icon--rose" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="8" />
+                  <path d="M12 7.5v9" />
+                  <path d="M9.4 10.2h4.3a1.8 1.8 0 0 1 0 3.6H9.4" />
+                </svg>
+              </span>
+              <p class="dash-stat-label">Gastos del mes</p>
+              <p class="dash-stat-value">{money(view.stats.expensesTotal)}</p>
+              <p class="dash-stat-note">Costos operativos registrados</p>
+            </article>
+
+            <article class="dash-stat">
+              <span class="dash-stat-icon dash-stat-icon--slate" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 8l8-4 8 4-8 4z" />
+                  <path d="M4 8v8l8 4 8-4V8" />
+                  <path d="M12 12v8" />
+                </svg>
+              </span>
+              <p class="dash-stat-label">Existencias bajas</p>
+              <p class="dash-stat-value">{number(view.stats.lowStockCount)}</p>
+              <p class="dash-stat-note">≤ {LOW_STOCK_THRESHOLD} unidades</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="rep-grid">
           <section class="rep-tile rep-tile--4" aria-labelledby="dash-payments">
             <div class="rep-tile-head">
               <h2 id="dash-payments">Mix de cobro</h2>
@@ -146,7 +171,7 @@ const hasStockData = data !== null && Object.keys(data.stockByProduct).length > 
             </div>
           </section>
 
-          <section class="rep-tile rep-tile--5" aria-labelledby="dash-top">
+          <section class="rep-tile rep-tile--4" aria-labelledby="dash-top">
             <div class="rep-tile-head">
               <h2 id="dash-top">Top productos</h2>
               <span>Por ingreso</span>
@@ -198,28 +223,7 @@ const hasStockData = data !== null && Object.keys(data.stockByProduct).length > 
               }
             </div>
           </section>
-
-          <section class="rep-tile rep-tile--3" aria-labelledby="dash-expenses">
-            <div class="rep-tile-head">
-              <h2 id="dash-expenses">Gastos del mes</h2>
-              <span>{money(view.stats.expensesTotal)}</span>
-            </div>
-            <div class="rep-tile-body">
-              {
-                view.expenseBreakdown.length > 0 ? (
-                  <BarList items={view.expenseBreakdown} colors label="Gastos por categoría" />
-                ) : (
-                  <div class="rep-empty">
-                    <strong>Sin gastos este mes</strong>
-                    <span>Registra gastos operativos para ver su peso en el resultado.</span>
-                    <a href="/admin/gastos">Registrar un gasto</a>
-                  </div>
-                )
-              }
-            </div>
-          </section>
         </div>
-
         <section class="dash-gallery" aria-labelledby="dash-gallery-title">
           <div class="rep-tile-head">
             <h2 id="dash-gallery-title">La farmacia en imágenes</h2>

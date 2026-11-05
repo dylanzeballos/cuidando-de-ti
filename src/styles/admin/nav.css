@@ -1,0 +1,139 @@
+.adm-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.adm-nav-group {
+  display: block;
+  margin-bottom: 1.05rem;
+}
+
+.adm-nav-group:last-child {
+  margin-bottom: 0;
+}
+
+.adm-nav-home {
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+}
+
+.adm-nav-group-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0 0.35rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  color: color-mix(in oklab, #fff 88%, var(--adm-brand));
+  cursor: pointer;
+  list-style: none;
+  transition: background-color 150ms var(--adm-ease-out), color 150ms var(--adm-ease-out);
+}
+
+.adm-nav-group-label::-webkit-details-marker {
+  display: none;
+}
+
+.adm-nav-chevron {
+  flex: 0 0 auto;
+  opacity: 0.7;
+  transition: transform 180ms var(--adm-ease-out);
+}
+
+.adm-nav-group:not([open]) .adm-nav-chevron {
+  transform: rotate(-90deg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .adm-nav-group-label:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+  }
+}
+
+.adm-nav-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-top: 0.1rem;
+}
+
+.adm-nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.62rem 0.78rem;
+  border-radius: 10px;
+  color: color-mix(in oklab, #fff 90%, var(--adm-brand));
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 550;
+  transition: background-color 180ms var(--adm-ease-out), color 180ms var(--adm-ease-out),
+    transform 120ms var(--adm-ease-out);
+}
+
+.adm-nav-link[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-weight: 630;
+}
+
+.adm-nav-icon {
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.adm-nav-link[aria-current="page"] .adm-nav-icon {
+  opacity: 1;
+}
+
+.adm-nav-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adm-nav-dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #fbbf24;
+}
+
+/* Módulo habilitado sin pantalla de administración todavía. */
+.adm-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.62rem 0.78rem;
+  border-radius: 10px;
+  color: color-mix(in oklab, #fff 88%, var(--adm-brand));
+  font-size: 0.92rem;
+  font-weight: 550;
+}
+
+.adm-nav-soon {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: color-mix(in oklab, #fff 88%, var(--adm-brand));
+}
+
+.adm-nav-empty {
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  color: color-mix(in oklab, #fff 88%, var(--adm-brand));
+  font-size: 0.82rem;
+}

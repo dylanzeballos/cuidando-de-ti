@@ -109,7 +109,7 @@ const today = new Intl.DateTimeFormat('es-BO', {
 <BaseLayout title={documentTitle} noindex>
   <a class="adm-skip" href="#contenido">Saltar al contenido</a>
   <div class="adm-shell" id="adm-shell">
-    <aside class="adm-sidebar">
+    <aside class="adm-sidebar" id="adm-sidebar">
       <header class="adm-brand">
         <BrandLogo size={34} />
         <span class="adm-brand-text">
@@ -257,8 +257,22 @@ const today = new Intl.DateTimeFormat('es-BO', {
       </footer>
     </aside>
 
+    <div class="adm-scrim" data-adm-scrim aria-hidden="true"></div>
+
     <main class="adm-main" id="contenido">
       <header class="adm-header">
+        <button
+          class="adm-menu-toggle"
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded="false"
+          aria-controls="adm-sidebar"
+          data-adm-menu
+        >
+          <span class="adm-menu-line"></span>
+          <span class="adm-menu-line"></span>
+          <span class="adm-menu-line"></span>
+        </button>
         <div class="adm-greeting-block">
           <p class="adm-greeting">{greeting}, {displayName}</p>
           <span class="adm-context">
@@ -347,7 +361,56 @@ const today = new Intl.DateTimeFormat('es-BO', {
         localStorage.setItem(RAIL_KEY, rail ? 'rail' : 'full');
       });
 
-      const isDesktop = window.matchMedia('(min-width: 861px)').matches;
+      const menuButton = shell.querySelector<HTMLButtonElement>('[data-adm-menu]');
+      const scrim = shell.querySelector<HTMLElement>('[data-adm-scrim]');
+      const sidebar = document.getElementById('adm-sidebar');
+      const mobileQuery = window.matchMedia('(max-width: 1024px)');
+
+      const closeNav = () => {
+        shell.classList.remove('adm-shell--nav-open');
+        menuButton?.setAttribute('aria-expanded', 'false');
+        menuButton?.setAttribute('aria-label', 'Abrir menú');
+        document.documentElement.classList.remove('adm-nav-locked');
+      };
+
+      const openNav = () => {
+        shell.classList.add('adm-shell--nav-open');
+        menuButton?.setAttribute('aria-expanded', 'true');
+        menuButton?.setAttribute('aria-label', 'Cerrar menú');
+        document.documentElement.classList.add('adm-nav-locked');
+        window.setTimeout(() => {
+          sidebar?.querySelector<HTMLElement>('.adm-nav-link')?.focus();
+        }, 280);
+      };
+
+      menuButton?.addEventListener('click', () => {
+        if (shell.classList.contains('adm-shell--nav-open')) closeNav();
+        else openNav();
+      });
+
+      scrim?.addEventListener('click', () => {
+        closeNav();
+        menuButton?.focus();
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && shell.classList.contains('adm-shell--nav-open')) {
+          closeNav();
+          menuButton?.focus();
+        }
+      });
+
+      sidebar?.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          if (mobileQuery.matches) closeNav();
+        });
+      });
+
+      mobileQuery.addEventListener('change', () => {
+        if (!mobileQuery.matches) closeNav();
+      });
+
+      const isDesktop = window.matchMedia('(min-width: 1025px)').matches;
       shell.querySelectorAll<HTMLDetailsElement>('details.adm-nav-group').forEach((group) => {
         if (isDesktop) {
           const key = `cuidando:nav:${group.dataset.group ?? ''}`;

@@ -1,0 +1,51 @@
+/* ---------- Motion ---------- */
+@keyframes adm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes adm-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes adm-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm-main,
+  .adm-table tbody tr,
+  .adm-banner {
+    animation: adm-fade 200ms ease both;
+  }
+  .adm-btn:active,
+  .adm-btn--ghost:active,
+  .adm-logout:active,
+  .adm-nav-link,
+  .adm-table tbody tr {
+    transition: none;
+  }
+  .adm-btn:active,
+  .adm-logout:active {
+    transform: none;
+  }
+}
+

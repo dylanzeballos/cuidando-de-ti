@@ -1,0 +1,193 @@
+/* ---------- Reportes ---------- */
+.rep-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  margin-bottom: 1.35rem;
+}
+
+.rep-head h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 2.6vw, 2.15rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.rep-head p {
+  margin: 0.35rem 0 0;
+  max-width: 64ch;
+  color: var(--adm-muted);
+}
+
+.rep-periods {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--adm-line);
+  border-radius: 10px;
+  background: var(--adm-surface);
+}
+
+.rep-periods a {
+  padding: 0.38rem 0.66rem;
+  border-radius: 7px;
+  color: var(--adm-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 150ms var(--adm-ease-out), color 150ms var(--adm-ease-out);
+}
+
+.rep-periods a[aria-current="page"] {
+  background: var(--adm-brand);
+  color: #fff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rep-periods a:not([aria-current="page"]):hover {
+    background: var(--adm-paper);
+    color: var(--adm-ink);
+  }
+}
+
+.rep-lead {
+  margin: 0.35rem 0 0;
+  max-width: 64ch;
+  color: var(--adm-muted);
+}
+
+/* KPIs compactos en pills, como una barra de estado. */
+.rep-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.rep-kpi {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.48rem 0.95rem 0.48rem 0.45rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: 999px;
+}
+
+.rep-kpi-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--kpi-color, var(--adm-brand));
+}
+
+.rep-kpi-icon--teal { --kpi-color: #0f766e; }
+.rep-kpi-icon--blue { --kpi-color: #2563eb; }
+.rep-kpi-icon--amber { --kpi-color: #d97706; }
+.rep-kpi-icon--violet { --kpi-color: #7c3aed; }
+.rep-kpi-icon--rose { --kpi-color: #e11d48; }
+.rep-kpi-icon--slate { --kpi-color: #475569; }
+
+.rep-kpi-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.rep-kpi-text small {
+  color: var(--adm-muted);
+  font-size: 0.65rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rep-kpi-text strong {
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.rep-kpi-text em {
+  color: var(--adm-muted);
+  font-size: 0.72rem;
+  font-style: normal;
+}
+
+.rep-delta--up {
+  color: #0f766e;
+  font-weight: 600;
+}
+
+.rep-delta--down {
+  color: var(--adm-danger);
+  font-weight: 600;
+}
+
+/* Lienzo de visuales: columnas de 12 con tamaños variados. */
+.rep-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1.15rem;
+}
+
+.rep-tile {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.05rem 1.15rem 1.2rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: var(--adm-radius);
+}
+
+.rep-tile--8 { grid-column: span 8; }
+.rep-tile--7 { grid-column: span 7; }
+.rep-tile--6 { grid-column: span 6; }
+.rep-tile--5 { grid-column: span 5; }
+.rep-tile--4 { grid-column: span 4; }
+.rep-tile--3 { grid-column: span 3; }
+.rep-tile--12 { grid-column: span 12; }
+
+.rep-tile-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.rep-tile-head h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: -0.015em;
+}
+
+.rep-tile-head span {
+  color: var(--adm-muted);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rep-tile-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.rep-source {
+  margin: 1.25rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.76rem;
+}
+

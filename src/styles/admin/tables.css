@@ -1,0 +1,185 @@
+/* ---------- Tablas ---------- */
+.adm-table-wrap {
+  border: 1px solid var(--adm-line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+table.adm-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.adm-table th,
+.adm-table td {
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.9rem;
+}
+
+.adm-table th {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--adm-muted);
+  background: #f4f9f8;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.adm-table tbody tr {
+  border-bottom: 1px solid var(--adm-line);
+  animation: adm-fade 380ms var(--adm-ease-out) both;
+  transition: background-color 140ms ease;
+}
+
+.adm-table tbody tr:last-child {
+  border-bottom: 0;
+}
+
+.adm-table tbody tr:nth-child(1) { animation-delay: 0ms; }
+.adm-table tbody tr:nth-child(2) { animation-delay: 35ms; }
+.adm-table tbody tr:nth-child(3) { animation-delay: 70ms; }
+.adm-table tbody tr:nth-child(4) { animation-delay: 105ms; }
+.adm-table tbody tr:nth-child(5) { animation-delay: 140ms; }
+.adm-table tbody tr:nth-child(6) { animation-delay: 175ms; }
+.adm-table tbody tr:nth-child(n + 7) { animation-delay: 200ms; }
+
+@media (hover: hover) and (pointer: fine) {
+  .adm-table tbody tr:hover {
+    background: #f3faf8;
+  }
+}
+
+/* ---------- Chips y badges ---------- */
+.adm-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: #eef3ef;
+  color: var(--adm-muted);
+}
+
+.adm-chip--on {
+  background: var(--adm-brand-soft);
+  color: #0f766e;
+}
+
+.adm-chip--alert {
+  background: var(--adm-err-bg);
+  color: #8f2f24;
+}
+
+.adm-session {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0.6rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.8rem;
+}
+
+.adm-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.adm-toolbar-note {
+  color: var(--adm-muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.adm-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0 0 1rem;
+  overflow: hidden;
+  background: var(--adm-line);
+  border: 1px solid var(--adm-line);
+  border-radius: 12px;
+}
+
+.adm-metrics > div {
+  padding: 0.8rem 1rem;
+  background: var(--adm-surface);
+}
+
+.adm-metrics dt {
+  color: var(--adm-muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.adm-metrics dd {
+  margin: 0.2rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+}
+
+@media (max-width: 760px) {
+  .adm-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.adm-list a .adm-chip {
+  transition: background-color 150ms var(--adm-ease-out), transform 120ms var(--adm-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .adm-list a:hover .adm-chip {
+    background: #e3ebe4;
+  }
+}
+
+.adm-list a:active .adm-chip {
+  transform: scale(0.97);
+}
+
+.adm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.adm-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.adm-badge--on {
+  background: var(--adm-ok-bg);
+  color: #0f6a3f;
+}
+
+.adm-badge--off {
+  background: #f0f1ee;
+  color: #7a857d;
+}
+
+.adm-badge--warn {
+  background: #fdf4e3;
+  color: #7a5a12;
+}
+

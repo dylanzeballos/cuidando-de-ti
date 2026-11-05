@@ -1,0 +1,171 @@
+---
+interface SeriesPoint {
+  label: string;
+  value: number;
+}
+
+interface Series {
+  id: string;
+  label: string;
+  unit: 'money' | 'number';
+  note: string;
+  points: SeriesPoint[];
+}
+
+interface Props {
+  series: Series[];
+  caption: string;
+}
+
+const { series, caption } = Astro.props;
+const first = series[0];
+const points = first?.points ?? [];
+const max = Math.max(...points.map((point) => point.value), 1);
+const initialTotal = points.reduce((sum, point) => sum + point.value, 0);
+const numberFormat = new Intl.NumberFormat('es-BO', { maximumFractionDigits: 0 });
+const initialValue = first
+  ? first.unit === 'money'
+    ? `Bs ${numberFormat.format(initialTotal)}`
+    : numberFormat.format(initialTotal)
+  : '';
+const initialHeights = points.map((point) =>
+  point.value > 0 ? Math.max((point.value / max) * 100, 3) : 0,
+);
+---
+
+<section class="hero-chart" data-hero-chart>
+  <div class="hero-chart-head">
+    <div class="hero-tabs" role="tablist" aria-label="Métrica del panel">
+      {
+        series.map((item, index) => (
+          <button
+            type="button"
+            role="tab"
+            data-hero-series={item.id}
+            aria-selected={index === 0 ? 'true' : 'false'}
+          >
+            {item.label}
+          </button>
+        ))
+      }
+    </div>
+    <span class="hero-period">{caption}</span>
+  </div>
+
+  <p class="hero-value" data-hero-value aria-live="polite">{initialValue}</p>
+  <p class="hero-note" data-hero-note>{first?.note ?? ''}</p>
+
+  {initialTotal === 0 && (
+    <p class="hero-empty">
+      Aún no hay movimientos en el periodo. <a href="/admin/ventas">Registra una venta</a> para
+      empezar a ver la actividad.
+    </p>
+  )}
+
+  <ol class="hero-bars" data-hero-bars>
+    {
+      points.map((point, index) => (
+        <li class="hero-bar" data-hero-bar={index} style={`--i:${index}`}>
+          <span class="hero-bar-track" aria-hidden="true">
+            <span class="hero-bar-fill" data-hero-fill style={`height:${initialHeights[index]}%`}></span>
+          </span>
+          <span class="hero-bar-label" data-hero-label>
+            {point.label}
+          </span>
+        </li>
+      ))
+    }
+  </ol>
+
+  <script type="application/json" data-hero-data set:html={JSON.stringify(series)} />
+</section>
+
+<script>
+  interface HeroSeries {
+    id: string;
+    label: string;
+    unit: 'money' | 'number';
+    note: string;
+    points: { label: string; value: number }[];
+  }
+
+  const numberFormat = new Intl.NumberFormat('es-BO', { maximumFractionDigits: 0 });
+  const format = (value: number, unit: HeroSeries['unit']): string =>
+    unit === 'money' ? `Bs ${numberFormat.format(value)}` : numberFormat.format(value);
+
+  document.querySelectorAll<HTMLElement>('[data-hero-chart]').forEach((chart) => {
+    const dataNode = chart.querySelector<HTMLScriptElement>('[data-hero-data]');
+    if (!dataNode?.textContent) return;
+
+    let series: HeroSeries[];
+    try {
+      series = JSON.parse(dataNode.textContent) as HeroSeries[];
+    } catch {
+      return;
+    }
+    if (series.length === 0) return;
+
+    const buttons = Array.from(chart.querySelectorAll<HTMLButtonElement>('[data-hero-series]'));
+    const bars = Array.from(chart.querySelectorAll<HTMLElement>('[data-hero-bar]'));
+    const fills = Array.from(chart.querySelectorAll<HTMLElement>('[data-hero-fill]'));
+    const labels = Array.from(chart.querySelectorAll<HTMLElement>('[data-hero-label]'));
+    const valueNode = chart.querySelector<HTMLElement>('[data-hero-value]');
+    const noteNode = chart.querySelector<HTMLElement>('[data-hero-note]');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let active = 0;
+    let timer: number | undefined;
+
+    const render = (index: number): void => {
+      const current = series[index];
+      if (!current) return;
+
+      const max = Math.max(...current.points.map((point) => point.value), 1);
+      const total = current.points.reduce((sum, point) => sum + point.value, 0);
+
+      current.points.forEach((point, position) => {
+        const height = point.value > 0 ? Math.max((point.value / max) * 100, 3) : 0;
+        const fill = fills[position];
+        const label = labels[position];
+        const bar = bars[position];
+        if (fill) fill.style.height = `${height}%`;
+        if (label) label.textContent = point.label;
+        if (bar) bar.title = `${point.label}: ${format(point.value, current.unit)}`;
+      });
+
+      if (valueNode) valueNode.textContent = format(total, current.unit);
+      if (noteNode) noteNode.textContent = current.note;
+
+      buttons.forEach((button, position) => {
+        button.setAttribute('aria-selected', String(position === index));
+      });
+      active = index;
+    };
+
+    const stop = (): void => {
+      if (timer !== undefined) window.clearInterval(timer);
+      timer = undefined;
+    };
+
+    const start = (): void => {
+      if (reduceMotion || series.length < 2) return;
+      stop();
+      timer = window.setInterval(() => render((active + 1) % series.length), 7000);
+    };
+
+    buttons.forEach((button, index) => {
+      button.addEventListener('click', () => {
+        render(index);
+        start();
+      });
+    });
+
+    chart.addEventListener('pointerenter', stop);
+    chart.addEventListener('pointerleave', start);
+    chart.addEventListener('focusin', stop);
+    chart.addEventListener('focusout', start);
+
+    render(0);
+    start();
+  });
+</script>

@@ -1,0 +1,177 @@
+/* ---------- Responsive ---------- */
+@media (max-width: 1024px) {
+  .adm-shell,
+  .adm-shell--rail {
+    grid-template-columns: 1fr;
+  }
+
+  .adm-menu-toggle {
+    display: inline-flex;
+  }
+
+  .adm-sidebar,
+  .adm-shell--rail .adm-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: min(86vw, 322px);
+    height: 100vh;
+    height: 100dvh;
+    padding: 1.35rem 1.1rem 1.1rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.4rem;
+    overflow-y: auto;
+    transform: translateX(-102%);
+    visibility: hidden;
+    box-shadow: 24px 0 60px -30px rgba(15, 23, 42, 0.55);
+    transition: transform 280ms var(--adm-ease-out), visibility 0s linear 280ms;
+  }
+
+  .adm-shell--nav-open .adm-sidebar {
+    transform: none;
+    visibility: visible;
+    transition: transform 280ms var(--adm-ease-out);
+  }
+
+  .adm-brand,
+  .adm-shell--rail .adm-brand {
+    flex-direction: row;
+    gap: 0.7rem;
+    padding: 0 0.35rem;
+  }
+
+  .adm-brand-text small {
+    display: block;
+  }
+
+  .adm-rail-toggle {
+    display: none;
+  }
+
+  .adm-nav,
+  .adm-shell--rail .adm-nav {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0;
+    width: 100%;
+    overflow: visible;
+    order: 0;
+    flex-basis: auto;
+  }
+
+  .adm-nav-group,
+  .adm-shell--rail .adm-nav-group {
+    display: block;
+    margin-bottom: 1.05rem;
+  }
+
+  .adm-nav-group-label,
+  .adm-shell--rail .adm-nav-group-label {
+    display: flex;
+  }
+
+  .adm-nav-items,
+  .adm-shell--rail .adm-nav-items {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.15rem;
+    width: 100%;
+  }
+
+  .adm-nav-link,
+  .adm-nav-item,
+  .adm-shell--rail .adm-nav-link,
+  .adm-shell--rail .adm-nav-item {
+    justify-content: flex-start;
+    width: 100%;
+    padding: 0.62rem 0.78rem;
+    background: transparent;
+  }
+
+  .adm-nav-link[aria-current="page"] {
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .adm-shell--rail .adm-brand-text,
+  .adm-shell--rail .adm-nav-text,
+  .adm-shell--rail .adm-nav-soon,
+  .adm-shell--rail .adm-account-mail,
+  .adm-shell--rail .adm-gear-label {
+    display: revert;
+  }
+
+  .adm-nav-soon {
+    display: inline;
+  }
+
+  .adm-sidebar-foot,
+  .adm-shell--rail .adm-sidebar-foot {
+    margin: auto 0 0;
+    flex-direction: column;
+    align-items: stretch;
+    width: auto;
+    padding: 0.9rem 0.2rem 0.15rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+  }
+
+  .adm-account,
+  .adm-shell--rail .adm-account {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .adm-shell--rail .adm-gear {
+    justify-content: flex-start;
+    padding-inline: 0.7rem;
+  }
+
+  .adm-logout,
+  .adm-shell--rail .adm-logout {
+    width: 100%;
+    padding: 0.6rem 0.9rem;
+  }
+
+  .adm-shell--rail .adm-logout span {
+    display: inline;
+  }
+
+  .adm-main {
+    padding: 1.25rem 1.1rem 4rem;
+  }
+
+  .adm-header {
+    align-items: flex-start;
+    gap: 0.65rem;
+    flex-wrap: nowrap;
+  }
+
+  .adm-greeting-block {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .adm-greeting {
+    font-size: 1.35rem;
+  }
+
+  .adm-header-actions {
+    display: none;
+  }
+
+  .adm-subnav {
+    margin-bottom: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .adm-sidebar,
+  .adm-shell--rail .adm-sidebar {
+    width: min(92vw, 322px);
+  }
+
+  .adm-main {
+    padding: 1.1rem 0.9rem 3.5rem;
+  }
+}

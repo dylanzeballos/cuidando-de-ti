@@ -1,0 +1,178 @@
+/* ---------- Estructura ---------- */
+/* Enlace para saltar la navegación: visible solo al recibir foco. */
+.adm-skip {
+  position: absolute;
+  left: 0.75rem;
+  top: -3rem;
+  z-index: 100;
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  background: var(--adm-brand);
+  color: #fff;
+  font-weight: 620;
+  text-decoration: none;
+  transition: top 140ms var(--adm-ease-out);
+}
+
+.adm-skip:focus-visible {
+  top: 0.75rem;
+}
+
+.adm-shell {
+  display: grid;
+  grid-template-columns: 272px 1fr;
+  min-height: 100vh;
+  background: var(--adm-paper);
+  color: var(--adm-ink);
+  transition: grid-template-columns 220ms var(--adm-ease-out);
+  /* El sistema de diseño global toma los tokens del panel dentro del shell. */
+  --background: var(--adm-paper);
+  --foreground: var(--adm-ink);
+  --card: var(--adm-surface);
+  --card-foreground: var(--adm-ink);
+  --border: var(--adm-line);
+  --muted-foreground: var(--adm-muted);
+  --primary: var(--adm-brand);
+  --primary-foreground: #fff;
+  /* El panel adopta su propia marca para las primitivas compartidas. */
+  --empresa-primary: var(--adm-brand);
+  --empresa-background: var(--adm-paper);
+  --empresa-foreground: var(--adm-ink);
+}
+
+.adm-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding: 1.6rem 1.1rem 1.25rem;
+  color: #f2fbf9;
+  /* El color principal de la farmacia es el color del sidebar. */
+  background: var(--empresa-primary, var(--adm-brand));
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.12);
+}
+
+.adm-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0 0.35rem;
+}
+
+.adm-rail-toggle {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  padding: 0;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 150ms var(--adm-ease-out), transform 180ms var(--adm-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .adm-rail-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.adm-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.adm-brand-text strong {
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
+}
+
+.adm-brand-text small {
+  color: color-mix(in oklab, #fff 88%, var(--adm-brand));
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+.adm-main {
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1.25rem, 5vw, 4rem) 5rem;
+  width: 100%;
+  max-width: 1480px;
+  margin-inline: auto;
+  animation: adm-rise 460ms var(--adm-ease-out) both;
+}
+
+/* ---------- Sidebar en modo riel ---------- */
+.adm-shell--rail {
+  grid-template-columns: 84px 1fr;
+}
+
+.adm-shell--rail .adm-sidebar {
+  padding-inline: 0.7rem;
+  align-items: center;
+}
+
+.adm-shell--rail .adm-brand {
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0;
+}
+
+.adm-shell--rail .adm-rail-toggle {
+  margin-left: 0;
+  transform: rotate(180deg);
+}
+
+.adm-shell--rail .adm-brand-text,
+.adm-shell--rail .adm-nav-group-label,
+.adm-shell--rail .adm-nav-text,
+.adm-shell--rail .adm-nav-soon,
+.adm-shell--rail .adm-account-mail,
+.adm-shell--rail .adm-logout span {
+  display: none;
+}
+
+.adm-shell--rail .adm-nav {
+  width: 100%;
+}
+
+.adm-shell--rail .adm-nav-items {
+  align-items: center;
+  width: 100%;
+}
+
+.adm-shell--rail .adm-nav-link,
+.adm-shell--rail .adm-nav-item {
+  position: relative;
+  justify-content: center;
+  width: 100%;
+  padding-inline: 0;
+}
+
+.adm-shell--rail .adm-nav-dot {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.55rem;
+  margin-left: 0;
+}
+
+.adm-shell--rail .adm-sidebar-foot {
+  align-items: center;
+  width: 100%;
+}
+
+.adm-shell--rail .adm-account {
+  justify-content: center;
+  padding: 0;
+}
+
+.adm-shell--rail .adm-logout {
+  width: auto;
+  padding: 0.55rem;
+}
+

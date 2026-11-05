@@ -1,0 +1,106 @@
+.adm-sidebar-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.9rem 0.2rem 0.15rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.adm-gear {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.7rem;
+  color: color-mix(in oklab, #fff 88%, var(--adm-brand));
+  font-size: 0.88rem;
+  font-weight: 550;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: background-color 160ms var(--adm-ease-out), color 160ms var(--adm-ease-out);
+}
+
+.adm-gear svg {
+  flex: 0 0 auto;
+  opacity: 0.85;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .adm-gear:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+  }
+}
+
+.adm-shell--rail .adm-gear {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.adm-shell--rail .adm-gear-label {
+  display: none;
+}
+
+.adm-account {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0 0.2rem;
+}
+
+.adm-account-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.adm-account-mail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  color: color-mix(in oklab, #fff 90%, var(--adm-brand));
+}
+
+.adm-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.9rem;
+  font: inherit;
+  font-weight: 600;
+  color: #ffe4df;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 160ms var(--adm-ease-out), border-color 160ms var(--adm-ease-out),
+    color 160ms var(--adm-ease-out), transform 120ms var(--adm-ease-out);
+}
+
+.adm-logout-icon {
+  opacity: 0.9;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .adm-logout:hover {
+    background: rgba(178, 59, 46, 0.22);
+    border-color: rgba(178, 59, 46, 0.5);
+    color: #ffd9d3;
+  }
+}
+
+.adm-logout:active {
+  transform: scale(0.97);
+}
+

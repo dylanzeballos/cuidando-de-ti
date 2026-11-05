@@ -1,0 +1,148 @@
+/* ---------- Cabecera de página ---------- */
+.adm-page-head {
+  margin-bottom: 2rem;
+}
+
+.adm-page-head h1 {
+  margin: 0;
+  font-size: clamp(1.9rem, 3.6vw, 2.6rem);
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.adm-sub {
+  margin: 0.4rem 0 0;
+  color: var(--adm-muted);
+  max-width: 60ch;
+}
+
+/* ---------- Tarjetas ---------- */
+.adm-card {
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: var(--adm-radius);
+  padding: 1.5rem 1.6rem 1.7rem;
+  margin-bottom: 1.5rem;
+}
+
+.adm-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.adm-card-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- Panel de inicio ---------- */
+.adm-dash-group {
+  margin-bottom: 2rem;
+}
+
+.adm-dash-group:last-child {
+  margin-bottom: 0;
+}
+
+.adm-dash-group-title {
+  margin: 0 0 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--adm-muted);
+}
+
+.adm-dashboard {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.adm-dashboard-item {
+  display: flex;
+}
+
+.adm-dashboard-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+}
+
+.adm-dashboard-icon {
+  color: var(--adm-brand);
+}
+
+.adm-dashboard-title {
+  margin: 0;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+
+.adm-dashboard-desc {
+  margin: 0;
+  color: var(--adm-muted);
+}
+
+.adm-dashboard-link {
+  margin-top: auto;
+  align-self: flex-start;
+  color: var(--adm-brand);
+  font-weight: 620;
+  text-decoration: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .adm-dashboard-link:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ---------- Ventas y caja ---------- */
+.svc-summary {
+  margin: 0 0 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.svc-summary div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.svc-summary dt {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--adm-muted);
+}
+
+.svc-summary dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.svc-subtitle {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--adm-muted);
+}
+
+.svc-summary a {
+  color: var(--adm-brand);
+}
+

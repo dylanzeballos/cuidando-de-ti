@@ -1,0 +1,172 @@
+/* ---------- Home dashboard ---------- */
+.rep-inline-link {
+  color: var(--adm-brand);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rep-inline-link:hover {
+    text-decoration: underline;
+  }
+}
+
+.dash-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 1.15rem;
+  margin-bottom: 1.15rem;
+}
+
+.dash-hero-panel {
+  min-width: 0;
+  padding: 1.5rem 1.6rem 1.6rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: var(--adm-radius);
+}
+
+.dash-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.dash-panel-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.dash-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.dash-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 1.15rem 1.2rem 1.2rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: var(--adm-radius);
+}
+
+.dash-stat-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 0.4rem;
+  color: #fff;
+  background: var(--stat-color, var(--adm-brand));
+  border-radius: 11px;
+}
+
+.dash-stat-icon--violet { --stat-color: #7c3aed; }
+.dash-stat-icon--amber { --stat-color: #d97706; }
+.dash-stat-icon--rose { --stat-color: #e11d48; }
+.dash-stat-icon--slate { --stat-color: #475569; }
+
+.dash-stat-label {
+  margin: 0;
+  color: var(--adm-muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dash-stat-value {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.1vw, 1.8rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-stat-note {
+  margin: 0;
+  color: var(--adm-muted);
+  font-size: 0.75rem;
+}
+
+/* ---------- Galería de la farmacia ---------- */
+.dash-gallery {
+  margin-top: 1.5rem;
+}
+
+.dash-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dash-gallery-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--adm-ink);
+  text-decoration: none;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: var(--adm-radius);
+  transition: border-color 160ms var(--adm-ease-out);
+}
+
+.dash-gallery-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  transition: transform 420ms var(--adm-ease-out);
+}
+
+.dash-gallery-card span {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.8rem 0.95rem 0.95rem;
+}
+
+.dash-gallery-card strong {
+  font-size: 0.95rem;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+}
+
+.dash-gallery-card small {
+  color: var(--adm-muted);
+  font-size: 0.78rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dash-gallery-card:hover {
+    border-color: var(--adm-brand);
+  }
+
+  .dash-gallery-card:hover img {
+    transform: scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-gallery-card img {
+    transition: none;
+  }
+
+  .dash-gallery-card:hover img {
+    transform: none;
+  }
+}
+

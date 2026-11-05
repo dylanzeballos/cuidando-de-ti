@@ -1,0 +1,139 @@
+.rep-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.rep-table th {
+  padding: 0.4rem 0.45rem;
+  color: var(--adm-muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.rep-table td {
+  padding: 0.5rem 0.45rem;
+  border-bottom: 1px solid var(--adm-line);
+  vertical-align: top;
+}
+
+.rep-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.rep-table .rep-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rep-table .rep-muted {
+  color: var(--adm-muted);
+}
+
+.rep-negative {
+  color: var(--adm-danger);
+  font-weight: 600;
+}
+
+/* Existencias bajas */
+.rep-stock {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rep-stock li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--adm-line);
+  font-size: 0.83rem;
+}
+
+.rep-stock li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.rep-stock-name {
+  min-width: 0;
+}
+
+.rep-stock-name strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.rep-stock-name small {
+  color: var(--adm-muted);
+  font-size: 0.74rem;
+}
+
+.rep-stock-qty {
+  flex: 0 0 auto;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: var(--adm-err-bg);
+  color: #8f2f24;
+  font-size: 0.75rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.rep-empty {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem 0 0.35rem;
+  color: var(--adm-muted);
+  font-size: 0.85rem;
+}
+
+.rep-empty strong {
+  color: var(--adm-ink);
+  font-weight: 600;
+}
+
+.rep-empty a {
+  color: var(--adm-brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rep-empty a:hover {
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: 1180px) {
+  .rep-tile--3 { grid-column: span 4; }
+  .rep-tile--4 { grid-column: span 6; }
+  .rep-tile--5 { grid-column: span 6; }
+  .rep-tile--7 { grid-column: span 6; }
+  .rep-tile--8 { grid-column: span 12; }
+}
+
+@media (max-width: 900px) {
+  .rep-tile,
+  .rep-tile--3,
+  .rep-tile--4,
+  .rep-tile--5,
+  .rep-tile--6,
+  .rep-tile--7,
+  .rep-tile--8 {
+    grid-column: span 12;
+  }
+}
+
