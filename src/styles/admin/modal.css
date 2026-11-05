@@ -23,11 +23,35 @@
 .adm-modal-body.adm-form {
   margin: 0;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
 }
 
 @media (max-width: 640px) {
   .adm-modal-body.adm-form {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .adm-modal {
+    width: min(94vw, 540px);
+    max-height: 92vh;
+  }
+
+  .adm-modal-head,
+  .adm-modal-body,
+  .adm-modal-foot {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .adm-modal-foot {
+    flex-wrap: wrap;
+  }
+
+  .adm-modal-foot .adm-btn {
+    flex: 1 1 140px;
+    justify-content: center;
   }
 }
 
