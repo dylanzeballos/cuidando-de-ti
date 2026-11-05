@@ -178,6 +178,17 @@
   vertical-align: top;
 }
 
+/* Columna de acciones compacta y centrada. */
+.adm-table .adm-col-actions {
+  width: 1%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.adm-table .adm-col-actions .adm-row-actions {
+  justify-content: center;
+}
+
 .adm-table tfoot th,
 .adm-table tfoot td {
   padding: 0.7rem 0.85rem;

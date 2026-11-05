@@ -26,7 +26,7 @@ Los costos cargan sucursales, productos activos y márgenes de la sucursal. La b
 
 ### Modales y preselección
 
-`cost-form` y `expense-form` son `<dialog>` con formulario `POST`. El botón `+` de cada fila usa `data-dialog-set` para preseleccionar producto y sucursal antes de `showModal()`. Si la API rechaza el alta, la redirección incluye `form` y el controlador reabre el modal con el error.
+`cost-form` y `expense-form` son `<dialog>` con formulario `POST`. La acción de cada fila usa `data-dialog-set` para preseleccionar producto y sucursal antes de `showModal()`: `+` cuando no hay costo y **lápiz** cuando ya existe, con el título del diálogo en “Actualizar costo”. Si la API rechaza el alta, la redirección incluye `form` y el controlador reabre el modal con el error.
 
 ### Validación compartida
 

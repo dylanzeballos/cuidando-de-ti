@@ -7,7 +7,7 @@ Las pantallas de costos y gastos funcionan, pero no se pueden operar con comodid
 ## What Changes
 
 - Rediseño de `/admin/costos` con métricas (productos, con costo, sin costo y margen promedio), selector de sucursal, búsqueda y filtro por estado.
-- **Acción por producto**: botón `+` en cada fila que abre el costo con producto y sucursal preseleccionados.
+- **Acción por producto**: `+` para agregar un costo y **lápiz** para actualizar uno existente, con producto y sucursal preseleccionados.
 - Formulario de costo en **diálogo modal** con validación de servidor y reapertura tras error.
 - Rediseño de `/admin/gastos` con métricas (total, cantidad, promedio y categorías), filtros por mes, categoría y sucursal.
 - Formulario de gasto en **diálogo modal**, con sucursal opcional.

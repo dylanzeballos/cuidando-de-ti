@@ -46,11 +46,17 @@ La pantalla MUST permitir registrar un costo con producto, sucursal, monto no ne
 - **WHEN** se envía el formulario
 - **THEN** se muestra el error y no se llama a la API
 
-#### Scenario: Acción por producto
+#### Scenario: Acción por producto sin costo
 
-- **GIVEN** una fila de márgenes
+- **GIVEN** una fila de márgenes sin costo
 - **WHEN** se pulsa `+`
 - **THEN** el diálogo de costo se abre con el producto y la sucursal de la fila
+
+#### Scenario: Acción por producto con costo
+
+- **GIVEN** una fila con costo vigente
+- **WHEN** se pulsa el lápiz
+- **THEN** el diálogo se abre como “Actualizar costo” con el producto y la sucursal de la fila
 
 #### Scenario: Alta rechazada
 

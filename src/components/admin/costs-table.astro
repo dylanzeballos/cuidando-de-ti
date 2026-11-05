@@ -20,7 +20,7 @@ const { rows, branchId, unitLabels } = Astro.props;
         <th scope="col">Costo</th>
         <th scope="col">Margen</th>
         <th scope="col">Margen %</th>
-        <th scope="col">Acciones</th>
+        <th scope="col" class="adm-col-actions">Acciones</th>
       </tr>
     </thead>
     <tbody>
@@ -51,28 +51,50 @@ const { rows, branchId, unitLabels } = Astro.props;
               ? '—'
               : `${margin.marginPercent.toFixed(1)} %`}
           </td>
-          <td data-label="Acciones">
+          <td data-label="Acciones" class="adm-col-actions">
             <div class="adm-row-actions">
               <button
-                class="adm-icon-btn adm-icon-btn--add"
+                class={`adm-icon-btn${margin === null ? ' adm-icon-btn--add' : ''}`}
                 type="button"
                 data-dialog-target="cost-dialog"
                 data-dialog-set={JSON.stringify({ productId: product.id, branchId })}
-                title={margin === null ? 'Registrar costo' : 'Registrar nuevo costo'}
-                aria-label={`Registrar costo de ${product.name}`}
+                data-dialog-heading={margin === null ? undefined : 'Actualizar costo'}
+                title={margin === null ? 'Registrar costo' : 'Editar costo'}
+                aria-label={
+                  margin === null
+                    ? `Registrar costo de ${product.name}`
+                    : `Editar costo de ${product.name}`
+                }
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.2"
-                  stroke-linecap="round"
-                  aria-hidden="true"
-                >
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
+                {margin === null ? (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.9"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                )}
               </button>
             </div>
           </td>

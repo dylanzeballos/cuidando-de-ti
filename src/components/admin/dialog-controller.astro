@@ -19,9 +19,10 @@
     dialog.querySelectorAll('form').forEach((form) => form.reset());
 
     const heading = opener?.dataset.dialogHeading;
-    if (heading) {
-      const title = dialog.querySelector<HTMLElement>('[data-dialog-title]');
-      if (title) title.textContent = heading;
+    const title = dialog.querySelector<HTMLElement>('[data-dialog-title]');
+    if (title) {
+      if (!title.dataset.defaultTitle) title.dataset.defaultTitle = title.textContent ?? '';
+      title.textContent = heading ?? title.dataset.defaultTitle ?? '';
     }
 
     const raw = opener?.dataset.dialogSet;

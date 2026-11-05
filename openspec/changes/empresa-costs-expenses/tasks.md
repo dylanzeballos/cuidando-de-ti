@@ -10,7 +10,7 @@
 
 - [x] 2.1 Añadir métricas, sucursal, búsqueda y filtro por estado.
 - [x] 2.2 Mover el alta de costo a un diálogo modal.
-- [x] 2.3 Añadir acción `+` por producto con producto y sucursal preseleccionados.
+- [x] 2.3 Añadir acción por producto: `+` sin costo y lápiz con costo, con preselección.
 - [x] 2.4 Conservar filtros y reabrir el modal tras un error.
 
 ## 3. Pantalla de gastos
