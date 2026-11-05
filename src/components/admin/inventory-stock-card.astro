@@ -1,0 +1,64 @@
+---
+import EmptyState from '@/components/primitives/empty-state.astro';
+import StockFilters from '@/components/admin/stock-filters.astro';
+import StockTable from '@/components/admin/stock-table.astro';
+import type { Branch, Product } from '@/lib/admin/catalog-api';
+import type { StockFilter } from '@/lib/admin/inventory';
+
+interface Props {
+  branch: Branch;
+  products: Product[];
+  filteredProducts: Product[];
+  stockByProduct: Map<string, number>;
+  threshold: number;
+  lowStock: number;
+  query: string;
+  stockFilter: StockFilter;
+}
+
+const {
+  branch,
+  products,
+  filteredProducts,
+  stockByProduct,
+  threshold,
+  lowStock,
+  query,
+  stockFilter,
+} = Astro.props;
+---
+
+<section class="adm-card" aria-labelledby="stock-title">
+  <div class="adm-card-head">
+    <h2 id="stock-title">Existencias de {branch.name}</h2>
+    <span class={`adm-chip${lowStock > 0 ? ' adm-chip--alert' : ''}`}>
+      {filteredProducts.length} {filteredProducts.length === 1 ? 'listado' : 'listados'}
+    </span>
+  </div>
+
+  <StockFilters query={query} status={stockFilter} branchId={branch.id} />
+
+  {products.length === 0 ? (
+    <EmptyState
+      title="No hay productos"
+      message="Registra productos en el catálogo para ver sus existencias."
+    />
+  ) : filteredProducts.length === 0 ? (
+    <EmptyState
+      title="Sin resultados"
+      message="Prueba con otro texto o estado de existencias."
+    />
+  ) : (
+    <StockTable
+      products={filteredProducts}
+      stockByProduct={stockByProduct}
+      threshold={threshold}
+      branchId={branch.id}
+    />
+  )}
+
+  <p class="adm-note">
+    Usa <strong>+</strong> para una entrada y <strong>−</strong> para una salida. Se considera
+    stock bajo cuando quedan {threshold} unidades o menos.
+  </p>
+</section>

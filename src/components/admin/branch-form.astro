@@ -6,31 +6,82 @@ interface Props {
 const { open } = Astro.props;
 ---
 
-<details class="adm-card adm-details" open={open}>
-  <summary class="adm-details-summary">
-    <span>
-      <strong>Nueva sucursal</strong>
-      <small>Código, nombre y dirección</small>
-    </span>
-    <span class="adm-chip">Crear</span>
-  </summary>
-
-  <form class="adm-form" method="post">
+<dialog
+  id="branch-dialog"
+  class="adm-modal"
+  aria-labelledby="branch-dialog-title"
+  data-dialog-auto-open={open ? '' : undefined}
+>
+  <form method="post">
     <input type="hidden" name="action" value="branch" />
-    <div class="adm-field">
-      <label for="branch-code">Código</label>
-      <input id="branch-code" name="code" required maxlength="40" placeholder="CENTRO" autocomplete="off" />
+
+    <header class="adm-modal-head">
+      <div>
+        <h2 id="branch-dialog-title">Nueva sucursal</h2>
+        <p>Define el punto de atención donde se controlan las existencias.</p>
+      </div>
+      <button class="adm-modal-close" type="button" data-dialog-close aria-label="Cerrar">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
+
+    <div class="adm-modal-body adm-form">
+      <div class="adm-field">
+        <label for="branch-code">Código</label>
+        <input
+          id="branch-code"
+          name="code"
+          required
+          maxlength="40"
+          placeholder="CENTRO"
+          autocomplete="off"
+        />
+      </div>
+      <div class="adm-field">
+        <label for="branch-name">Nombre</label>
+        <input
+          id="branch-name"
+          name="name"
+          required
+          maxlength="160"
+          placeholder="Sucursal Centro"
+          autocomplete="off"
+        />
+      </div>
+      <div class="adm-field adm-field--full">
+        <label for="branch-address">Dirección</label>
+        <input id="branch-address" name="address" maxlength="240" autocomplete="off" />
+      </div>
     </div>
-    <div class="adm-field">
-      <label for="branch-name">Nombre</label>
-      <input id="branch-name" name="name" required maxlength="160" placeholder="Sucursal Centro" autocomplete="off" />
-    </div>
-    <div class="adm-field">
-      <label for="branch-address">Dirección</label>
-      <input id="branch-address" name="address" maxlength="240" autocomplete="off" />
-    </div>
-    <div class="adm-actions">
-      <button class="adm-btn" type="submit">Crear sucursal</button>
-    </div>
+
+    <footer class="adm-modal-foot">
+      <button class="adm-btn adm-btn--ghost" type="button" data-dialog-close>Cancelar</button>
+      <button class="adm-btn" type="submit">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Crear sucursal
+      </button>
+    </footer>
   </form>
-</details>
+</dialog>

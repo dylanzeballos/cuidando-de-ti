@@ -25,7 +25,15 @@ La página carga sucursales y productos activos, y consulta el stock de cada pro
 
 ### Formularios PRG sin hidratación
 
-Sucursal, movimiento y transferencia son formularios HTML `POST` que se resuelven en la misma ruta con `request.formData()`, validación de servidor y redirección 303 con `ok`/`error` y `form` para reabrir el formulario correspondiente. No se hidrata React.
+Sucursal, movimiento y transferencia son formularios HTML `POST` que se resuelven en la misma ruta con `request.formData()`, validación de servidor y redirección 303 con `ok`/`error` y `form` para reabrir el formulario correspondiente. No se hidrata React. Los formularios viven en diálogos modales nativos que se abren con el controlador compartido y se reabren tras un error.
+
+### Acciones rápidas con preselección
+
+Cada fila de existencias expone botones compactos `+` y `−` que abren el diálogo de movimiento con `type`, `productId` y `branchId` preseleccionados mediante `data-dialog-set`. El controlador compartido restablece el formulario y aplica el preset antes de `showModal()`, sin JavaScript por fila.
+
+### Cantidades enteras
+
+Los campos de cantidad usan `step="1"` e `inputmode="numeric"`. El servidor exige un entero: entradas y salidas mayores que cero y ajustes mayores o iguales a cero. Así el paso de la interfaz y la validación coinciden.
 
 ### Transferencias
 

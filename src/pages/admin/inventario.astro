@@ -1,11 +1,11 @@
 ---
 import AdminShell from '@/components/admin/admin-shell.astro';
 import BranchForm from '@/components/admin/branch-form.astro';
-import BranchPicker from '@/components/admin/branch-picker.astro';
+import InventoryBranchCard from '@/components/admin/inventory-branch-card.astro';
+import InventoryHeader from '@/components/admin/inventory-header.astro';
 import InventoryMetrics from '@/components/admin/inventory-metrics.astro';
+import InventoryStockCard from '@/components/admin/inventory-stock-card.astro';
 import MovementForm from '@/components/admin/movement-form.astro';
-import StockFilters from '@/components/admin/stock-filters.astro';
-import StockTable from '@/components/admin/stock-table.astro';
 import TransferForm from '@/components/admin/transfer-form.astro';
 import LoadingState from '@/components/primitives/loading-state.astro';
 import EmptyState from '@/components/primitives/empty-state.astro';
@@ -92,12 +92,10 @@ const status = empresa === null ? 'loading' : empresa.status;
 ---
 
 <AdminShell title="Inventario" active="/admin/inventario">
-  <header class="adm-page-head">
-    <h1>Inventario</h1>
-    <p class="adm-sub">
-      Existencias, movimientos y transferencias entre sucursales de {empresaName}.
-    </p>
-  </header>
+  <InventoryHeader
+    empresaName={empresaName}
+    canOperate={branches.length > 0 && products.length > 0}
+  />
 
   {okMessage && <p class="adm-banner adm-banner--ok" role="status">{okMessage}</p>}
   {pageError && <p class="adm-banner adm-banner--error" role="alert">{pageError}</p>}
@@ -117,82 +115,47 @@ const status = empresa === null ? 'loading' : empresa.status;
           unregistered={unregistered}
         />
 
-        <section class="adm-card" aria-labelledby="sucursal-title">
-          <div class="adm-card-head">
-            <h2 id="sucursal-title">Sucursal</h2>
-            <span class="adm-chip">{branches.length}</span>
-          </div>
-          {branches.length === 0 ? (
-            <EmptyState
-              title="Aún no hay sucursales"
-              message="Crea la primera para controlar las existencias por punto de atención."
-            />
-          ) : (
-            <BranchPicker branches={branches} selectedId={selectedBranch?.id ?? ''} />
-          )}
-        </section>
-
-        <BranchForm open={openForm === 'branch'} />
+        <InventoryBranchCard
+          branches={branches}
+          selectedBranchId={selectedBranch?.id ?? ''}
+        />
 
         {branches.length === 0 || products.length === 0 ? (
           <EmptyState
             title="Falta información"
             message="Crea al menos una sucursal y un producto para operar el inventario."
           />
-        ) : (
-          <div class="adm-inventory-forms">
-            <MovementForm
-              branches={branches}
-              products={products}
-              selectedBranchId={selectedBranch?.id ?? ''}
-              open={openForm === 'movement'}
-            />
-            <TransferForm
-              branches={branches}
-              products={products}
-              selectedBranchId={selectedBranch?.id ?? ''}
-              open={openForm === 'transfer'}
-            />
-          </div>
-        )}
+        ) : null}
 
         {selectedBranch && (
-          <section class="adm-card" aria-labelledby="stock-title">
-            <div class="adm-card-head">
-              <h2 id="stock-title">Existencias de {selectedBranch.name}</h2>
-              <span class={`adm-chip${lowStock > 0 ? ' adm-chip--alert' : ''}`}>
-                {filteredProducts.length} listados
-              </span>
-            </div>
+          <InventoryStockCard
+            branch={selectedBranch}
+            products={products}
+            filteredProducts={filteredProducts}
+            stockByProduct={stockByProduct}
+            threshold={LOW_STOCK_THRESHOLD}
+            lowStock={lowStock}
+            query={query}
+            stockFilter={stockFilter}
+          />
+        )}
 
-            <StockFilters
-              query={query}
-              status={stockFilter}
-              branchId={selectedBranch.id}
-            />
-
-            {products.length === 0 ? (
-              <EmptyState
-                title="No hay productos"
-                message="Registra productos en el catálogo para ver sus existencias."
-              />
-            ) : filteredProducts.length === 0 ? (
-              <EmptyState
-                title="Sin resultados"
-                message="Prueba con otro texto o estado de existencias."
-              />
-            ) : (
-              <StockTable
-                products={filteredProducts}
-                stockByProduct={stockByProduct}
-                threshold={LOW_STOCK_THRESHOLD}
-              />
-            )}
-
-            <p class="adm-note">
-              Se considera stock bajo cuando quedan {LOW_STOCK_THRESHOLD} unidades o menos.
-            </p>
-          </section>
+        <BranchForm open={openForm === 'branch'} />
+        {products.length > 0 && (
+          <MovementForm
+            branches={branches}
+            products={products}
+            selectedBranchId={selectedBranch?.id ?? ''}
+            open={openForm === 'movement'}
+          />
+        )}
+        {products.length > 0 && (
+          <TransferForm
+            branches={branches}
+            products={products}
+            selectedBranchId={selectedBranch?.id ?? ''}
+            open={openForm === 'transfer'}
+          />
         )}
       </>
     )

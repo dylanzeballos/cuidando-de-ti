@@ -35,20 +35,32 @@ export async function handleInventoryPost(
   if (action === 'movement') {
     const branchId = String(form.get('branchId') ?? '').trim();
     const productId = String(form.get('productId') ?? '').trim();
+    const type = String(form.get('type') ?? 'ENTRY') as 'ENTRY' | 'EXIT' | 'ADJUSTMENT';
     const quantity = Number(form.get('quantity') ?? '0');
     if (branchId.length === 0 || productId.length === 0) {
       return { status: 'error', form: 'movement', message: 'Elige la sucursal y el producto.' };
     }
-    if (!Number.isFinite(quantity) || quantity < 0) {
+    if (!['ENTRY', 'EXIT', 'ADJUSTMENT'].includes(type)) {
+      return { status: 'error', form: 'movement', message: 'Elige un tipo de movimiento válido.' };
+    }
+    if (!Number.isInteger(quantity) || quantity < 0) {
       return {
         status: 'error',
         form: 'movement',
         branchId,
-        message: 'La cantidad debe ser mayor o igual a cero.',
+        message: 'La cantidad debe ser un número entero mayor o igual a cero.',
+      };
+    }
+    if (type !== 'ADJUSTMENT' && quantity <= 0) {
+      return {
+        status: 'error',
+        form: 'movement',
+        branchId,
+        message: 'La cantidad debe ser mayor que cero.',
       };
     }
     const result = await client.registerMovement({
-      type: String(form.get('type') ?? 'ENTRY') as 'ENTRY' | 'EXIT' | 'ADJUSTMENT',
+      type,
       branchId,
       productId,
       quantity,
@@ -75,12 +87,12 @@ export async function handleInventoryPost(
         message: 'El origen y el destino deben ser distintos.',
       };
     }
-    if (!Number.isFinite(quantity) || quantity <= 0) {
+    if (!Number.isInteger(quantity) || quantity <= 0) {
       return {
         status: 'error',
         form: 'transfer',
         branchId: fromBranchId,
-        message: 'La cantidad debe ser mayor que cero.',
+        message: 'La cantidad debe ser un número entero mayor que cero.',
       };
     }
     const result = await client.transferStock({ fromBranchId, toBranchId, productId, quantity });

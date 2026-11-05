@@ -38,19 +38,45 @@ La pantalla MUST permitir buscar por nombre o SKU y filtrar por estado (`stock b
 
 ### Requirement: Movimientos de inventario
 
-La pantalla MUST permitir registrar entradas, salidas y ajustes con sucursal, producto y cantidad, validando en servidor antes de llamar a la API.
+La pantalla MUST permitir registrar entradas, salidas y ajustes con sucursal, producto y cantidad, validando en servidor antes de llamar a la API. Las cantidades MUST ser enteras y el campo MUST avanzar de uno en uno.
 
 #### Scenario: Movimiento válido
 
 - **GIVEN** una sucursal y un producto
-- **WHEN** se registra una entrada con cantidad positiva
+- **WHEN** se registra una entrada con cantidad entera positiva
 - **THEN** la página confirma la operación y el stock se actualiza
 
 #### Scenario: Cantidad inválida
 
-- **GIVEN** una cantidad negativa o vacía
+- **GIVEN** una cantidad negativa, vacía o decimal
 - **WHEN** se envía el movimiento
 - **THEN** se muestra el error y no se llama a la API
+
+### Requirement: Acciones rápidas por producto
+
+La tabla de existencias MUST ofrecer acciones compactas `+` y `−` por producto que abran el diálogo de movimiento con el tipo, el producto y la sucursal preseleccionados.
+
+#### Scenario: Entrada rápida
+
+- **GIVEN** una fila de existencias
+- **WHEN** se pulsa `+`
+- **THEN** se abre el diálogo con tipo entrada, el producto de la fila y la sucursal actual
+
+#### Scenario: Salida rápida
+
+- **GIVEN** una fila de existencias
+- **WHEN** se pulsa `−`
+- **THEN** se abre el diálogo con tipo salida, el producto de la fila y la sucursal actual
+
+### Requirement: Diálogos de inventario
+
+Los formularios de sucursal, movimiento y transferencia MUST mostrarse en diálogos modales accesibles, con cierre por Escape, botón y clic fuera, y MUST reabrirse cuando su envío falla. Los botones de acción MUST incluir icono y etiqueta o nombre accesible.
+
+#### Scenario: Reapertura tras error
+
+- **GIVEN** un movimiento rechazado por el backend
+- **WHEN** la página redirige con el error
+- **THEN** el diálogo de movimiento vuelve a abrirse con el mensaje legible
 
 ### Requirement: Transferencias entre sucursales
 

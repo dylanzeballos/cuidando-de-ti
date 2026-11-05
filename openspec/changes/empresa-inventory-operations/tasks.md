@@ -13,6 +13,9 @@
 - [x] 2.4 Implementar transferencias entre sucursales con origen y destino distintos.
 - [x] 2.5 Convertir la tabla de existencias en tarjetas `data-label` en móvil.
 
+- [x] 2.6 Añadir acciones rápidas `+`/`−` por producto con preselección en el diálogo de movimiento.
+- [x] 2.7 Mover sucursal, movimiento y transferencia a diálogos modales con botones de icono y cantidades enteras.
+
 ## 3. Verificación
 
 - [x] 3.1 Verificar `/admin/inventario` y sus filtros con la API local (200, estados vacío y con datos).

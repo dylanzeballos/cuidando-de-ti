@@ -1,0 +1,70 @@
+/* Acciones compactas con icono y ayudas de formulario. */
+.adm-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.adm-card-head-side {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.adm-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: var(--adm-muted);
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line-strong);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 140ms var(--adm-ease-out), background-color 140ms var(--adm-ease-out);
+}
+
+.adm-icon-btn--add {
+  color: var(--adm-link);
+  background: var(--adm-brand-soft);
+  border-color: transparent;
+}
+
+.adm-icon-btn--remove {
+  color: var(--adm-danger-ink);
+  background: var(--adm-err-bg);
+  border-color: transparent;
+}
+
+.adm-icon-btn:active {
+  transform: scale(0.94);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .adm-icon-btn:hover {
+    color: var(--adm-ink);
+    background: var(--adm-surface-2);
+  }
+  .adm-icon-btn--add:hover {
+    color: var(--adm-brand-ink);
+    background: var(--adm-ok-bg);
+  }
+  .adm-icon-btn--remove:hover {
+    color: var(--adm-danger);
+    background: var(--adm-err-bg);
+  }
+}
+
+.adm-field--full {
+  grid-column: 1 / -1;
+}
+
+.adm-field-hint {
+  margin: 0.3rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--adm-muted);
+}

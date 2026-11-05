@@ -1,24 +1,7 @@
-/* Inventario: formularios en dos columnas y ajustes responsive. */
-.adm-inventory-forms {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-  gap: 1rem;
-}
-
-.adm-inventory-forms > .adm-card {
-  margin-bottom: 0;
-}
-
+/* Inventario: selector de sucursal y ajustes responsive. */
 .adm-branch-picker {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
   margin-top: 0.25rem;
-}
-
-@media (max-width: 1000px) {
-  .adm-inventory-forms {
-    grid-template-columns: 1fr;
-  }
 }

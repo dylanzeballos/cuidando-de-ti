@@ -3,6 +3,14 @@
   margin-bottom: 2rem;
 }
 
+.adm-page-head--row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
 .adm-page-head h1 {
   margin: 0;
   font-size: clamp(1.9rem, 3.6vw, 2.6rem);
@@ -28,7 +36,7 @@
 
 .adm-card-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;

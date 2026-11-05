@@ -1,0 +1,60 @@
+---
+interface Props {
+  empresaName: string;
+  canOperate: boolean;
+}
+
+const { empresaName, canOperate } = Astro.props;
+---
+
+<header class="adm-page-head adm-page-head--row">
+  <div>
+    <h1>Inventario</h1>
+    <p class="adm-sub">
+      Existencias, movimientos y transferencias entre sucursales de {empresaName}.
+    </p>
+  </div>
+  {canOperate && (
+    <div class="adm-page-actions">
+      <button
+        class="adm-btn adm-btn--small adm-btn--ghost"
+        type="button"
+        data-dialog-target="movement-dialog"
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Movimiento
+      </button>
+      <button
+        class="adm-btn adm-btn--small"
+        type="button"
+        data-dialog-target="transfer-dialog"
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 7h13m0 0-3-3m3 3-3 3M20 17H7m0 0 3-3m-3 3 3 3" />
+        </svg>
+        Transferir
+      </button>
+    </div>
+  )}
+</header>

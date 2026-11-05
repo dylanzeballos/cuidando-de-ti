@@ -1,0 +1,48 @@
+---
+import BranchPicker from '@/components/admin/branch-picker.astro';
+import EmptyState from '@/components/primitives/empty-state.astro';
+import type { Branch } from '@/lib/admin/catalog-api';
+
+interface Props {
+  branches: Branch[];
+  selectedBranchId: string;
+}
+
+const { branches, selectedBranchId } = Astro.props;
+---
+
+<section class="adm-card" aria-labelledby="sucursal-title">
+  <div class="adm-card-head">
+    <h2 id="sucursal-title">Sucursal</h2>
+    <div class="adm-card-head-side">
+      <span class="adm-chip">{branches.length}</span>
+      <button
+        class="adm-btn adm-btn--small adm-btn--ghost"
+        type="button"
+        data-dialog-target="branch-dialog"
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Nueva
+      </button>
+    </div>
+  </div>
+  {branches.length === 0 ? (
+    <EmptyState
+      title="Aún no hay sucursales"
+      message="Crea la primera para controlar las existencias por punto de atención."
+    />
+  ) : (
+    <BranchPicker branches={branches} selectedId={selectedBranchId} />
+  )}
+</section>

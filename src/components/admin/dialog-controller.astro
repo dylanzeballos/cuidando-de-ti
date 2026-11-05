@@ -14,6 +14,34 @@
     syncScrollLock();
   };
 
+  // Restablece los campos y aplica valores preseleccionados del disparador.
+  const prepareDialog = (dialog: HTMLDialogElement, opener: HTMLElement | null): void => {
+    dialog.querySelectorAll('form').forEach((form) => form.reset());
+
+    const heading = opener?.dataset.dialogHeading;
+    if (heading) {
+      const title = dialog.querySelector<HTMLElement>('[data-dialog-title]');
+      if (title) title.textContent = heading;
+    }
+
+    const raw = opener?.dataset.dialogSet;
+    if (!raw) return;
+    try {
+      const values = JSON.parse(raw) as Record<string, string>;
+      for (const [name, value] of Object.entries(values)) {
+        const field = dialog.querySelector<
+          HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        >(`[name="${CSS.escape(name)}"]`);
+        if (field) {
+          field.value = String(value);
+          field.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    } catch {
+      // Un preset inválido no impide abrir el diálogo con sus valores por defecto.
+    }
+  };
+
   // Delegación: cualquier botón con data-dialog-target abre su diálogo.
   document.addEventListener('click', (event) => {
     const target = event.target;
@@ -26,6 +54,7 @@
         document
           .querySelectorAll<HTMLDialogElement>('dialog.adm-modal[open]')
           .forEach((open) => open.close());
+        prepareDialog(dialog, opener);
         dialog.showModal();
         syncScrollLock();
       }

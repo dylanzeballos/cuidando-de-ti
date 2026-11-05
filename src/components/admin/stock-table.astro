@@ -10,9 +10,10 @@ interface Props {
   products: Product[];
   stockByProduct: Map<string, number>;
   threshold: number;
+  branchId: string;
 }
 
-const { products, stockByProduct, threshold } = Astro.props;
+const { products, stockByProduct, threshold, branchId } = Astro.props;
 ---
 
 <div class="adm-table-wrap">
@@ -23,6 +24,7 @@ const { products, stockByProduct, threshold } = Astro.props;
         <th scope="col">Producto</th>
         <th scope="col">Existencias</th>
         <th scope="col">Estado</th>
+        <th scope="col">Acciones</th>
       </tr>
     </thead>
     <tbody>
@@ -38,6 +40,60 @@ const { products, stockByProduct, threshold } = Astro.props;
             </td>
             <td data-label="Estado">
               <span class={STOCK_STATUS_BADGE[stock]}>{STOCK_STATUS_LABELS[stock]}</span>
+            </td>
+            <td data-label="Acciones">
+              <div class="adm-row-actions">
+                <button
+                  class="adm-icon-btn adm-icon-btn--add"
+                  type="button"
+                  data-dialog-target="movement-dialog"
+                  data-dialog-set={JSON.stringify({
+                    type: 'ENTRY',
+                    productId: product.id,
+                    branchId,
+                  })}
+                  title="Registrar entrada"
+                  aria-label={`Registrar entrada de ${product.name}`}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </button>
+                <button
+                  class="adm-icon-btn adm-icon-btn--remove"
+                  type="button"
+                  data-dialog-target="movement-dialog"
+                  data-dialog-set={JSON.stringify({
+                    type: 'EXIT',
+                    productId: product.id,
+                    branchId,
+                  })}
+                  title="Registrar salida"
+                  aria-label={`Registrar salida de ${product.name}`}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 12h14" />
+                  </svg>
+                </button>
+              </div>
             </td>
           </tr>
         );
