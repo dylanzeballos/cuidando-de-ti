@@ -14,6 +14,8 @@ declare namespace App {
     } | null;
     /** Cuenta autenticada de la sesión de servidor. */
     account: { email: string } | null;
+    /** Espacio de trabajo derivado del tipo de usuario, si la sesión lo conoce. */
+    workspace?: 'administracion' | 'ventas' | 'almacen' | 'contabilidad' | null;
   }
 
   interface SessionData {

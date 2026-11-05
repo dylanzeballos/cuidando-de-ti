@@ -32,6 +32,10 @@ npm run build   # compila el servidor SSR
 - **Shell de administración**: sidebar con el color principal de la empresa,
   grupos de navegación colapsables (`<details>`) y modo riel para dejar solo
   iconos. El estado se recuerda en `localStorage`, sin hidratar frameworks.
+- **Espacios de trabajo**: `src/lib/workspaces.ts` define lentes de interfaz
+  (Administración, Ventas, Almacén, Contabilidad) que filtran la navegación por
+  módulos. El espacio se resolverá del tipo de usuario autenticado; el selector
+  manual se retiró. El backend sigue autorizando cada operación.
 - **Tema por empresa mediante tokens**: `src/layouts/base-layout.astro` aplica la
   segunda capa de tokens (`--empresa-primary`, `--empresa-background`,
   `--empresa-foreground`) desde la configuración validada. Un tema con colores no
@@ -234,3 +238,16 @@ fuente falla, el panel muestra el resto y un aviso de carga parcial.
 `reports` es un módulo de presentación: no tiene permiso propio. Las pantallas
 siguen protegidas por los permisos de ventas, catálogo, inventario y costos que
 ya valida el backend.
+
+### Estación de venta
+
+`/admin/ventas` es una estación de caja en dos columnas: catálogo con búsqueda a
+la izquierda y detalle de venta fijo a la derecha, con cantidades, subtotal,
+descuento, total y método de pago. Al registrar, muestra el número de venta y el
+acceso al comprobante. El historial permite filtrar por estado y resume ingresos,
+completadas, anuladas y venta promedio.
+
+Las pantallas de costos y gastos usan los endpoints reales del backend
+(`GET /api/v1/costs/margins`, `POST /api/v1/costs`, `GET|POST /api/v1/costs/expenses`
+y `GET /api/v1/costs/expenses/totals`), no el contrato histórico basado en
+periodos.

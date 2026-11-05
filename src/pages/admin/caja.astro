@@ -170,8 +170,8 @@ const status = empresa === null ? 'loading' : empresa.status;
               <div><dt>Ventas registradas</dt><dd>{openSession.saleCount}</dd></div>
             </dl>
             <p class="adm-sub">
-              <a href="/admin/ventas">Ir al registro de venta</a> ·
-              <a href="/admin/ventas/historial">Historial de ventas</a>
+              Turno abierto de {selectedBranch?.name}. El historial y el registro están en las
+              pestañas superiores.
             </p>
             <form class="adm-form" method="post">
               <input type="hidden" name="action" value="close" />

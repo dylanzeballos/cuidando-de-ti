@@ -1,13 +1,12 @@
 ---
 import AdminShell from '@/components/admin/admin-shell.astro';
 import LoadingState from '@/components/primitives/loading-state.astro';
-import EmptyState from '@/components/primitives/empty-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
+import ModulePlaceholder from '@/components/admin/module-placeholder.astro';
 import { INSTALLATION } from '@/lib/installation';
 
-// El middleware ya garantiza la sesión para `/admin/**`; la empresa es la de la
-// instalación y se resuelve en el servidor. El registro de clientes todavía no
-// tiene contrato de backend, así que muestra su estado y lo que hará al habilitarse.
+// El middleware garantiza la sesión y adjunta la empresa desde el servidor. El
+// registro de clientes aún no tiene contrato de backend: se muestra su estado.
 const empresa = Astro.locals.empresa;
 const empresaName = empresa?.name ?? INSTALLATION.name;
 const status = empresa === null ? 'loading' : empresa.status;
@@ -15,8 +14,8 @@ const status = empresa === null ? 'loading' : empresa.status;
 
 <AdminShell title="Clientes" active="/admin/clientes">
   <header class="adm-page-head">
-    <h1>Gestión de clientes</h1>
-    <p class="adm-sub">Relaciones y registro de clientes de {empresaName}.</p>
+    <h1>Pacientes y clientes</h1>
+    <p class="adm-sub">Relaciones, historial y saldos de {empresaName}.</p>
   </header>
 
   {
@@ -25,34 +24,17 @@ const status = empresa === null ? 'loading' : empresa.status;
     ) : status === 'unavailable' ? (
       <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
     ) : (
-      <>
-        <section class="adm-card" aria-labelledby="clientes-estado">
-          <div class="adm-card-head">
-            <h2 id="clientes-estado">Estado del módulo</h2>
-            <span class="adm-chip">Por habilitar</span>
-          </div>
-          <p class="adm-sub">
-            El registro de clientes se activa cuando el backend publica el contrato
-            de clientes y la empresa lo contrata. Hasta entonces, las ventas se
-            cobran sin identificar al cliente.
-          </p>
-          <h3 class="svc-subtitle">Lo que incluirá</h3>
-          <ul class="adm-list" role="list">
-            <li><span class="adm-chip">Directorio de clientes</span></li>
-            <li><span class="adm-chip">Historial de compras</span></li>
-            <li><span class="adm-chip">Crédito y saldos</span></li>
-          </ul>
-        </section>
-
-        <EmptyState
-          title="Aún no hay clientes registrados"
-          message="Cuando se habilite el módulo podrás dar de alta clientes y consultar su historial de compras."
-        >
-          <a class="adm-btn" href="/admin/ventas" style="align-self: flex-start; text-decoration: none;">
-            Ver ventas
-          </a>
-        </EmptyState>
-      </>
+      <ModulePlaceholder
+        title="Directorio de pacientes y clientes"
+        description="Este módulo se activa cuando el backend publica el contrato de clientes y la empresa lo contrata. Hasta entonces las ventas se registran sin identificar al cliente."
+        items={[
+          'Directorio con datos de contacto',
+          'Historial de compras por cliente',
+          'Crédito, saldos y recordatorios',
+        ]}
+        ctaHref="/admin/ventas"
+        ctaLabel="Ir al registro de venta"
+      />
     )
   }
 </AdminShell>

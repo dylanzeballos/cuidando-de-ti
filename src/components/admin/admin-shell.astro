@@ -4,6 +4,7 @@ import BaseLayout from '@/layouts/base-layout.astro';
 import BrandLogo from '@/components/brand-logo.astro';
 import ModuleIcon from '@/components/module-icon.astro';
 import { buildModuleViews, groupModuleViews } from '@/lib/module-catalog';
+import { getWorkspace } from '@/lib/workspaces';
 import { INSTALLATION } from '@/lib/installation';
 
 interface Props {
@@ -22,7 +23,15 @@ const {
   accountEmail = Astro.locals.account?.email ?? null,
 } = Astro.props;
 
-const views = buildModuleViews(modules);
+const workspace = getWorkspace(Astro.locals.workspace);
+// El espacio lo define el tipo de usuario (middleware/sesión). Hasta que el
+// backend publique los roles, `Astro.locals.workspace` es nulo y la instalación
+// opera con la vista completa; el modelo ya filtra por módulos.
+const allViews = buildModuleViews(modules);
+const allowedModules = workspace.modules === null ? null : new Set(workspace.modules);
+const views = allowedModules === null
+  ? allViews
+  : allViews.filter((view) => allowedModules.has(view.code));
 const groups = groupModuleViews(views);
 
 // La sección activa es la del módulo dueño de la ruta: las subpáginas (caja,
@@ -30,30 +39,66 @@ const groups = groupModuleViews(views);
 const currentRoute = active ?? '';
 const isActive = (route: string) => currentRoute === route || currentRoute.startsWith(`${route}/`);
 const isHome = currentRoute === '/admin' || currentRoute.length === 0;
+const pathname = Astro.url.pathname;
 
-// Pestañas de acceso rápido: solo se muestran las secciones realmente
-// habilitadas, para que el header no ofrezca destinos que no existen.
-const QUICK_ROUTES = [
-  '/admin',
-  '/admin/ventas',
-  '/admin/catalogo',
-  '/admin/inventario',
-  '/admin/reportes',
-  '/admin/costos',
-] as const;
-const nameByRoute = new Map<string, string>();
-for (const view of views) {
-  if (view.route !== null) nameByRoute.set(view.route, view.name);
-}
-const quickTabs = QUICK_ROUTES.flatMap((route) => {
-  if (route === '/admin') return [{ route, name: 'Inicio' }];
-  const name = nameByRoute.get(route);
-  return name === undefined ? [] : [{ route, name }];
-});
-const salesEnabled = nameByRoute.has('/admin/ventas');
-const isTabActive = (route: string) => (route === '/admin' ? isHome : isActive(route));
+// Subnavegación contextual del módulo. No repite el sidebar: son las vistas
+// internas de la sección activa o anclas a los bloques de la propia página.
+type HeaderTab = { label: string; href: string; anchor?: boolean };
+
+const HEADER_TABS: Record<string, HeaderTab[]> = {
+  '/admin': [
+    { label: 'Resumen', href: '#dash-activity', anchor: true },
+    { label: 'Cobros', href: '#dash-payments', anchor: true },
+    { label: 'Productos', href: '#dash-top', anchor: true },
+    { label: 'Existencias', href: '#dash-stock', anchor: true },
+  ],
+  '/admin/reportes': [
+    { label: 'Ingresos', href: '#rep-trend', anchor: true },
+    { label: 'Cobros', href: '#rep-payments', anchor: true },
+    { label: 'Productos', href: '#rep-top', anchor: true },
+    { label: 'Márgenes', href: '#rep-margins', anchor: true },
+  ],
+  '/admin/ventas': [
+    { label: 'Registro', href: '/admin/ventas' },
+    { label: 'Historial', href: '/admin/ventas/historial' },
+    { label: 'Caja', href: '/admin/caja' },
+  ],
+  '/admin/catalogo': [
+    { label: 'Categorías', href: '#categorias-title', anchor: true },
+    { label: 'Productos', href: '#productos-title', anchor: true },
+  ],
+  '/admin/inventario': [
+    { label: 'Sucursales', href: '#sucursales-title', anchor: true },
+    { label: 'Movimientos', href: '#movimiento-title', anchor: true },
+    { label: 'Existencias', href: '#stock-title', anchor: true },
+  ],
+  '/admin/costos': [
+    { label: 'Costos', href: '/admin/costos' },
+    { label: 'Gastos', href: '/admin/gastos' },
+  ],
+  '/admin/usuarios': [
+    { label: 'Usuarios', href: '/admin/usuarios' },
+    { label: 'Roles', href: '/admin/roles' },
+  ],
+};
+
+const tabs = HEADER_TABS[currentRoute] ?? [];
+const linkTabs = tabs.filter((tab) => tab.anchor !== true);
+const activeLink = [...linkTabs]
+  .sort((a, b) => b.href.length - a.href.length)
+  .find((tab) => pathname === tab.href || pathname.startsWith(`${tab.href}/`))?.href;
+const headerTabs = tabs.map((tab, index) => ({
+  ...tab,
+  current: tab.anchor === true ? index === 0 : tab.href === activeLink,
+}));
 
 const documentTitle = `${title} · ${INSTALLATION.name}`;
+const accountName = (accountEmail ?? '').split('@')[0] ?? '';
+const displayName = accountName.length > 0
+  ? accountName.charAt(0).toUpperCase() + accountName.slice(1)
+  : 'equipo';
+const hour = new Date().getHours();
+const greeting = hour < 12 ? 'Buen día' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
 const today = new Intl.DateTimeFormat('es-BO', {
   weekday: 'short',
   day: 'numeric',
@@ -97,12 +142,12 @@ const today = new Intl.DateTimeFormat('es-BO', {
 
       <nav class="adm-nav" aria-label="Secciones">
         <a
-          href="/admin"
+          href={workspace.landing}
           class="adm-nav-link adm-nav-home"
           title="Inicio"
           aria-current={isHome ? 'page' : undefined}
         >
-          <ModuleIcon name="home" size={20} class="adm-nav-icon" />
+          <ModuleIcon name="home" size={22} class="adm-nav-icon" />
           <span class="adm-nav-text">Inicio</span>
         </a>
 
@@ -138,13 +183,13 @@ const today = new Intl.DateTimeFormat('es-BO', {
                         title={view.name}
                         aria-current={isActive(view.route) ? 'page' : undefined}
                       >
-                        <ModuleIcon name={view.icon} size={20} class="adm-nav-icon" />
+                        <ModuleIcon name={view.icon} size={22} class="adm-nav-icon" />
                         <span class="adm-nav-text">{view.name}</span>
                         {view.code === 'reports' && <span class="adm-nav-dot" aria-hidden="true" />}
                       </a>
                     ) : (
                       <span class="adm-nav-item" title={view.name}>
-                        <ModuleIcon name={view.icon} size={20} class="adm-nav-icon" />
+                        <ModuleIcon name={view.icon} size={22} class="adm-nav-icon" />
                         <span class="adm-nav-text">{view.name}</span>
                         <span class="adm-nav-soon">Pronto</span>
                       </span>
@@ -158,6 +203,28 @@ const today = new Intl.DateTimeFormat('es-BO', {
       </nav>
 
       <footer class="adm-sidebar-foot">
+        <a
+          class="adm-gear"
+          href="/admin/roles"
+          title="Configuración de roles y permisos"
+          aria-label="Configuración de roles y permisos"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <span class="adm-gear-label">Configuración</span>
+        </a>
         <div class="adm-account">
           <span class="adm-account-avatar" aria-hidden="true">
             {(accountEmail ?? '?').slice(0, 1).toUpperCase()}
@@ -192,42 +259,58 @@ const today = new Intl.DateTimeFormat('es-BO', {
 
     <main class="adm-main" id="contenido">
       <header class="adm-header">
-        <nav class="adm-tabs" aria-label="Navegación rápida">
-          {
-            quickTabs.map((tab) => (
-              <a
-                href={tab.route}
-                class="adm-tab"
-                aria-current={isTabActive(tab.route) ? 'page' : undefined}
-              >
-                {tab.name}
-              </a>
-            ))
-          }
-        </nav>
+        <div class="adm-greeting-block">
+          <p class="adm-greeting">{greeting}, {displayName}</p>
+          <span class="adm-context">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            {INSTALLATION.name} · {workspace.label}
+          </span>
+        </div>
         <div class="adm-header-actions">
-          <span class="adm-date">{today}</span>
-          {
-            salesEnabled && (
-              <a class="adm-btn adm-btn--small" href="/admin/ventas">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.2"
-                  stroke-linecap="round"
-                  aria-hidden="true"
-                >
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-                Nueva venta
-              </a>
-            )
-          }
+          <span class="adm-date">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.9"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+              <path d="M8 3v4M16 3v4M3 10h18"></path>
+            </svg>
+            {today}
+          </span>
         </div>
       </header>
+
+      {
+        headerTabs.length > 0 && (
+          <nav class="adm-subnav" aria-label="Secciones del módulo">
+            {headerTabs.map((tab) => (
+              <a href={tab.href} class="adm-tab" aria-current={tab.current ? 'page' : undefined}>
+                {tab.label}
+              </a>
+            ))}
+          </nav>
+        )
+      }
       <slot />
     </main>
   </div>

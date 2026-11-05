@@ -37,11 +37,6 @@ const view =
         months: 6,
       });
 
-const hour = new Date().getHours();
-const greeting = hour < 12 ? 'Buen día' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
-const accountName = (Astro.locals.account?.email ?? '').split('@')[0] ?? '';
-const displayName = accountName.length > 0 ? accountName.charAt(0).toUpperCase() + accountName.slice(1) : 'equipo';
-
 const money = (value: number | null | undefined): string =>
   value === null || value === undefined ? '—' : formatMoney(value);
 const percent = (value: number | null): string =>
@@ -76,12 +71,7 @@ const hasStockData = data !== null && Object.keys(data.stockByProduct).length > 
       <ErrorState message="No pudimos cargar el panel. Inténtalo de nuevo en unos minutos." />
     ) : (
       <>
-        <header class="dash-hero">
-          <h1>
-            {greeting}, {displayName}
-          </h1>
-          <p>Este es el pulso de {INSTALLATION.name} en los últimos 6 meses.</p>
-        </header>
+        <h1 class="adm-sr">Inicio</h1>
 
         <ul class="rep-kpis" aria-label="Resumen de la farmacia">
           <Kpi kind="revenue" label="Ingresos" value={money(view.stats.revenue)} tone="teal" />
@@ -230,6 +220,74 @@ const hasStockData = data !== null && Object.keys(data.stockByProduct).length > 
           </section>
         </div>
 
+        <section class="dash-gallery" aria-labelledby="dash-gallery-title">
+          <div class="rep-tile-head">
+            <h2 id="dash-gallery-title">La farmacia en imágenes</h2>
+            <span>Categorías y espacios</span>
+          </div>
+          <ul class="dash-gallery-grid">
+            <li>
+              <a class="dash-gallery-card" href="/admin/catalogo">
+                <img
+                  src="/images/medicamentos.jpg"
+                  alt="Blisters de medicamentos sobre una superficie azul"
+                  loading="lazy"
+                  width="900"
+                  height="600"
+                />
+                <span>
+                  <strong>Medicamentos</strong>
+                  <small>Analgésicos, antibióticos y más</small>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="dash-gallery-card" href="/admin/catalogo">
+                <img
+                  src="/images/pastillas.jpg"
+                  alt="Cápsulas y pastillas de colores"
+                  loading="lazy"
+                  width="900"
+                  height="600"
+                />
+                <span>
+                  <strong>Vitaminas y bienestar</strong>
+                  <small>Suplementos y cuidado diario</small>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="dash-gallery-card" href="/admin/catalogo">
+                <img
+                  src="/images/cuidado.jpg"
+                  alt="Cápsulas naranjas junto a un frasco"
+                  loading="lazy"
+                  width="900"
+                  height="600"
+                />
+                <span>
+                  <strong>Cuidado personal</strong>
+                  <small>Dermocosmética y primeros auxilios</small>
+                </span>
+              </a>
+            </li>
+            <li>
+              <a class="dash-gallery-card" href="/admin/inventario">
+                <img
+                  src="/images/farmacia.jpg"
+                  alt="Interior luminoso de una farmacia"
+                  loading="lazy"
+                  width="900"
+                  height="600"
+                />
+                <span>
+                  <strong>Tu farmacia</strong>
+                  <small>Existencias y sucursales</small>
+                </span>
+              </a>
+            </li>
+          </ul>
+        </section>
       </>
     )
   }

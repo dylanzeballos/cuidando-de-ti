@@ -5,15 +5,12 @@ import EmptyState from '@/components/primitives/empty-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
 import { API_BASE_URL } from 'astro:env/server';
 import { createAdminClient, type Branch, type Product } from '@/lib/admin/catalog-api';
-import { resolveCostsClient } from '@/lib/admin/costs-service';
-import { latestCost, marginOf, type CostEntry } from '@/lib/admin/costs-api';
-import { COST_FIELD_ERRORS, validateCostInput } from '@/lib/admin/costs-validation';
+import { createCostsLiveClient, type CostMargin } from '@/lib/admin/costs-live-api';
 import { formatMoney } from '@/lib/sales/cart';
 import { INSTALLATION } from '@/lib/installation';
 
 // El token viene de la sesión de servidor; el navegador nunca lo recibe. La
-// empresa es implícita de la instalación: no se lee de `query` ni de `body`. El
-// middleware ya garantiza la sesión para `/admin/**`.
+// empresa es implícita de la instalación.
 const auth = await Astro.session?.get('auth');
 if (!auth) {
   return Astro.redirect('/entrar?redirect=%2Fadmin%2Fcostos', 303);
@@ -23,7 +20,14 @@ const empresa = Astro.locals.empresa;
 const empresaName = INSTALLATION.name;
 
 const catalog = createAdminClient({ baseUrl: API_BASE_URL, token: auth.accessToken });
-const costs = resolveCostsClient(auth.accessToken, empresaName);
+const costs = createCostsLiveClient({ baseUrl: API_BASE_URL, token: auth.accessToken });
+
+function isoToday(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
 
 const back = (params: Record<string, string>) =>
   new Response(null, {
@@ -34,34 +38,33 @@ const back = (params: Record<string, string>) =>
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
   const action = String(form.get('action') ?? '');
-
   if (action !== 'cost') return back({ error: 'Acción no reconocida.' });
 
   const productId = String(form.get('productId') ?? '').trim();
   const branchId = String(form.get('branchId') ?? '').trim();
-  const amountRaw = String(form.get('amount') ?? '');
-  const validFrom = String(form.get('validFrom') ?? '').trim();
+  const amountRaw = String(form.get('amount') ?? '').trim();
+  const validFrom = String(form.get('validFrom') ?? '').trim() || isoToday();
+  const amount = Number(amountRaw);
 
-  // Validación en servidor antes de llamar a la API: un costo inválido no se envía.
-  const fieldError = validateCostInput({ productId, branchId, amountRaw });
-  if (fieldError !== null) return back({ form: 'cost', error: fieldError, productId, branchId });
+  if (branchId.length === 0) return back({ error: 'Elige la sucursal.', form: 'cost' });
+  if (productId.length === 0) return back({ error: 'Elige el producto.', form: 'cost' });
+  if (amountRaw.length === 0 || !Number.isFinite(amount) || amount < 0) {
+    return back({ error: 'El costo debe ser un número mayor o igual a cero.', form: 'cost' });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(validFrom)) {
+    return back({ error: 'Indica una fecha de vigencia válida.', form: 'cost' });
+  }
 
-  const result = await costs.recordCost({
-    productId,
-    branchId,
-    amount: Number(amountRaw),
-    ...(validFrom.length > 0 ? { validFrom } : {}),
-  });
+  const result = await costs.createCost({ branchId, productId, costPrice: amount, validFrom });
   if (result.status === 'ok') return back({ branchId, ok: 'Costo registrado.' });
-  // Los errores del backend (producto inexistente, vigencia solapada) se muestran legibles.
-  return back({ form: 'cost', error: result.message, productId, branchId });
+  return back({ branchId, form: 'cost', error: result.message });
 }
 
 let branches: Branch[] = [];
 let products: Product[] = [];
-let costList: CostEntry[] = [];
+let margins: CostMargin[] = [];
 let loadError: string | null = null;
-let costsUnavailable = false;
+let unauthorized = false;
 
 const [branchesResult, productsResult] = await Promise.all([
   catalog.listBranches(),
@@ -72,64 +75,43 @@ else loadError = branchesResult.message;
 if (productsResult.status === 'ok') products = productsResult.data.items;
 else loadError ??= productsResult.message;
 
-const queryBranchId = Astro.url.searchParams.get('branchId');
-const selectedBranch = branches.find((branch) => branch.id === queryBranchId) ?? branches[0] ?? null;
+const selectedBranch =
+  branches.find((branch) => branch.id === Astro.url.searchParams.get('branchId')) ?? branches[0] ?? null;
 
-// Los costos de la sucursal elegida vienen de la API; ante un fallo no se
-// muestra ninguna lista con datos.
 if (selectedBranch !== null && loadError === null) {
-  const costsResult = await costs.listCosts({ branchId: selectedBranch.id });
-  if (costsResult.status === 'ok') costList = costsResult.data;
-  else {
-    costsUnavailable = costsResult.status === 'unavailable';
-    loadError = costsResult.message;
+  const marginsResult = await costs.listMargins(selectedBranch.id);
+  if (marginsResult.status === 'ok') {
+    margins = marginsResult.data.items;
+  } else {
+    unauthorized = marginsResult.status === 'unauthorized';
+    loadError = marginsResult.message;
   }
 }
 
+const marginByProduct = new Map(margins.map((margin) => [margin.productId, margin]));
+const rows = products.map((product) => ({
+  product,
+  margin: marginByProduct.get(product.id) ?? null,
+}));
+
 const okMessage = Astro.url.searchParams.get('ok');
-const errorMessage = Astro.url.searchParams.get('error');
-const isFieldError =
-  Astro.url.searchParams.get('form') === 'cost' &&
-  errorMessage !== null &&
-  COST_FIELD_ERRORS.has(errorMessage);
-const pageError = errorMessage !== null && !isFieldError ? errorMessage : null;
-
-const COST_FIELD_ERROR_TEXT: Record<string, string> = {
-  'product-required': 'Elige el producto del costo.',
-  'branch-required': 'Elige la sucursal del costo.',
-  'amount-required': 'Escribe el costo de compra.',
-  'amount-invalid': 'El costo debe ser un número.',
-  'amount-negative': 'El costo debe ser un número mayor o igual a cero.',
-};
-const fieldError = isFieldError && errorMessage !== null ? (COST_FIELD_ERROR_TEXT[errorMessage] ?? 'Revisa este campo.') : null;
-const submittedProductId = Astro.url.searchParams.get('productId') ?? '';
-const submittedBranchId = Astro.url.searchParams.get('branchId') ?? selectedBranch?.id ?? '';
-
-// El margen se calcula en el servidor a partir del precio de venta vigente y del
-// costo más reciente de la sucursal: el HTML servido ya lo muestra.
-type CostRow = {
-  product: Product;
-  cost: CostEntry | null;
-  margin: number | null;
-};
-const rows: CostRow[] =
-  selectedBranch === null
-    ? []
-    : products.map((product) => {
-        const cost = latestCost(costList, product.id, selectedBranch.id);
-        return { product, cost, margin: cost === null ? null : marginOf(product.unitPrice, cost.amount) };
-      });
-
-// El middleware adjunta la empresa desde el servidor; `null` solo mientras se resuelve.
+const pageError = Astro.url.searchParams.get('error');
 const status = empresa === null ? 'loading' : empresa.status;
+
+const unitLabels: Record<string, string> = {
+  UNIT: 'Unidad',
+  KG: 'Kilogramo',
+  LITER: 'Litro',
+  PACK: 'Paquete',
+};
 ---
 
 <AdminShell title="Costos" active="/admin/costos">
   <header class="adm-page-head">
-    <h1>Costos</h1>
+    <h1>Costos y márgenes</h1>
     <p class="adm-sub">
-      Costo de compra y margen por producto y sucursal de {empresaName}. Registra
-      también los <a href="/admin/gastos">gastos operativos</a> por periodo.
+      Costo de compra vigente por producto y sucursal de {empresaName}. El margen se calcula en el
+      servidor frente al precio de venta.
     </p>
   </header>
 
@@ -143,26 +125,22 @@ const status = empresa === null ? 'loading' : empresa.status;
       <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
     ) : loadError !== null ? (
       <ErrorState
-        title={costsUnavailable ? 'La API de costos no está disponible' : 'No se pudo cargar'}
-        message="No pudimos cargar los costos de la empresa. Inténtalo de nuevo en unos minutos."
+        title={unauthorized ? 'No autorizado' : 'No se pudo cargar'}
+        message="No pudimos cargar los costos de la empresa. Verifica el permiso de costos e inténtalo de nuevo."
       />
     ) : branches.length === 0 ? (
       <EmptyState
         title="Aún no hay sucursales"
-        message="Crea una sucursal en el inventario para poder registrar el costo por sucursal."
+        message="Crea una sucursal en el inventario para registrar el costo por sucursal."
       >
-        <a class="adm-btn" href="/admin/inventario" style="align-self: flex-start; text-decoration: none;">
-          Ir al inventario
-        </a>
+        <a class="adm-link" href="/admin/inventario">Ir al inventario</a>
       </EmptyState>
     ) : products.length === 0 ? (
       <EmptyState
         title="Aún no hay productos"
-        message="Registra productos en el catálogo para poder fijar su costo de compra."
+        message="Registra productos en el catálogo para fijar su costo de compra."
       >
-        <a class="adm-btn" href="/admin/catalogo" style="align-self: flex-start; text-decoration: none;">
-          Ir al catálogo
-        </a>
+        <a class="adm-link" href="/admin/catalogo">Ir al catálogo</a>
       </EmptyState>
     ) : (
       <>
@@ -187,22 +165,17 @@ const status = empresa === null ? 'loading' : empresa.status;
         <section class="adm-card" aria-labelledby="registrar-title">
           <div class="adm-card-head">
             <h2 id="registrar-title">Registrar costo</h2>
+            <span class="adm-chip">Vigencia desde</span>
           </div>
 
-          <form class="adm-form" method="post" aria-describedby={fieldError ? 'cost-error' : undefined}>
+          <form class="adm-form" method="post">
             <input type="hidden" name="action" value="cost" />
             <div class="adm-field">
               <label for="cost-product">Producto</label>
-              <select
-                id="cost-product"
-                name="productId"
-                required
-                aria-invalid={errorMessage === 'product-required'}
-                aria-describedby={fieldError ? 'cost-error' : undefined}
-              >
+              <select id="cost-product" name="productId" required>
                 <option value="">Elige un producto</option>
                 {products.map((product) => (
-                  <option value={product.id} selected={product.id === submittedProductId}>
+                  <option value={product.id}>
                     {product.sku} · {product.name}
                   </option>
                 ))}
@@ -210,15 +183,9 @@ const status = empresa === null ? 'loading' : empresa.status;
             </div>
             <div class="adm-field">
               <label for="cost-branch">Sucursal</label>
-              <select
-                id="cost-branch"
-                name="branchId"
-                required
-                aria-invalid={errorMessage === 'branch-required'}
-                aria-describedby={fieldError ? 'cost-error' : undefined}
-              >
+              <select id="cost-branch" name="branchId" required>
                 {branches.map((branch) => (
-                  <option value={branch.id} selected={branch.id === submittedBranchId}>
+                  <option value={branch.id} selected={branch.id === selectedBranch?.id}>
                     {branch.code} · {branch.name}
                   </option>
                 ))}
@@ -234,27 +201,22 @@ const status = empresa === null ? 'loading' : empresa.status;
                 step="0.01"
                 required
                 autocomplete="off"
-                aria-invalid={errorMessage === 'amount-negative' || errorMessage === 'amount-invalid' || errorMessage === 'amount-required'}
-                aria-describedby={fieldError ? 'cost-error' : undefined}
               />
             </div>
             <div class="adm-field">
               <label for="cost-valid-from">Vigente desde</label>
-              <input id="cost-valid-from" name="validFrom" type="date" autocomplete="off" aria-describedby={fieldError ? 'cost-error' : undefined} />
+              <input id="cost-valid-from" name="validFrom" type="date" value={isoToday()} required />
             </div>
             <div class="adm-actions">
               <button class="adm-btn" type="submit">Registrar costo</button>
             </div>
           </form>
-          {fieldError && (
-            <p id="cost-error" class="adm-field-error" role="alert">{fieldError}</p>
-          )}
         </section>
 
-        <section class="adm-card" aria-labelledby="lista-title">
+        <section class="adm-card" aria-labelledby="margenes-title">
           <div class="adm-card-head">
-            <h2 id="lista-title">Productos y margen · {selectedBranch?.name}</h2>
-            <span class="adm-chip">{rows.length}</span>
+            <h2 id="margenes-title">Márgenes de {selectedBranch?.name}</h2>
+            <span class="adm-chip">{margins.length} con costo</span>
           </div>
 
           <div class="adm-table-wrap">
@@ -263,52 +225,46 @@ const status = empresa === null ? 'loading' : empresa.status;
                 <tr>
                   <th scope="col">Producto</th>
                   <th scope="col">Precio de venta</th>
-                  <th scope="col">Costo de compra</th>
+                  <th scope="col">Costo</th>
                   <th scope="col">Margen</th>
-                  <th scope="col">Vigencia</th>
+                  <th scope="col">Margen %</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map(({ product, cost, margin }) => (
+                {rows.map(({ product, margin }) => (
                   <tr>
                     <td>
                       <strong>{product.name}</strong>
-                      <br />
-                      <span class="adm-sub">{product.sku}</span>
+                      <div class="adm-cell-muted">
+                        {product.sku} · {unitLabels[product.unit] ?? product.unit}
+                      </div>
                     </td>
                     <td class="adm-num">{formatMoney(product.unitPrice)}</td>
                     <td class="adm-num">
-                      {cost === null ? (
-                        <span class="adm-chip">Sin costo registrado</span>
+                      {margin === null ? (
+                        <span class="adm-chip">Sin costo</span>
                       ) : (
-                        formatMoney(cost.amount)
+                        formatMoney(margin.costPrice)
                       )}
+                    </td>
+                    <td class={`adm-num ${margin !== null && margin.marginAmount < 0 ? 'adm-negative' : ''}`}>
+                      {margin === null ? '—' : formatMoney(margin.marginAmount)}
                     </td>
                     <td class="adm-num">
-                      {margin === null ? (
-                        <span class="adm-sub">Sin costo</span>
-                      ) : margin < 0 ? (
-                        <span class="adm-badge adm-badge--off">Margen negativo: {formatMoney(margin)}</span>
-                      ) : margin === 0 ? (
-                        <span class="adm-chip">Margen cero: {formatMoney(margin)}</span>
-                      ) : (
-                        formatMoney(margin)
-                      )}
-                    </td>
-                    <td>
-                      {cost === null ? (
-                        <span class="adm-sub">—</span>
-                      ) : cost.validTo === null ? (
-                        <span class="adm-sub">Desde {cost.validFrom} · vigente</span>
-                      ) : (
-                        <span class="adm-sub">{cost.validFrom} – {cost.validTo}</span>
-                      )}
+                      {margin?.marginPercent === null || margin?.marginPercent === undefined
+                        ? '—'
+                        : `${margin.marginPercent.toFixed(1)} %`}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          <p class="adm-note">
+            Solo los productos con costo vigente muestran margen. Un costo nuevo debe empezar
+            después del último vigente para no solaparse.
+          </p>
         </section>
       </>
     )

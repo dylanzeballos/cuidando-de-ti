@@ -5,7 +5,7 @@ import EmptyState from '@/components/primitives/empty-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
 import { resolveSalesClient } from '@/lib/sales/sales-service';
 import { formatMoney, paymentMethodLabel } from '@/lib/sales/cart';
-import type { Sale } from '@/lib/sales/sales-api';
+import type { Sale, SaleStatus } from '@/lib/sales/sales-api';
 import { INSTALLATION } from '@/lib/installation';
 
 // El token viene de la sesión de servidor; el navegador nunca lo recibe. El
@@ -19,77 +19,139 @@ const empresa = Astro.locals.empresa;
 const empresaName = INSTALLATION.name;
 const sales = resolveSalesClient(auth.accessToken);
 
-const listResult = await sales.listSales();
+const statusParam = Astro.url.searchParams.get('estado');
+const statusFilter: SaleStatus | undefined =
+  statusParam === 'COMPLETED' || statusParam === 'ANNULLED' ? statusParam : undefined;
+
+const listResult = await sales.listSales({ status: statusFilter, size: 100 });
 const rows: Sale[] = listResult.status === 'ok' ? listResult.data.items : [];
+const total = listResult.status === 'ok' ? listResult.data.total : 0;
 const loadError = listResult.status === 'unavailable' ? listResult.message : null;
 const status = empresa === null ? 'loading' : empresa.status;
+
+const completed = rows.filter((sale) => sale.status === 'COMPLETED');
+const annulled = rows.filter((sale) => sale.status === 'ANNULLED');
+const pageRevenue = completed.reduce((sum, sale) => sum + sale.total, 0);
+const averageTicket = completed.length === 0 ? null : pageRevenue / completed.length;
 
 const paymentSummary = (sale: Sale): string => {
   const methods = [...new Set(sale.payments.map((payment) => paymentMethodLabel(payment.method)))];
   return methods.length === 0 ? '—' : methods.join(', ');
 };
+
+const filterHref = (value: SaleStatus | null): string =>
+  value === null ? '/admin/ventas/historial' : `/admin/ventas/historial?estado=${value}`;
 ---
 
 <AdminShell title="Ventas" active="/admin/ventas">
   <header class="adm-page-head">
     <h1>Historial de ventas</h1>
-    <p class="adm-sub">Ventas registradas de {empresaName}.</p>
-    <p class="adm-sub"><a href="/admin/ventas">Ir al registro de venta</a></p>
+    <p class="adm-sub">Ventas registradas de {empresaName}, con su estado y forma de pago.</p>
   </header>
 
   {loadError && <p class="adm-banner adm-banner--error" role="alert">{loadError}</p>}
 
   {
     status === 'loading' ? (
-      <LoadingState label="Cargando la configuración de la empresa…" />
+      <LoadingState label="Cargando el historial de ventas…" />
     ) : status === 'unavailable' ? (
       <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
     ) : listResult.status !== 'ok' ? (
       <ErrorState message="No pudimos cargar el historial de ventas. Inténtalo de nuevo en unos minutos." />
-    ) : rows.length === 0 ? (
-      <EmptyState
-        title="Aún no hay ventas"
-        message="Las ventas que registres aparecerán aquí."
-      />
     ) : (
-      <section class="adm-card" aria-labelledby="historial-title">
-        <div class="adm-card-head">
-          <h2 id="historial-title">Ventas</h2>
-          <span class="adm-chip">{listResult.data.total}</span>
+      <>
+        <div class="adm-toolbar">
+          <nav class="rep-periods" aria-label="Filtrar por estado">
+            <a href={filterHref(null)} aria-current={statusFilter === undefined ? 'page' : undefined}>
+              Todas
+            </a>
+            <a
+              href={filterHref('COMPLETED')}
+              aria-current={statusFilter === 'COMPLETED' ? 'page' : undefined}
+            >
+              Completadas
+            </a>
+            <a
+              href={filterHref('ANNULLED')}
+              aria-current={statusFilter === 'ANNULLED' ? 'page' : undefined}
+            >
+              Anuladas
+            </a>
+          </nav>
+          <span class="adm-toolbar-note">{total} ventas en total</span>
         </div>
-        <div class="adm-table-wrap">
-          <table class="adm-table">
-            <thead>
-              <tr>
-                <th scope="col">N.º</th>
-                <th scope="col">Fecha</th>
-                <th scope="col">Total</th>
-                <th scope="col">Pago</th>
-                <th scope="col">Estado</th>
-                <th scope="col">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((sale) => (
-                <tr>
-                  <td>#{sale.number}</td>
-                  <td>{new Date(sale.createdAt).toLocaleString('es-BO')}</td>
-                  <td>{formatMoney(sale.total)}</td>
-                  <td>{paymentSummary(sale)}</td>
-                  <td>
-                    <span class={`adm-badge ${sale.status === 'ANNULLED' ? 'adm-badge--off' : 'adm-badge--on'}`}>
-                      {sale.status === 'ANNULLED' ? 'Anulada' : 'Completada'}
-                    </span>
-                  </td>
-                  <td>
-                    <a href={`/admin/ventas/${sale.id}`}>Ver detalle</a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+
+        {rows.length === 0 ? (
+          <EmptyState
+            title="Aún no hay ventas"
+            message="Las ventas que registres aparecerán aquí con su comprobante."
+          >
+            <a class="adm-link" href="/admin/ventas">Registrar la primera venta</a>
+          </EmptyState>
+        ) : (
+          <>
+            <dl class="adm-metrics" aria-label="Resumen de las ventas listadas">
+              <div>
+                <dt>Ingresos listados</dt>
+                <dd>{formatMoney(pageRevenue)}</dd>
+              </div>
+              <div>
+                <dt>Completadas</dt>
+                <dd>{completed.length}</dd>
+              </div>
+              <div>
+                <dt>Anuladas</dt>
+                <dd>{annulled.length}</dd>
+              </div>
+              <div>
+                <dt>Venta promedio</dt>
+                <dd>{averageTicket === null ? '—' : formatMoney(averageTicket)}</dd>
+              </div>
+            </dl>
+
+            <section class="adm-card" aria-labelledby="historial-title">
+              <div class="adm-card-head">
+                <h2 id="historial-title">Ventas</h2>
+                <span class="adm-chip">{rows.length} listadas</span>
+              </div>
+              <div class="adm-table-wrap">
+                <table class="adm-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">N.º</th>
+                      <th scope="col">Fecha</th>
+                      <th scope="col">Total</th>
+                      <th scope="col">Pago</th>
+                      <th scope="col">Estado</th>
+                      <th scope="col">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((sale) => (
+                      <tr>
+                        <td>#{sale.number}</td>
+                        <td>
+                          {new Date(sale.createdAt).toLocaleString('es-BO')}
+                        </td>
+                        <td class="adm-num">{formatMoney(sale.total)}</td>
+                        <td>{paymentSummary(sale)}</td>
+                        <td>
+                          <span class={`adm-badge ${sale.status === 'ANNULLED' ? 'adm-badge--off' : 'adm-badge--on'}`}>
+                            {sale.status === 'ANNULLED' ? 'Anulada' : 'Completada'}
+                          </span>
+                        </td>
+                        <td>
+                          <a class="adm-link" href={`/admin/ventas/${sale.id}`}>Ver detalle</a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </>
+        )}
+      </>
     )
   }
 </AdminShell>

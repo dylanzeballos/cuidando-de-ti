@@ -3,15 +3,12 @@ import AdminShell from '@/components/admin/admin-shell.astro';
 import LoadingState from '@/components/primitives/loading-state.astro';
 import EmptyState from '@/components/primitives/empty-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
-import { resolveCostsClient } from '@/lib/admin/costs-service';
-import { isValidPeriod, EXPENSE_FIELD_ERRORS, validateExpenseInput } from '@/lib/admin/costs-validation';
-import type { ExpenseSummary } from '@/lib/admin/costs-api';
+import { API_BASE_URL } from 'astro:env/server';
+import { createCostsLiveClient, type ExpenseEntry, type ExpenseTotals } from '@/lib/admin/costs-live-api';
 import { formatMoney } from '@/lib/sales/cart';
 import { INSTALLATION } from '@/lib/installation';
 
-// El token viene de la sesión de servidor; el navegador nunca lo recibe. La
-// empresa es implícita de la instalación: no se lee de `query` ni de `body`. El
-// middleware ya garantiza la sesión para `/admin/**`.
+// El token viene de la sesión de servidor; el navegador nunca lo recibe.
 const auth = await Astro.session?.get('auth');
 if (!auth) {
   return Astro.redirect('/entrar?redirect=%2Fadmin%2Fgastos', 303);
@@ -19,12 +16,33 @@ if (!auth) {
 
 const empresa = Astro.locals.empresa;
 const empresaName = INSTALLATION.name;
+const costs = createCostsLiveClient({ baseUrl: API_BASE_URL, token: auth.accessToken });
 
-const costs = resolveCostsClient(auth.accessToken, empresaName);
+const PERIOD = /^\d{4}-(0[1-9]|1[0-2])$/;
 
-const currentPeriod = new Date().toISOString().slice(0, 7);
-const requestedPeriod = Astro.url.searchParams.get('period');
-const period = requestedPeriod !== null && isValidPeriod(requestedPeriod) ? requestedPeriod : currentPeriod;
+function currentPeriod(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function periodRange(period: string): { from: string; to: string } {
+  const [year, month] = period.split('-').map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  return {
+    from: `${period}-01`,
+    to: `${period}-${String(lastDay).padStart(2, '0')}`,
+  };
+}
+
+function defaultDate(period: string): string {
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return today.startsWith(period) ? today : `${period}-01`;
+}
+
+const requested = Astro.url.searchParams.get('period');
+const period = requested !== null && PERIOD.test(requested) ? requested : currentPeriod();
+const { from, to } = periodRange(period);
 
 const back = (params: Record<string, string>) =>
   new Response(null, {
@@ -34,70 +52,66 @@ const back = (params: Record<string, string>) =>
 
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
-  const action = String(form.get('action') ?? '');
+  if (String(form.get('action') ?? '') !== 'expense') return back({ error: 'Acción no reconocida.' });
 
-  if (action !== 'expense') return back({ error: 'Acción no reconocida.' });
+  const category = String(form.get('category') ?? '').trim();
+  const description = String(form.get('description') ?? '').trim();
+  const amountRaw = String(form.get('amount') ?? '').trim();
+  const expenseDate = String(form.get('expenseDate') ?? '').trim() || defaultDate(period);
+  const amount = Number(amountRaw);
 
-  const concept = String(form.get('concept') ?? '').trim();
-  const amountRaw = String(form.get('amount') ?? '');
-  const submittedPeriod = String(form.get('period') ?? period);
+  if (category.length === 0) return back({ error: 'Escribe la categoría del gasto.' });
+  if (description.length === 0) return back({ error: 'Escribe la descripción del gasto.' });
+  if (amountRaw.length === 0 || !Number.isFinite(amount) || amount < 0) {
+    return back({ error: 'El monto debe ser un número mayor o igual a cero.' });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(expenseDate)) {
+    return back({ error: 'Indica una fecha válida.' });
+  }
 
-  // Validación en servidor antes de llamar a la API: un gasto inválido no se envía.
-  const fieldError = validateExpenseInput({ concept, amountRaw, period: submittedPeriod });
-  if (fieldError !== null) return back({ form: 'expense', error: fieldError, concept, period: submittedPeriod });
-
-  const result = await costs.createExpense({
-    concept,
-    amount: Number(amountRaw),
-    period: submittedPeriod,
-  });
-  if (result.status === 'ok') return back({ period: submittedPeriod, ok: 'Gasto registrado.' });
-  // Los errores del backend (periodo duplicado) se muestran legibles y no se añaden al listado.
-  return back({ form: 'expense', error: result.message, concept, period: submittedPeriod });
+  const result = await costs.createExpense({ category, description, amount, expenseDate });
+  if (result.status === 'ok') return back({ ok: 'Gasto registrado.' });
+  return back({ error: result.message });
 }
 
-let summary: ExpenseSummary | null = null;
+let entries: ExpenseEntry[] = [];
+let totals: ExpenseTotals | null = null;
 let loadError: string | null = null;
-let costsUnavailable = false;
 
-const summaryResult = await costs.listExpenses({ period });
-if (summaryResult.status === 'ok') summary = summaryResult.data;
-else {
-  costsUnavailable = summaryResult.status === 'unavailable';
-  loadError = summaryResult.message;
-}
+const [listResult, totalsResult] = await Promise.all([
+  costs.listExpenses(from, to),
+  costs.expenseTotals(from, to),
+]);
+if (listResult.status === 'ok') entries = listResult.data.items;
+else loadError = listResult.message;
+if (totalsResult.status === 'ok') totals = totalsResult.data;
+else loadError ??= totalsResult.message;
 
+const total = totals?.total ?? entries.reduce((sum, entry) => sum + entry.amount, 0);
 const okMessage = Astro.url.searchParams.get('ok');
-const errorMessage = Astro.url.searchParams.get('error');
-const isFieldError =
-  Astro.url.searchParams.get('form') === 'expense' &&
-  errorMessage !== null &&
-  EXPENSE_FIELD_ERRORS.has(errorMessage);
-const pageError = errorMessage !== null && !isFieldError ? errorMessage : null;
-
-const EXPENSE_FIELD_ERROR_TEXT: Record<string, string> = {
-  'concept-required': 'Escribe el concepto del gasto.',
-  'period-required': 'Elige el periodo del gasto.',
-  'period-invalid': 'El periodo debe ser un mes válido.',
-  'amount-required': 'Escribe el monto del gasto.',
-  'amount-invalid': 'El monto debe ser un número.',
-  'amount-negative': 'El monto debe ser un número mayor o igual a cero.',
-};
-const fieldError = isFieldError && errorMessage !== null ? (EXPENSE_FIELD_ERROR_TEXT[errorMessage] ?? 'Revisa este campo.') : null;
-const submittedConcept = Astro.url.searchParams.get('concept') ?? '';
-const total = summary?.total ?? 0;
-const expenseCount = summary?.items.length ?? 0;
-
-// El middleware adjunta la empresa desde el servidor; `null` solo mientras se resuelve.
+const pageError = Astro.url.searchParams.get('error');
 const status = empresa === null ? 'loading' : empresa.status;
+
+const CATEGORY_SUGGESTIONS = [
+  'ARRIENDO',
+  'SERVICIOS',
+  'SUELDOS',
+  'INSUMOS',
+  'MANTENIMIENTO',
+  'TRANSPORTE',
+  'OTROS',
+];
+
+const periodLabel = new Intl.DateTimeFormat('es-BO', { month: 'long', year: 'numeric' }).format(
+  new Date(`${period}-01T12:00:00`),
+);
 ---
 
 <AdminShell title="Gastos" active="/admin/costos">
   <header class="adm-page-head">
-    <h1>Gastos</h1>
+    <h1>Gastos operativos</h1>
     <p class="adm-sub">
-      Gastos y costos operativos por periodo de {empresaName}. El costo de compra
-      por producto está en <a href="/admin/costos">Costos</a>.
+      Gastos por periodo de {empresaName}. Se registran con categoría, descripción, monto y fecha.
     </p>
   </header>
 
@@ -110,16 +124,13 @@ const status = empresa === null ? 'loading' : empresa.status;
     ) : status === 'unavailable' ? (
       <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
     ) : loadError !== null ? (
-      <ErrorState
-        title={costsUnavailable ? 'La API de gastos no está disponible' : 'No se pudo cargar'}
-        message="No pudimos cargar los gastos del periodo. Inténtalo de nuevo en unos minutos."
-      />
+      <ErrorState message="No pudimos cargar los gastos del periodo. Inténtalo de nuevo en unos minutos." />
     ) : (
       <>
         <section class="adm-card" aria-labelledby="periodo-title">
           <div class="adm-card-head">
             <h2 id="periodo-title">Periodo</h2>
-            <span class="adm-chip">{period}</span>
+            <span class="adm-chip">{periodLabel}</span>
           </div>
           <form class="adm-form" method="get">
             <div class="adm-field">
@@ -135,22 +146,35 @@ const status = empresa === null ? 'loading' : empresa.status;
         <section class="adm-card" aria-labelledby="registrar-title">
           <div class="adm-card-head">
             <h2 id="registrar-title">Registrar gasto</h2>
+            <span class="adm-total">{formatMoney(total)} en el periodo</span>
           </div>
 
-          <form class="adm-form" method="post" aria-describedby={fieldError ? 'expense-error' : undefined}>
+          <form class="adm-form" method="post">
             <input type="hidden" name="action" value="expense" />
             <div class="adm-field">
-              <label for="expense-concept">Concepto</label>
+              <label for="expense-category">Categoría</label>
               <input
-                id="expense-concept"
-                name="concept"
+                id="expense-category"
+                name="category"
                 required
-                maxlength="160"
-                placeholder="Alquiler…"
+                maxlength="40"
+                list="expense-categories"
                 autocomplete="off"
-                value={submittedConcept}
-                aria-invalid={errorMessage === 'concept-required'}
-                aria-describedby={fieldError ? 'expense-error' : undefined}
+                placeholder="ARRIENDO"
+              />
+              <datalist id="expense-categories">
+                {CATEGORY_SUGGESTIONS.map((category) => <option value={category} />)}
+              </datalist>
+            </div>
+            <div class="adm-field">
+              <label for="expense-description">Descripción</label>
+              <input
+                id="expense-description"
+                name="description"
+                required
+                maxlength="240"
+                autocomplete="off"
+                placeholder="Alquiler del local"
               />
             </div>
             <div class="adm-field">
@@ -163,72 +187,82 @@ const status = empresa === null ? 'loading' : empresa.status;
                 step="0.01"
                 required
                 autocomplete="off"
-                aria-invalid={errorMessage === 'amount-negative' || errorMessage === 'amount-invalid' || errorMessage === 'amount-required'}
-                aria-describedby={fieldError ? 'expense-error' : undefined}
               />
             </div>
             <div class="adm-field">
-              <label for="expense-period">Periodo</label>
+              <label for="expense-date">Fecha</label>
               <input
-                id="expense-period"
-                name="period"
-                type="month"
-                value={period}
+                id="expense-date"
+                name="expenseDate"
+                type="date"
+                value={defaultDate(period)}
                 required
-                autocomplete="off"
-                aria-invalid={errorMessage === 'period-invalid' || errorMessage === 'period-required'}
-                aria-describedby={fieldError ? 'expense-error' : undefined}
               />
             </div>
             <div class="adm-actions">
               <button class="adm-btn" type="submit">Registrar gasto</button>
             </div>
           </form>
-          {fieldError && (
-            <p id="expense-error" class="adm-field-error" role="alert">{fieldError}</p>
-          )}
         </section>
+
+        {totals !== null && totals.byCategory.length > 0 && (
+          <section class="adm-card" aria-labelledby="categorias-title">
+            <div class="adm-card-head">
+              <h2 id="categorias-title">Gastos por categoría</h2>
+              <span class="adm-chip">{totals.byCategory.length}</span>
+            </div>
+            <ul class="rep-bars" aria-label="Gastos por categoría">
+              {totals.byCategory.map((entry) => (
+                <li class="rep-bar">
+                  <span class="rep-bar-label">{entry.category}</span>
+                  <span class="rep-bar-value">{formatMoney(entry.total)}</span>
+                  <span class="rep-bar-track" aria-hidden="true">
+                    <span
+                      class="rep-bar-fill"
+                      style={`width:${total > 0 ? Math.max((entry.total / total) * 100, 2) : 0}%`}
+                    />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section class="adm-card" aria-labelledby="lista-title">
           <div class="adm-card-head">
-            <h2 id="lista-title">Gastos de {period}</h2>
-            <span class="adm-chip">{expenseCount}</span>
+            <h2 id="lista-title">Gastos del periodo</h2>
+            <span class="adm-chip">{entries.length}</span>
           </div>
 
-          <dl class="svc-summary">
-            <div>
-              <dt>Total del periodo</dt>
-              <dd class="adm-num">{formatMoney(total)}</dd>
-            </div>
-          </dl>
-
-          {expenseCount === 0 ? (
+          {entries.length === 0 ? (
             <EmptyState
               title="Sin gastos en el periodo"
-              message={`No hay gastos registrados en ${period}. El total del periodo es cero.`}
+              message={`No hay gastos registrados en ${periodLabel}.`}
             />
           ) : (
             <div class="adm-table-wrap">
               <table class="adm-table">
                 <thead>
                   <tr>
-                    <th scope="col">Concepto</th>
+                    <th scope="col">Fecha</th>
+                    <th scope="col">Categoría</th>
+                    <th scope="col">Descripción</th>
                     <th scope="col">Monto</th>
-                    <th scope="col">Registrado</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {summary?.items.map((expense) => (
+                  {entries.map((entry) => (
                     <tr>
-                      <td>{expense.concept}</td>
-                      <td class="adm-num">{formatMoney(expense.amount)}</td>
-                      <td>{new Date(expense.createdAt).toLocaleDateString('es-BO')}</td>
+                      <td>{new Date(`${entry.expenseDate}T12:00:00`).toLocaleDateString('es-BO')}</td>
+                      <td><span class="adm-chip">{entry.category}</span></td>
+                      <td>{entry.description}</td>
+                      <td class="adm-num">{formatMoney(entry.amount)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr>
-                    <th scope="row" colspan="2">Total del periodo</th>
+                    <th scope="row" colspan="3">Total del periodo</th>
                     <td class="adm-num">{formatMoney(total)}</td>
                   </tr>
                 </tfoot>

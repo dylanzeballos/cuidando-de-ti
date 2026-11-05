@@ -1,0 +1,33 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  status?: string;
+  items: string[];
+  ctaHref: string;
+  ctaLabel: string;
+}
+
+const { title, description, status = 'Por habilitar', items, ctaHref, ctaLabel } = Astro.props;
+---
+
+<section class="adm-placeholder" aria-labelledby="placeholder-title">
+  <div class="adm-placeholder-copy">
+    <span class="adm-chip">{status}</span>
+    <h2 id="placeholder-title">{title}</h2>
+    <p>{description}</p>
+    <a class="adm-btn adm-btn--ghost" href={ctaHref}>{ctaLabel}</a>
+  </div>
+
+  <div class="adm-placeholder-list-wrap">
+    <p class="adm-placeholder-label">Lo que incluirá</p>
+    <ol class="adm-placeholder-list">
+      {items.map((item, index) => (
+        <li>
+          <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+          {item}
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

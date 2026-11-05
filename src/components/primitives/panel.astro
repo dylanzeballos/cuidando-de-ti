@@ -10,7 +10,7 @@ const { title, labelledby, class: className = '' } = Astro.props;
 ---
 
 <section
-  class:list={['rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm', className]}
+  class:list={['rounded-2xl border border-border bg-card p-6 text-card-foreground', className]}
   aria-labelledby={labelledby}
 >
   {title && <h2 id={labelledby} class="m-0 mb-4 text-lg font-medium">{title}</h2>}

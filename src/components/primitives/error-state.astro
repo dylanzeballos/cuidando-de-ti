@@ -8,11 +8,8 @@ interface Props {
 const { title = 'No se pudo cargar', message, class: className = '' } = Astro.props;
 ---
 
-<div
-  class:list={['flex flex-col gap-1 rounded-xl border border-destructive/40 bg-destructive/10 p-6 text-destructive', className]}
-  role="alert"
->
+<div class:list={['adm-error-state', className]} role="alert">
   <strong>{title}</strong>
-  <p class="m-0">{message}</p>
+  <p>{message}</p>
   <slot />
 </div>

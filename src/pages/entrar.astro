@@ -1,7 +1,5 @@
 ---
 import BaseLayout from '@/layouts/base-layout.astro';
-import Container from '@/components/primitives/container.astro';
-import Panel from '@/components/primitives/panel.astro';
 import BrandLogo from '@/components/brand-logo.astro';
 import { INSTALLATION } from '@/lib/installation';
 
@@ -23,17 +21,33 @@ const fieldError = error === 'email' || error === 'password' ? error : null;
 
 <BaseLayout title="Iniciar sesión" noindex>
   <main class="entrar">
-    <Container class="entrar-inner">
-      <Panel class="entrar-card">
+    <div class="entrar-shell">
+      <aside class="entrar-aside">
         <div class="entrar-brand">
-          <BrandLogo size={44} />
+          <BrandLogo size={40} />
           <span class="entrar-brand-text">
             <strong>{INSTALLATION.name}</strong>
             <small>{INSTALLATION.sector}</small>
           </span>
         </div>
-        <h1 class="entrar-title">Iniciar sesión</h1>
-        <p class="entrar-sub">Accede a la administración de {INSTALLATION.name}.</p>
+
+        <div class="entrar-pitch">
+          <h2>La farmacia, en orden.</h2>
+          <p>Ventas, existencias, costos y reportes en un solo lugar.</p>
+          <ul>
+            <li>Registro de ventas y comprobantes</li>
+            <li>Control de existencias por sucursal</li>
+            <li>Reportes y márgenes al día</li>
+          </ul>
+        </div>
+
+        <p class="entrar-aside-foot">Acceso privado · {INSTALLATION.sector}</p>
+      </aside>
+
+      <section class="entrar-panel">
+        <p class="entrar-kicker">Administración</p>
+        <h1>Iniciar sesión</h1>
+        <p class="entrar-sub">Accede con tu cuenta de {INSTALLATION.name}.</p>
 
         {message && <p class="entrar-alert" role="alert">{message}</p>}
 
@@ -75,115 +89,268 @@ const fieldError = error === 'email' || error === 'password' ? error : null;
 
           <button class="entrar-submit" type="submit">Entrar</button>
         </form>
-      </Panel>
-    </Container>
+
+        <p class="entrar-help">Si no puedes entrar, contacta al administrador de la farmacia.</p>
+      </section>
+    </div>
   </main>
 </BaseLayout>
+
 <style>
   .entrar {
     display: grid;
     place-items: center;
     min-height: 100vh;
     padding: 1.5rem;
-    background: color-mix(in srgb, var(--empresa-foreground) 5%, var(--empresa-background));
+    background: #f4f7f9;
   }
-  .entrar-inner {
-    max-width: 26rem;
+
+  .entrar-shell {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: min(100%, 960px);
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #e4ebf1;
+    border-radius: 22px;
   }
-  .entrar-card {
-    padding: 2rem;
+
+  .entrar-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2.5rem;
+    color: #fff;
+    background-color: var(--empresa-primary);
+    background-image:
+      linear-gradient(180deg, rgba(15, 118, 110, 0.94), rgba(15, 118, 110, 0.86)),
+      url('/images/farmacia.jpg');
+    background-position: center;
+    background-size: cover;
   }
+
   .entrar-brand {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-    margin-bottom: 1.35rem;
+    gap: 0.7rem;
   }
+
   .entrar-brand-text {
     display: flex;
     flex-direction: column;
     line-height: 1.15;
   }
+
   .entrar-brand-text strong {
     font-size: 1rem;
     letter-spacing: -0.01em;
-    color: var(--foreground);
   }
+
   .entrar-brand-text small {
-    color: var(--muted-foreground);
+    color: color-mix(in oklab, #fff 82%, var(--empresa-primary));
     font-size: 0.78rem;
   }
-  .entrar-title {
+
+  .entrar-pitch {
+    margin-top: auto;
+  }
+
+  .entrar-pitch h2 {
     margin: 0;
-    font-size: 1.6rem;
+    max-width: 14ch;
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
     letter-spacing: -0.03em;
+    line-height: 1.05;
   }
+
+  .entrar-pitch p {
+    margin: 0.7rem 0 1.4rem;
+    max-width: 32ch;
+    color: color-mix(in oklab, #fff 84%, var(--empresa-primary));
+    line-height: 1.55;
+  }
+
+  .entrar-pitch ul {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .entrar-pitch li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: color-mix(in oklab, #fff 92%, var(--empresa-primary));
+    font-size: 0.86rem;
+  }
+
+  .entrar-pitch li::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+  }
+
+  .entrar-aside-foot {
+    margin: auto 0 0;
+    color: color-mix(in oklab, #fff 70%, var(--empresa-primary));
+    font-size: 0.75rem;
+  }
+
+  .entrar-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2.5rem clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .entrar-kicker {
+    margin: 0 0 0.3rem;
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .entrar-panel h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.75rem;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+
   .entrar-sub {
-    margin: 0.35rem 0 1.25rem;
-    color: var(--muted-foreground);
+    margin: 0.4rem 0 1.4rem;
+    color: #64748b;
   }
+
   .entrar-alert {
-    margin: 0 0 1.25rem;
+    margin: 0 0 1.2rem;
     padding: 0.7rem 0.9rem;
+    color: #8f2f24;
+    background: #fbeae8;
+    border: 1px solid #e7beb6;
     border-radius: 10px;
-    background: color-mix(in srgb, var(--destructive) 12%, transparent);
-    color: var(--destructive);
+    font-size: 0.88rem;
     font-weight: 550;
   }
+
   .entrar-form {
     display: grid;
     gap: 1rem;
   }
+
   .entrar-field {
     display: grid;
     gap: 0.3rem;
   }
+
   .entrar-field label {
+    color: #334155;
     font-size: 0.8rem;
-    font-weight: 650;
-    color: var(--muted-foreground);
+    font-weight: 600;
   }
+
   .entrar-field input {
     width: 100%;
-    padding: 0.6rem 0.7rem;
+    padding: 0.62rem 0.72rem;
     font: inherit;
-    color: var(--foreground);
-    background: var(--card);
-    border: 1px solid var(--border);
+    color: #0f172a;
+    background: #fff;
+    border: 1px solid #cfdbe5;
     border-radius: 10px;
+    transition: border-color 140ms ease, box-shadow 140ms ease;
   }
+
   .entrar-field input:focus-visible {
-    outline: 2px solid var(--empresa-primary);
-    outline-offset: 2px;
+    outline: none;
+    border-color: var(--empresa-primary);
+    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.16);
   }
+
   .entrar-field input[aria-invalid="true"] {
-    border-color: var(--destructive);
+    border-color: #b23b2e;
   }
+
   .entrar-field-error {
     margin: 0;
-    color: var(--destructive);
+    color: #b23b2e;
     font-size: 0.82rem;
   }
+
   .entrar-submit {
     margin-top: 0.35rem;
-    padding: 0.65rem 1rem;
+    padding: 0.68rem 1rem;
     font: inherit;
     font-weight: 620;
-    color: var(--empresa-background);
+    color: #fff;
     background: var(--empresa-primary);
     border: 0;
     border-radius: 10px;
     cursor: pointer;
-    transition: transform 130ms cubic-bezier(0.23, 1, 0.32, 1);
+    transition: background-color 150ms ease, transform 130ms cubic-bezier(0.23, 1, 0.32, 1);
   }
+
+  .entrar-submit:hover {
+    background: color-mix(in oklab, var(--empresa-primary) 84%, #000);
+  }
+
   .entrar-submit:active {
-    transform: scale(0.97);
+    transform: scale(0.985);
   }
+
   .entrar-submit:focus-visible {
     outline: 2px solid var(--empresa-primary);
     outline-offset: 2px;
   }
+
+  .entrar-help {
+    margin: 1.5rem 0 0;
+    color: #64748b;
+    font-size: 0.78rem;
+  }
+
+  @media (max-width: 720px) {
+    .entrar-shell {
+      grid-template-columns: 1fr;
+    }
+
+    .entrar-aside {
+      gap: 1.2rem;
+      padding: 1.5rem;
+    }
+
+    .entrar-pitch h2 {
+      max-width: none;
+      font-size: 1.5rem;
+    }
+
+    .entrar-pitch p {
+      margin-bottom: 0;
+    }
+
+    .entrar-pitch ul,
+    .entrar-aside-foot {
+      display: none;
+    }
+
+    .entrar-panel {
+      padding: 1.6rem 1.4rem 2rem;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
+    .entrar-submit,
+    .entrar-field input {
+      transition: none;
+    }
+
     .entrar-submit:active {
       transform: none;
     }

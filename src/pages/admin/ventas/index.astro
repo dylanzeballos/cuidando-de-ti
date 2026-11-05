@@ -71,11 +71,16 @@ const status = empresa === null ? 'loading' : empresa.status;
   <header class="adm-page-head">
     <h1>Registro de venta</h1>
     <p class="adm-sub">
-      Prepara y registra la venta de {empresaName}. Requiere un turno de caja abierto.
+      Prepara y registra la venta de {empresaName}. Necesitas un turno de caja abierto.
     </p>
-    <p class="adm-sub">
-      <a href="/admin/caja">Caja</a> · <a href="/admin/ventas/historial">Historial de ventas</a>
-    </p>
+    {
+      openSession !== null && (
+        <p class="adm-session">
+          <span class="adm-badge adm-badge--on">Caja abierta</span>
+          {branchName(openSession.branchId)} · {openSession.saleCount} ventas en el turno
+        </p>
+      )
+    }
   </header>
 
   {loadError && <p class="adm-banner adm-banner--error" role="alert">{loadError}</p>}
@@ -102,6 +107,7 @@ const status = empresa === null ? 'loading' : empresa.status;
           <section class="adm-card" aria-labelledby="pos-sucursal">
             <div class="adm-card-head">
               <h2 id="pos-sucursal">Sucursal</h2>
+              <span class="adm-chip">{openSessions.length} cajas abiertas</span>
             </div>
             <ul class="adm-list" role="list">
               {openSessions.map((session) => (
@@ -121,11 +127,14 @@ const status = empresa === null ? 'loading' : empresa.status;
           <EmptyState
             title="No hay productos activos"
             message="Registra productos en el catálogo para poder venderlos."
-          />
+          >
+            <a class="adm-link" href="/admin/catalogo">Abrir catálogo</a>
+          </EmptyState>
         ) : (
           <PosIsland
             client:load
             branchId={selectedBranchId}
+            branchName={branchName(selectedBranchId)}
             registerEndpoint="/admin/ventas/registrar"
             products={products}
           />

@@ -1,5 +1,8 @@
 ---
 import AdminShell from '@/components/admin/admin-shell.astro';
+import LoadingState from '@/components/primitives/loading-state.astro';
+import EmptyState from '@/components/primitives/empty-state.astro';
+import ErrorState from '@/components/primitives/error-state.astro';
 import { API_BASE_URL } from 'astro:env/server';
 import { createAdminClient, type Branch, type Product } from '@/lib/admin/catalog-api';
 import { INSTALLATION } from '@/lib/installation';
@@ -9,6 +12,7 @@ const auth = await Astro.session?.get('auth');
 if (!auth) {
   return Astro.redirect('/entrar?redirect=%2Fadmin%2Finventario', 303);
 }
+const empresa = Astro.locals.empresa;
 const empresaName = INSTALLATION.name;
 
 const client = createAdminClient({ baseUrl: API_BASE_URL, token: auth.accessToken });
@@ -22,27 +26,34 @@ if (Astro.request.method === 'POST') {
 
   let result;
   if (action === 'branch') {
+    const code = String(form.get('code') ?? '').trim();
+    const name = String(form.get('name') ?? '').trim();
+    if (code.length === 0 || name.length === 0) {
+      return redirectWith('error', 'El código y el nombre de la sucursal son obligatorios.');
+    }
     result = await client.createBranch({
-      code: String(form.get('code') ?? ''),
-      name: String(form.get('name') ?? ''),
+      code,
+      name,
       address: String(form.get('address') ?? '').trim() || null,
     });
   } else if (action === 'movement') {
     const type = String(form.get('type') ?? 'ENTRY') as 'ENTRY' | 'EXIT' | 'ADJUSTMENT';
+    const quantity = Number(form.get('quantity') ?? '0');
+    if (!Number.isFinite(quantity) || quantity < 0) {
+      return redirectWith('error', 'La cantidad debe ser un número mayor o igual a cero.');
+    }
     result = await client.registerMovement({
       type,
       branchId: String(form.get('branchId') ?? ''),
       productId: String(form.get('productId') ?? ''),
-      quantity: Number(form.get('quantity') ?? '0'),
+      quantity,
       reason: String(form.get('reason') ?? '').trim() || null,
     });
   } else {
     return redirectWith('error', 'Acción no reconocida.');
   }
 
-  if (result.status === 'ok') {
-    return redirectWith('ok', 'Operación realizada.');
-  }
+  if (result.status === 'ok') return redirectWith('ok', 'Operación realizada.');
   return redirectWith('error', result.message);
 }
 
@@ -54,163 +65,216 @@ const [branchesResult, productsResult] = await Promise.all([
   client.listBranches(),
   client.listProducts({ active: true }),
 ]);
-if (branchesResult.status === 'ok') {
-  branches = branchesResult.data;
-} else {
-  loadError = branchesResult.message;
-}
-if (productsResult.status === 'ok') {
-  products = productsResult.data.items;
-} else {
-  loadError ??= productsResult.message;
-}
+if (branchesResult.status === 'ok') branches = branchesResult.data;
+else loadError = branchesResult.message;
+if (productsResult.status === 'ok') products = productsResult.data.items;
+else loadError ??= productsResult.message;
 
 const selectedBranchId = Astro.url.searchParams.get('branchId');
 const selectedBranch = branches.find((branch) => branch.id === selectedBranchId) ?? null;
 const stockByProduct = new Map<string, number>();
+
 if (selectedBranch !== null) {
   const stocks = await Promise.all(
-    products.map(async (product) => ({ id: product.id, result: await client.getStock(selectedBranch.id, product.id) })),
+    products.map(async (product) => ({
+      id: product.id,
+      result: await client.getStock(selectedBranch.id, product.id),
+    })),
   );
   for (const { id, result } of stocks) {
-    if (result.status === 'ok') {
-      stockByProduct.set(id, result.data.quantity);
-    }
+    if (result.status === 'ok') stockByProduct.set(id, result.data.quantity);
   }
 }
 
+const lowStockThreshold = 10;
+const lowStockCount = [...stockByProduct.values()].filter(
+  (quantity) => quantity <= lowStockThreshold,
+).length;
+
 const okMessage = Astro.url.searchParams.get('ok');
-const errorMessage = Astro.url.searchParams.get('error');
+const pageError = Astro.url.searchParams.get('error');
+const status = empresa === null ? 'loading' : empresa.status;
 ---
 
 <AdminShell title="Inventario" active="/admin/inventario">
   <header class="adm-page-head">
     <h1>Inventario</h1>
-    <p class="adm-sub">{branches.length} sucursales de {empresaName} · elige una para ver su stock.</p>
+    <p class="adm-sub">
+      {branches.length} sucursales de {empresaName}. Elige una para revisar sus existencias.
+    </p>
   </header>
 
   {okMessage && <p class="adm-banner adm-banner--ok" role="status">{okMessage}</p>}
-  {errorMessage && <p class="adm-banner adm-banner--error" role="alert">{errorMessage}</p>}
+  {pageError && <p class="adm-banner adm-banner--error" role="alert">{pageError}</p>}
   {loadError && <p class="adm-banner adm-banner--error" role="alert">{loadError}</p>}
 
-  <section class="adm-card" aria-labelledby="sucursales-title">
-    <div class="adm-card-head">
-      <h2 id="sucursales-title">Sucursales</h2>
-      <span class="adm-chip">{branches.length}</span>
-    </div>
-
-    <form class="adm-form" method="post">
-      <input type="hidden" name="action" value="branch" />
-      <div class="adm-field">
-        <label for="code">Código</label>
-        <input id="code" name="code" required maxlength="40" placeholder="CENTRO" />
-      </div>
-      <div class="adm-field">
-        <label for="branch-name">Nombre</label>
-        <input id="branch-name" name="name" required maxlength="160" placeholder="Sucursal Centro" />
-      </div>
-      <div class="adm-field">
-        <label for="address">Dirección</label>
-        <input id="address" name="address" maxlength="240" />
-      </div>
-      <div class="adm-actions">
-        <button class="adm-btn" type="submit">Crear sucursal</button>
-      </div>
-    </form>
-
-    {branches.length === 0 ? (
-      <p class="adm-empty"><strong>Aún no hay sucursales.</strong> Crea la primera para controlar el stock.</p>
+  {
+    status === 'loading' ? (
+      <LoadingState label="Cargando el inventario…" />
+    ) : status === 'unavailable' ? (
+      <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
     ) : (
-      <ul class="adm-list">
-        {branches.map((branch) => (
-          <li>
-            <a href={`/admin/inventario?branchId=${branch.id}`}>
-              <span class={`adm-chip${selectedBranch?.id === branch.id ? ' adm-chip--on' : ''}`}>
-                {branch.code} · {branch.name}
-              </span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    )}
-  </section>
+      <>
+        <section class="adm-card" aria-labelledby="sucursales-title">
+          <div class="adm-card-head">
+            <h2 id="sucursales-title">Sucursales</h2>
+            <span class="adm-chip">{branches.length}</span>
+          </div>
 
-  <section class="adm-card" aria-labelledby="movimiento-title">
-    <div class="adm-card-head">
-      <h2 id="movimiento-title">Registrar movimiento</h2>
-    </div>
+          <form class="adm-form" method="post">
+            <input type="hidden" name="action" value="branch" />
+            <div class="adm-field">
+              <label for="code">Código</label>
+              <input id="code" name="code" required maxlength="40" placeholder="CENTRO" autocomplete="off" />
+            </div>
+            <div class="adm-field">
+              <label for="branch-name">Nombre</label>
+              <input id="branch-name" name="name" required maxlength="160" placeholder="Sucursal Centro" autocomplete="off" />
+            </div>
+            <div class="adm-field">
+              <label for="address">Dirección</label>
+              <input id="address" name="address" maxlength="240" autocomplete="off" />
+            </div>
+            <div class="adm-actions">
+              <button class="adm-btn" type="submit">Crear sucursal</button>
+            </div>
+          </form>
 
-    {branches.length === 0 || products.length === 0 ? (
-      <p class="adm-empty"><strong>Falta información.</strong> Crea al menos una sucursal y un producto para registrar movimientos.</p>
-    ) : (
-      <form class="adm-form" method="post">
-        <input type="hidden" name="action" value="movement" />
-        <div class="adm-field">
-          <label for="type">Tipo</label>
-          <select id="type" name="type" required>
-            <option value="ENTRY">Entrada</option>
-            <option value="EXIT">Salida</option>
-            <option value="ADJUSTMENT">Ajuste</option>
-          </select>
-        </div>
-        <div class="adm-field">
-          <label for="mov-branch">Sucursal</label>
-          <select id="mov-branch" name="branchId" required>
-            {branches.map((branch) => (
-              <option value={branch.id} selected={branch.id === selectedBranchId}>{branch.code} · {branch.name}</option>
-            ))}
-          </select>
-        </div>
-        <div class="adm-field">
-          <label for="mov-product">Producto</label>
-          <select id="mov-product" name="productId" required>
-            {products.map((product) => (
-              <option value={product.id}>{product.sku} · {product.name}</option>
-            ))}
-          </select>
-        </div>
-        <div class="adm-field">
-          <label for="quantity">Cantidad</label>
-          <input id="quantity" name="quantity" type="number" min="0" step="0.001" required />
-        </div>
-        <div class="adm-field">
-          <label for="reason">Motivo</label>
-          <input id="reason" name="reason" maxlength="240" />
-        </div>
-        <div class="adm-actions">
-          <button class="adm-btn" type="submit">Registrar</button>
-        </div>
-      </form>
-    )}
-  </section>
-
-  {selectedBranch && (
-    <section class="adm-card" aria-labelledby="stock-title">
-      <div class="adm-card-head">
-        <h2 id="stock-title">Stock de {selectedBranch.name}</h2>
-        <span class="adm-chip">{stockByProduct.size} productos</span>
-      </div>
-
-      {products.length === 0 ? (
-        <p class="adm-empty"><strong>No hay productos.</strong> Registra productos en el catálogo para ver su stock.</p>
-      ) : (
-        <div class="adm-table-wrap">
-          <table class="adm-table">
-            <thead>
-              <tr><th>SKU</th><th>Producto</th><th>Cantidad</th></tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr>
-                  <td>{product.sku}</td>
-                  <td>{product.name}</td>
-                  <td>{stockByProduct.has(product.id) ? stockByProduct.get(product.id) : '—'}</td>
-                </tr>
+          {branches.length === 0 ? (
+            <EmptyState
+              title="Aún no hay sucursales"
+              message="Crea la primera para controlar las existencias por punto de atención."
+            />
+          ) : (
+            <ul class="adm-list" role="list">
+              {branches.map((branch) => (
+                <li>
+                  <a href={`/admin/inventario?branchId=${branch.id}`}>
+                    <span class={`adm-chip${selectedBranch?.id === branch.id ? ' adm-chip--on' : ''}`}>
+                      {branch.code} · {branch.name}
+                    </span>
+                  </a>
+                </li>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  )}
+            </ul>
+          )}
+        </section>
+
+        <section class="adm-card" aria-labelledby="movimiento-title">
+          <div class="adm-card-head">
+            <h2 id="movimiento-title">Registrar movimiento</h2>
+            <span class="adm-chip">Entrada · salida · ajuste</span>
+          </div>
+
+          {branches.length === 0 || products.length === 0 ? (
+            <EmptyState
+              title="Falta información"
+              message="Crea al menos una sucursal y un producto para registrar movimientos."
+            />
+          ) : (
+            <form class="adm-form" method="post">
+              <input type="hidden" name="action" value="movement" />
+              <div class="adm-field">
+                <label for="type">Tipo</label>
+                <select id="type" name="type" required>
+                  <option value="ENTRY">Entrada</option>
+                  <option value="EXIT">Salida</option>
+                  <option value="ADJUSTMENT">Ajuste</option>
+                </select>
+              </div>
+              <div class="adm-field">
+                <label for="mov-branch">Sucursal</label>
+                <select id="mov-branch" name="branchId" required>
+                  {branches.map((branch) => (
+                    <option value={branch.id} selected={branch.id === selectedBranchId}>
+                      {branch.code} · {branch.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div class="adm-field">
+                <label for="mov-product">Producto</label>
+                <select id="mov-product" name="productId" required>
+                  {products.map((product) => (
+                    <option value={product.id}>
+                      {product.sku} · {product.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div class="adm-field">
+                <label for="quantity">Cantidad</label>
+                <input id="quantity" name="quantity" type="number" min="0" step="0.001" required />
+              </div>
+              <div class="adm-field">
+                <label for="reason">Motivo</label>
+                <input id="reason" name="reason" maxlength="240" autocomplete="off" />
+              </div>
+              <div class="adm-actions">
+                <button class="adm-btn" type="submit">Registrar</button>
+              </div>
+            </form>
+          )}
+        </section>
+
+        {selectedBranch && (
+          <section class="adm-card" aria-labelledby="stock-title">
+            <div class="adm-card-head">
+              <h2 id="stock-title">Existencias de {selectedBranch.name}</h2>
+              <span class={`adm-chip${lowStockCount > 0 ? ' adm-chip--alert' : ''}`}>
+                {lowStockCount} con stock bajo
+              </span>
+            </div>
+
+            {products.length === 0 ? (
+              <EmptyState
+                title="No hay productos"
+                message="Registra productos en el catálogo para ver sus existencias."
+              />
+            ) : (
+              <div class="adm-table-wrap">
+                <table class="adm-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">SKU</th>
+                      <th scope="col">Producto</th>
+                      <th scope="col">Existencias</th>
+                      <th scope="col">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.map((product) => {
+                      const quantity = stockByProduct.get(product.id);
+                      return (
+                        <tr>
+                          <td>{product.sku}</td>
+                          <td><strong>{product.name}</strong></td>
+                          <td class="adm-num">
+                            {quantity === undefined ? '—' : `${quantity} u.`}
+                          </td>
+                          <td>
+                            {quantity === undefined ? (
+                              <span class="adm-chip">Sin registro</span>
+                            ) : quantity <= lowStockThreshold ? (
+                              <span class="adm-badge adm-badge--warn">Stock bajo</span>
+                            ) : (
+                              <span class="adm-badge adm-badge--on">Disponible</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <p class="adm-note">
+              Se considera stock bajo cuando quedan {lowStockThreshold} unidades o menos.
+            </p>
+          </section>
+        )}
+      </>
+    )
+  }
 </AdminShell>

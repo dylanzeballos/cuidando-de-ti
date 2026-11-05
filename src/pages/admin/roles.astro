@@ -112,6 +112,15 @@ const selectableCodes = permissionsResult.status === 'ok'
   ? selectablePermissionCodes(permissionsResult.data, modules)
   : new Set<string>();
 
+const permissionLabels = new Map<string, string>();
+if (permissionsResult.status === 'ok') {
+  for (const group of permissionsResult.data) {
+    for (const permission of group.permissions) {
+      permissionLabels.set(permission.code, permission.description || permission.code);
+    }
+  }
+}
+
 const okMessage = Astro.url.searchParams.get('ok');
 const errorMessage = Astro.url.searchParams.get('error');
 const fieldError = errorMessage === 'name-required' ? 'Escribe el nombre del rol.' : null;
@@ -170,7 +179,7 @@ const status = empresa === null ? 'loading' : empresa.status;
         <section class="adm-card" aria-labelledby="rol-form-title">
           <div class="adm-card-head">
             <h2 id="rol-form-title">{editingRole ? `Editar «${editingRole.name}»` : 'Nuevo rol'}</h2>
-            {editingRole && <a class="adm-dashboard-link" href="/admin/roles">Cancelar edición</a>}
+            {editingRole && <a class="adm-link" href="/admin/roles">Cancelar edición</a>}
           </div>
 
           <form method="post">
@@ -273,7 +282,7 @@ const status = empresa === null ? 'loading' : empresa.status;
                         {role.description && (
                           <>
                             <br />
-                            <span class="adm-sub">{role.description}</span>
+                            <span class="adm-cell-muted">{role.description}</span>
                           </>
                         )}
                       </td>
@@ -283,7 +292,7 @@ const status = empresa === null ? 'loading' : empresa.status;
                         ) : (
                           <ul class="adm-list" role="list">
                             {role.permissions.map((code) => (
-                              <li><span class="adm-chip">{code}</span></li>
+                              <li><span class="adm-chip">{permissionLabels.get(code) ?? code}</span></li>
                             ))}
                           </ul>
                         )}
