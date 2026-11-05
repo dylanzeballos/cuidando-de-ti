@@ -251,3 +251,9 @@ Las pantallas de costos y gastos usan los endpoints reales del backend
 (`GET /api/v1/costs/margins`, `POST /api/v1/costs`, `GET|POST /api/v1/costs/expenses`
 y `GET /api/v1/costs/expenses/totals`), no el contrato histórico basado en
 periodos.
+
+## Roadmap del ERP
+
+El estado del panel y los próximos bloques (catálogo editable, compras, clientes y facturación) están en [docs/erp-roadmap.md](docs/erp-roadmap.md).
+
+El cambio de inventario con transferencias y filtros está registrado en OpenSpec: openspec/changes/empresa-inventory-operations. 

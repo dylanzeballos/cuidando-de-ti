@@ -1,0 +1,29 @@
+---
+interface Props {
+  branches: number;
+  products: number;
+  lowStock: number;
+  unregistered: number;
+}
+
+const { branches, products, lowStock, unregistered } = Astro.props;
+---
+
+<dl class="adm-metrics" aria-label="Resumen del inventario">
+  <div>
+    <dt>Sucursales</dt>
+    <dd>{branches}</dd>
+  </div>
+  <div>
+    <dt>Productos</dt>
+    <dd>{products}</dd>
+  </div>
+  <div>
+    <dt>Stock bajo</dt>
+    <dd>{lowStock}</dd>
+  </div>
+  <div>
+    <dt>Sin registro</dt>
+    <dd>{unregistered}</dd>
+  </div>
+</dl>

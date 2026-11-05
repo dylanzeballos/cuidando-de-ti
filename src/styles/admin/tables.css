@@ -186,3 +186,8 @@ table.adm-table {
   color: var(--adm-warn-ink);
 }
 
+.adm-badge--danger {
+  background: var(--adm-err-bg);
+  color: var(--adm-danger-ink);
+}
+

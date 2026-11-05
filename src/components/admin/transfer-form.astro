@@ -1,0 +1,70 @@
+---
+import type { Branch, Product } from '@/lib/admin/catalog-api';
+
+interface Props {
+  branches: Branch[];
+  products: Product[];
+  selectedBranchId: string;
+  open: boolean;
+}
+
+const { branches, products, selectedBranchId, open } = Astro.props;
+const destinations = branches.filter((branch) => branch.id !== selectedBranchId);
+---
+
+<details class="adm-card adm-details" open={open}>
+  <summary class="adm-details-summary">
+    <span>
+      <strong>Transferir existencias</strong>
+      <small>Mueve stock entre sucursales de la empresa</small>
+    </span>
+    <span class="adm-chip">Entre sucursales</span>
+  </summary>
+
+  {destinations.length === 0 ? (
+    <p class="adm-note">
+      Necesitas al menos dos sucursales para transferir existencias. Crea otra sucursal primero.
+    </p>
+  ) : (
+    <form class="adm-form" method="post">
+      <input type="hidden" name="action" value="transfer" />
+      <div class="adm-field">
+        <label for="transfer-from">Desde</label>
+        <select id="transfer-from" name="fromBranchId" required>
+          {branches.map((branch) => (
+            <option value={branch.id} selected={branch.id === selectedBranchId}>
+              {branch.code} · {branch.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div class="adm-field">
+        <label for="transfer-to">Hacia</label>
+        <select id="transfer-to" name="toBranchId" required>
+          {destinations.map((branch) => (
+            <option value={branch.id}>
+              {branch.code} · {branch.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div class="adm-field">
+        <label for="transfer-product">Producto</label>
+        <select id="transfer-product" name="productId" required>
+          {products.map((product) => (
+            <option value={product.id}>
+              {product.sku} · {product.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div class="adm-field">
+        <label for="transfer-quantity">Cantidad</label>
+        <input id="transfer-quantity" name="quantity" type="number" min="0.001" step="0.001" required />
+      </div>
+      <div class="adm-actions">
+        <button class="adm-btn" type="submit">Transferir</button>
+      </div>
+    </form>
+  )}
+</details>

@@ -1,0 +1,65 @@
+---
+import type { Branch, Product } from '@/lib/admin/catalog-api';
+
+interface Props {
+  branches: Branch[];
+  products: Product[];
+  selectedBranchId: string;
+  open: boolean;
+}
+
+const { branches, products, selectedBranchId, open } = Astro.props;
+---
+
+<details class="adm-card adm-details" open={open}>
+  <summary class="adm-details-summary">
+    <span>
+      <strong>Registrar movimiento</strong>
+      <small>Entrada, salida o ajuste de existencias</small>
+    </span>
+    <span class="adm-chip">Entrada · salida · ajuste</span>
+  </summary>
+
+  <form class="adm-form" method="post">
+    <input type="hidden" name="action" value="movement" />
+    <div class="adm-field">
+      <label for="movement-type">Tipo</label>
+      <select id="movement-type" name="type" required>
+        <option value="ENTRY">Entrada</option>
+        <option value="EXIT">Salida</option>
+        <option value="ADJUSTMENT">Ajuste</option>
+      </select>
+    </div>
+    <div class="adm-field">
+      <label for="movement-branch">Sucursal</label>
+      <select id="movement-branch" name="branchId" required>
+        {branches.map((branch) => (
+          <option value={branch.id} selected={branch.id === selectedBranchId}>
+            {branch.code} · {branch.name}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div class="adm-field">
+      <label for="movement-product">Producto</label>
+      <select id="movement-product" name="productId" required>
+        {products.map((product) => (
+          <option value={product.id}>
+            {product.sku} · {product.name}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div class="adm-field">
+      <label for="movement-quantity">Cantidad</label>
+      <input id="movement-quantity" name="quantity" type="number" min="0" step="0.001" required />
+    </div>
+    <div class="adm-field">
+      <label for="movement-reason">Motivo</label>
+      <input id="movement-reason" name="reason" maxlength="240" autocomplete="off" />
+    </div>
+    <div class="adm-actions">
+      <button class="adm-btn" type="submit">Registrar movimiento</button>
+    </div>
+  </form>
+</details>

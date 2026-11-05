@@ -1,0 +1,47 @@
+---
+import type { Product } from '@/lib/admin/catalog-api';
+import {
+  STOCK_STATUS_BADGE,
+  STOCK_STATUS_LABELS,
+  stockStatus,
+} from '@/lib/admin/inventory';
+
+interface Props {
+  products: Product[];
+  stockByProduct: Map<string, number>;
+  threshold: number;
+}
+
+const { products, stockByProduct, threshold } = Astro.props;
+---
+
+<div class="adm-table-wrap">
+  <table class="adm-table adm-table--cards">
+    <thead>
+      <tr>
+        <th scope="col">SKU</th>
+        <th scope="col">Producto</th>
+        <th scope="col">Existencias</th>
+        <th scope="col">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {products.map((product) => {
+        const quantity = stockByProduct.get(product.id);
+        const stock = stockStatus(quantity, threshold);
+        return (
+          <tr>
+            <td data-label="SKU">{product.sku}</td>
+            <td data-label="Producto"><strong>{product.name}</strong></td>
+            <td data-label="Existencias" class="adm-num">
+              {quantity === undefined ? '—' : `${quantity} u.`}
+            </td>
+            <td data-label="Estado">
+              <span class={STOCK_STATUS_BADGE[stock]}>{STOCK_STATUS_LABELS[stock]}</span>
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+</div>

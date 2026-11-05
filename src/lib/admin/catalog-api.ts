@@ -73,6 +73,21 @@ export type RegisterMovementInput = {
   reason?: string | null;
 };
 
+export type TransferInput = {
+  fromBranchId: string;
+  toBranchId: string;
+  productId: string;
+  quantity: number;
+};
+
+export type Transfer = {
+  transferId: string;
+  fromBranchId: string;
+  toBranchId: string;
+  productId: string;
+  quantity: number;
+};
+
 export type AdminClientOptions = {
   /** URL base del backend, por ejemplo `http://localhost:8080/api/v1`. */
   baseUrl: string;
@@ -159,6 +174,8 @@ export function createAdminClient(options: AdminClientOptions) {
       request<Stock>(`/inventory/stock?branchId=${encodeURIComponent(branchId)}&productId=${encodeURIComponent(productId)}`),
     registerMovement: (input: RegisterMovementInput) =>
       postJson<Stock>('/inventory/movements', input),
+    transferStock: (input: TransferInput) =>
+      postJson<Transfer>('/inventory/transfers', input),
   };
 }
 

@@ -1,0 +1,48 @@
+---
+import type { StockFilter } from '@/lib/admin/inventory';
+
+interface Props {
+  query: string;
+  status: StockFilter;
+  branchId: string;
+}
+
+const { query, status, branchId } = Astro.props;
+const hasFilters = query.length > 0 || status !== 'todos';
+const clearHref = branchId
+  ? `/admin/inventario?branchId=${encodeURIComponent(branchId)}`
+  : '/admin/inventario';
+---
+
+<form class="adm-catalog-filters" method="get">
+  <input type="hidden" name="branchId" value={branchId} />
+  <div class="adm-search">
+    <label class="adm-sr" for="stock-search">Buscar productos</label>
+    <span class="adm-search-icon" aria-hidden="true">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m20 20-3.5-3.5"></path>
+      </svg>
+    </span>
+    <input
+      id="stock-search"
+      type="search"
+      name="q"
+      value={query}
+      placeholder="Buscar por nombre o SKU…"
+      maxlength="120"
+    />
+    <button type="submit">Filtrar</button>
+  </div>
+
+  <label class="adm-sr" for="stock-status">Estado de existencias</label>
+  <select id="stock-status" name="estado">
+    <option value="todos" selected={status === 'todos'}>Todas</option>
+    <option value="bajo" selected={status === 'bajo'}>Stock bajo</option>
+    <option value="agotado" selected={status === 'agotado'}>Agotados</option>
+    <option value="disponible" selected={status === 'disponible'}>Disponibles</option>
+    <option value="sin-registro" selected={status === 'sin-registro'}>Sin registro</option>
+  </select>
+
+  {hasFilters && <a class="adm-link" href={clearHref}>Limpiar</a>}
+</form>

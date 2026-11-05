@@ -1,0 +1,36 @@
+---
+interface Props {
+  open: boolean;
+}
+
+const { open } = Astro.props;
+---
+
+<details class="adm-card adm-details" open={open}>
+  <summary class="adm-details-summary">
+    <span>
+      <strong>Nueva sucursal</strong>
+      <small>Código, nombre y dirección</small>
+    </span>
+    <span class="adm-chip">Crear</span>
+  </summary>
+
+  <form class="adm-form" method="post">
+    <input type="hidden" name="action" value="branch" />
+    <div class="adm-field">
+      <label for="branch-code">Código</label>
+      <input id="branch-code" name="code" required maxlength="40" placeholder="CENTRO" autocomplete="off" />
+    </div>
+    <div class="adm-field">
+      <label for="branch-name">Nombre</label>
+      <input id="branch-name" name="name" required maxlength="160" placeholder="Sucursal Centro" autocomplete="off" />
+    </div>
+    <div class="adm-field">
+      <label for="branch-address">Dirección</label>
+      <input id="branch-address" name="address" maxlength="240" autocomplete="off" />
+    </div>
+    <div class="adm-actions">
+      <button class="adm-btn" type="submit">Crear sucursal</button>
+    </div>
+  </form>
+</details>

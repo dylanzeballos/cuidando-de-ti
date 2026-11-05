@@ -1,0 +1,22 @@
+---
+import type { Branch } from '@/lib/admin/catalog-api';
+
+interface Props {
+  branches: Branch[];
+  selectedId: string;
+}
+
+const { branches, selectedId } = Astro.props;
+---
+
+<ul class="adm-list adm-branch-picker" role="list">
+  {branches.map((branch) => (
+    <li>
+      <a href={`/admin/inventario?branchId=${branch.id}`}>
+        <span class={`adm-chip${branch.id === selectedId ? ' adm-chip--on' : ''}`}>
+          {branch.code} · {branch.name}
+        </span>
+      </a>
+    </li>
+  ))}
+</ul>
