@@ -86,7 +86,7 @@
   padding: 0.12rem 0.5rem;
   border-radius: 999px;
   background: var(--adm-err-bg);
-  color: #8f2f24;
+  color: var(--adm-danger-ink);
   font-size: 0.75rem;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
@@ -106,7 +106,7 @@
 }
 
 .rep-empty a {
-  color: var(--adm-brand);
+  color: var(--adm-link);
   font-weight: 600;
   text-decoration: none;
 }

@@ -18,19 +18,19 @@
 .adm-banner--ok {
   background: var(--adm-ok-bg);
   border-color: var(--adm-ok-line);
-  color: #0f766e;
+  color: var(--adm-ok-ink);
 }
 
 .adm-banner--error {
   background: var(--adm-err-bg);
   border-color: var(--adm-err-line);
-  color: #8f2f24;
+  color: var(--adm-danger-ink);
 }
 
 .adm-banner--warn {
-  background: #fdf4e3;
-  border-color: #ecd9a8;
-  color: #7a5a12;
+  background: var(--adm-warn-bg);
+  border-color: var(--adm-warn-line);
+  color: var(--adm-warn-ink);
 }
 
 /* ---------- Estados compartidos ---------- */
@@ -55,7 +55,7 @@
 .adm-skeleton-line {
   height: 12px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--adm-line) 25%, #f7fafb 50%, var(--adm-line) 75%);
+  background: linear-gradient(90deg, var(--adm-line) 25%, var(--adm-surface-2) 50%, var(--adm-line) 75%);
   background-size: 200% 100%;
   animation: adm-shimmer 1.4s linear infinite;
 }
@@ -106,7 +106,7 @@
   display: grid;
   gap: 0.4rem;
   padding: 1rem 1.15rem;
-  color: #8f2f24;
+  color: var(--adm-danger-ink);
   background: var(--adm-err-bg);
   border: 1px solid var(--adm-err-line);
   border-radius: 12px;
@@ -122,7 +122,7 @@
 
 /* Utilidades compartidas por las pantallas */
 .adm-link {
-  color: var(--adm-brand);
+  color: var(--adm-link);
   font-weight: 600;
   text-decoration: none;
 }

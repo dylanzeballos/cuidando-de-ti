@@ -114,7 +114,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .pos-product:hover {
-    background: #f6fbfa;
+    background: var(--adm-surface-hover);
     border-color: var(--adm-line);
   }
 }

@@ -40,7 +40,7 @@
 }
 
 .pos-register:focus-visible {
-  outline: 2px solid var(--adm-brand);
+  outline: 2px solid var(--adm-focus);
   outline-offset: 2px;
 }
 
@@ -54,7 +54,7 @@
 .pos-error {
   margin: 0.85rem 0 0;
   padding: 0.65rem 0.8rem;
-  color: #8f2f24;
+  color: var(--adm-danger-ink);
   font-size: 0.82rem;
   background: var(--adm-err-bg);
   border: 1px solid var(--adm-err-line);

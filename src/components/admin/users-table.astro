@@ -1,0 +1,111 @@
+---
+import type { Role, UserAccount } from '@/lib/admin/identity-api';
+
+interface Props {
+  users: UserAccount[];
+  roles: Role[];
+}
+
+const { users, roles } = Astro.props;
+
+const initials = (name: string): string =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+---
+
+<section class="adm-card" aria-labelledby="lista-usuarios-title">
+  <div class="adm-card-head">
+    <h2 id="lista-usuarios-title">Usuarios de la empresa</h2>
+    <span class="adm-chip">{users.length} listados</span>
+  </div>
+
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th scope="col">Usuario</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Roles</th>
+          <th scope="col">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {users.map((user) => (
+          <tr>
+            <td>
+              <div class="adm-user-cell">
+                <span class="adm-avatar" aria-hidden="true">{initials(user.displayName)}</span>
+                <span class="adm-user-name">
+                  <strong>{user.displayName}</strong>
+                  <small>{user.email}</small>
+                </span>
+              </div>
+            </td>
+            <td>
+              <span class={`adm-badge ${user.active ? 'adm-badge--on' : 'adm-badge--off'}`}>
+                {user.active ? 'Activo' : 'Inactivo'}
+              </span>
+            </td>
+            <td>
+              {user.roles.length === 0 ? (
+                <span class="adm-chip">Sin rol</span>
+              ) : (
+                <ul class="adm-list" role="list">
+                  {user.roles.map((roleName) => (
+                    <li><span class="adm-chip">{roleName}</span></li>
+                  ))}
+                </ul>
+              )}
+            </td>
+            <td>
+              <div class="adm-actions-cell">
+                <form method="post">
+                  <input type="hidden" name="action" value="status" />
+                  <input type="hidden" name="userId" value={user.id} />
+                  <input type="hidden" name="active" value={user.active ? 'false' : 'true'} />
+                  <button
+                    class={`adm-btn adm-btn--small ${user.active ? 'adm-btn--ghost' : ''}`}
+                    type="submit"
+                  >
+                    {user.active ? 'Desactivar' : 'Activar'}
+                  </button>
+                </form>
+
+                {roles.length > 0 && (
+                  <details class="adm-row-details">
+                    <summary>Editar roles</summary>
+                    <form method="post">
+                      <input type="hidden" name="action" value="roles" />
+                      <input type="hidden" name="userId" value={user.id} />
+                      <div class="adm-role-grid">
+                        {roles.map((role) => (
+                          <span class="adm-check">
+                            <input
+                              id={`user-${user.id}-role-${role.id}`}
+                              name="roleIds"
+                              type="checkbox"
+                              value={role.id}
+                              checked={user.roles.includes(role.name)}
+                            />
+                            <label for={`user-${user.id}-role-${role.id}`}>{role.name}</label>
+                          </span>
+                        ))}
+                      </div>
+                      <button class="adm-btn adm-btn--small adm-btn--ghost" type="submit">
+                        Guardar roles
+                      </button>
+                    </form>
+                  </details>
+                )}
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</section>

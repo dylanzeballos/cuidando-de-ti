@@ -1,16 +1,23 @@
 ---
 import AdminShell from '@/components/admin/admin-shell.astro';
+import UserForm from '@/components/admin/user-form.astro';
+import UsersTable from '@/components/admin/users-table.astro';
 import LoadingState from '@/components/primitives/loading-state.astro';
 import EmptyState from '@/components/primitives/empty-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
 import { resolveIdentityClient } from '@/lib/admin/identity-service';
-import { NEW_USER_FIELD_ERRORS, validateNewUser } from '@/lib/admin/identity-validation';
+import { validateNewUser } from '@/lib/admin/identity-validation';
+import { redirectWith } from '@/lib/admin/redirect';
+import {
+  parseUserFilters,
+  userFieldError,
+  userFilterHref,
+} from '@/lib/admin/users-page';
 import type { Role, UserAccount } from '@/lib/admin/identity-api';
 import { INSTALLATION } from '@/lib/installation';
 
 // El token viene de la sesión de servidor; el navegador nunca lo recibe. La
-// empresa es implícita de la instalación: no se lee ningún identificador de
-// empresa de `query` ni de `body`. El middleware ya garantiza la sesión.
+// empresa es implícita de la instalación.
 const auth = await Astro.session?.get('auth');
 if (!auth) {
   return Astro.redirect('/entrar?redirect=%2Fadmin%2Fusuarios', 303);
@@ -20,11 +27,11 @@ const client = resolveIdentityClient(auth.accessToken);
 const empresa = Astro.locals.empresa;
 const empresaName = INSTALLATION.name;
 
-const back = (params: Record<string, string>) =>
-  new Response(null, {
-    status: 303,
-    headers: { location: `/admin/usuarios?${new URLSearchParams(params).toString()}` },
-  });
+const { statusParam, query, activeFilter, currentFilter } = parseUserFilters(
+  Astro.url.searchParams,
+);
+
+const back = (params: Record<string, string>) => redirectWith('/admin/usuarios', params);
 
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
@@ -36,13 +43,11 @@ if (Astro.request.method === 'POST') {
     const password = String(form.get('password') ?? '');
     const active = form.get('active') === 'on';
 
-    // Validación en servidor antes de llamar a la API.
     const fieldError = validateNewUser({ email, displayName, password });
     if (fieldError !== null) return back({ form: 'create', error: fieldError, email, displayName });
 
     const result = await client.createUser({ email, password, displayName, active });
     if (result.status === 'ok') return back({ ok: 'Usuario creado.' });
-    // Un conflicto se muestra legible y no duplica el usuario (la API lo rechaza).
     return back({ form: 'create', error: result.message, email, displayName });
   }
 
@@ -51,7 +56,9 @@ if (Astro.request.method === 'POST') {
     const active = String(form.get('active') ?? '') === 'true';
     if (userId.length === 0) return back({ error: 'Usuario no válido.' });
     const result = await client.setUserStatus(userId, active);
-    if (result.status === 'ok') return back({ ok: active ? 'Usuario activado.' : 'Usuario desactivado.' });
+    if (result.status === 'ok') {
+      return back({ ok: active ? 'Usuario activado.' : 'Usuario desactivado.' });
+    }
     return back({ error: result.message });
   }
 
@@ -63,7 +70,6 @@ if (Astro.request.method === 'POST') {
     const rolesResult = await client.listRoles();
     if (rolesResult.status !== 'ok') return back({ error: rolesResult.message });
     const valid = new Set(rolesResult.data.map((role) => role.id));
-    // Solo se ofrecen roles definidos en la empresa: un rol inexistente no se aplica.
     if (requested.some((id) => !valid.has(id))) {
       return back({ error: 'Algún rol seleccionado ya no está definido en la empresa.' });
     }
@@ -80,7 +86,10 @@ let users: UserAccount[] = [];
 let roles: Role[] = [];
 let loadError: string | null = null;
 
-const [usersResult, rolesResult] = await Promise.all([client.listUsers(), client.listRoles()]);
+const [usersResult, rolesResult] = await Promise.all([
+  client.listUsers({ active: activeFilter, query: query || undefined, size: 100 }),
+  client.listRoles(),
+]);
 if (usersResult.status === 'ok') users = usersResult.data.items;
 else loadError = usersResult.message;
 if (rolesResult.status === 'ok') roles = rolesResult.data;
@@ -88,25 +97,14 @@ else loadError ??= rolesResult.message;
 
 const okMessage = Astro.url.searchParams.get('ok');
 const errorMessage = Astro.url.searchParams.get('error');
-const isFieldError =
-  Astro.url.searchParams.get('form') === 'create' &&
-  errorMessage !== null &&
-  NEW_USER_FIELD_ERRORS.has(errorMessage);
-const pageError = errorMessage !== null && !isFieldError ? errorMessage : null;
+const fieldError = userFieldError(Astro.url.searchParams.get('form'), errorMessage);
+const pageError = errorMessage !== null && fieldError === null ? errorMessage : null;
 const submittedEmail = Astro.url.searchParams.get('email') ?? '';
 const submittedName = Astro.url.searchParams.get('displayName') ?? '';
 
-const FIELD_ERROR_TEXT: Record<string, string> = {
-  'email-required': 'Escribe el correo del usuario.',
-  'email-invalid': 'El correo no tiene un formato válido.',
-  'displayName-required': 'Escribe el nombre visible.',
-  'password-length': 'La contraseña debe tener entre 8 y 72 caracteres.',
-};
-const fieldError = isFieldError && errorMessage !== null ? (FIELD_ERROR_TEXT[errorMessage] ?? 'Revisa este campo.') : null;
-
-// El middleware adjunta la empresa desde el servidor; `null` solo mientras se resuelve.
 const status = empresa === null ? 'loading' : empresa.status;
-const rolesAvailable = rolesResult.status === 'ok';
+const total = usersResult.status === 'ok' ? usersResult.data.total : users.length;
+const activeOnPage = users.filter((user) => user.active).length;
 ---
 
 <AdminShell title="Usuarios" active="/admin/usuarios">
@@ -125,164 +123,73 @@ const rolesAvailable = rolesResult.status === 'ok';
       <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
     ) : (
       <>
-        <section class="adm-card" aria-labelledby="nuevo-usuario-title">
-          <div class="adm-card-head">
-            <h2 id="nuevo-usuario-title">Nuevo usuario</h2>
-          </div>
+        <div class="adm-toolbar">
+          <nav class="rep-periods" aria-label="Filtrar usuarios">
+            <a href={userFilterHref('all', query)} aria-current={currentFilter === 'all' ? 'page' : undefined}>
+              Todos
+            </a>
+            <a
+              href={userFilterHref('active', query)}
+              aria-current={currentFilter === 'active' ? 'page' : undefined}
+            >
+              Activos
+            </a>
+            <a
+              href={userFilterHref('inactive', query)}
+              aria-current={currentFilter === 'inactive' ? 'page' : undefined}
+            >
+              Inactivos
+            </a>
+          </nav>
 
-          <form class="adm-form" method="post" aria-describedby={fieldError ? 'create-user-error' : undefined}>
-            <input type="hidden" name="action" value="create" />
-            <div class="adm-field">
-              <label for="new-email">Correo</label>
-              <input
-                id="new-email"
-                name="email"
-                type="email"
-                required
-                maxlength="200"
-                autocomplete="off"
-                value={submittedEmail}
-                aria-invalid={fieldError === FIELD_ERROR_TEXT['email-invalid'] || fieldError === FIELD_ERROR_TEXT['email-required']}
-                aria-describedby={fieldError ? 'create-user-error' : undefined}
-              />
-            </div>
-            <div class="adm-field">
-              <label for="new-name">Nombre</label>
-              <input
-                id="new-name"
-                name="displayName"
-                required
-                maxlength="160"
-                value={submittedName}
-                aria-describedby={fieldError ? 'create-user-error' : undefined}
-              />
-            </div>
-            <div class="adm-field">
-              <label for="new-password">Contraseña</label>
-              <input
-                id="new-password"
-                name="password"
-                type="password"
-                required
-                minlength="8"
-                maxlength="72"
-                autocomplete="new-password"
-                aria-describedby={fieldError ? 'create-user-error' : undefined}
-              />
-            </div>
-            <div class="adm-field">
-              <span class="adm-check">
-                <input id="new-active" name="active" type="checkbox" />
-                <label for="new-active">Activo</label>
-              </span>
-            </div>
-            <div class="adm-actions">
-              <button class="adm-btn" type="submit">Crear usuario</button>
-            </div>
+          <form class="adm-search" method="get" role="search">
+            <input
+              type="search"
+              name="q"
+              value={query}
+              placeholder="Buscar por nombre o correo…"
+              aria-label="Buscar usuarios"
+              maxlength="120"
+            />
+            {statusParam && <input type="hidden" name="estado" value={statusParam} />}
+            <button class="adm-btn adm-btn--ghost adm-btn--small" type="submit">Buscar</button>
           </form>
-          {fieldError && (
-            <p id="create-user-error" class="adm-field-error" role="alert">{fieldError}</p>
-          )}
-        </section>
+        </div>
+
+        <dl class="adm-metrics" aria-label="Resumen de usuarios">
+          <div>
+            <dt>Usuarios</dt>
+            <dd>{total}</dd>
+          </div>
+          <div>
+            <dt>Activos en la lista</dt>
+            <dd>{activeOnPage}</dd>
+          </div>
+          <div>
+            <dt>Inactivos en la lista</dt>
+            <dd>{users.length - activeOnPage}</dd>
+          </div>
+          <div>
+            <dt>Roles</dt>
+            <dd>{roles.length}</dd>
+          </div>
+        </dl>
+
+        <UserForm
+          fieldError={fieldError}
+          submittedEmail={submittedEmail}
+          submittedName={submittedName}
+        />
 
         {loadError ? (
           <ErrorState message={loadError} />
         ) : users.length === 0 ? (
           <EmptyState
-            title="Aún no hay usuarios"
-            message="Crea el primero para dar acceso a la empresa."
+            title="Sin usuarios para este filtro"
+            message="Prueba con otro estado o crea el primero para dar acceso a la farmacia."
           />
         ) : (
-          <section class="adm-card" aria-labelledby="lista-usuarios-title">
-            <div class="adm-card-head">
-              <h2 id="lista-usuarios-title">Usuarios de la empresa</h2>
-              <span class="adm-chip">{users.length}</span>
-            </div>
-
-            <div class="adm-table-wrap">
-              <table class="adm-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Usuario</th>
-                    <th scope="col">Estado</th>
-                    <th scope="col">Roles</th>
-                    <th scope="col">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user) => (
-                    <tr>
-                      <td>
-                        <strong>{user.displayName}</strong>
-                        <br />
-                        <span class="adm-cell-muted">{user.email}</span>
-                      </td>
-                      <td>
-                        <span class={`adm-badge ${user.active ? 'adm-badge--on' : 'adm-badge--off'}`}>
-                          {user.active ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
-                      <td>
-                        {user.roles.length === 0 ? (
-                          <span class="adm-chip">Sin rol</span>
-                        ) : (
-                          <ul class="adm-list" role="list">
-                            {user.roles.map((roleName) => (
-                              <li><span class="adm-chip">{roleName}</span></li>
-                            ))}
-                          </ul>
-                        )}
-                      </td>
-                      <td>
-                        <div class="adm-actions-cell">
-                          <form method="post">
-                            <input type="hidden" name="action" value="status" />
-                            <input type="hidden" name="userId" value={user.id} />
-                            <input type="hidden" name="active" value={user.active ? 'false' : 'true'} />
-                            <button
-                              class={`adm-btn adm-btn--small ${user.active ? 'adm-btn--ghost' : ''}`}
-                              type="submit"
-                            >
-                              {user.active ? 'Desactivar' : 'Activar'}
-                            </button>
-                          </form>
-
-                          {rolesAvailable && roles.length > 0 ? (
-                            <form method="post">
-                              <input type="hidden" name="action" value="roles" />
-                              <input type="hidden" name="userId" value={user.id} />
-                              <fieldset class="adm-roles">
-                                <legend>Roles de {user.displayName}</legend>
-                                <div class="adm-role-grid">
-                                  {roles.map((role) => (
-                                    <span class="adm-check">
-                                      <input
-                                        id={`user-${user.id}-role-${role.id}`}
-                                        name="roleIds"
-                                        type="checkbox"
-                                        value={role.id}
-                                        checked={user.roles.includes(role.name)}
-                                      />
-                                      <label for={`user-${user.id}-role-${role.id}`}>{role.name}</label>
-                                    </span>
-                                  ))}
-                                </div>
-                              </fieldset>
-                              <button class="adm-btn adm-btn--small adm-btn--ghost" type="submit">
-                                Guardar roles
-                              </button>
-                            </form>
-                          ) : (
-                            <span class="adm-chip">Sin roles definidos</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+          <UsersTable users={users} roles={roles} />
         )}
       </>
     )

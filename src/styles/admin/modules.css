@@ -61,7 +61,7 @@
 }
 
 .adm-placeholder-list li span {
-  color: var(--adm-brand);
+  color: var(--adm-link);
   font-size: 0.72rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;

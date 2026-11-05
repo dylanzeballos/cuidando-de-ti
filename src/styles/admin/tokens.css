@@ -19,6 +19,7 @@
   --adm-brand-ink: #0b5d56;
   --adm-accent: #d97706;
   --adm-danger: #b23b2e;
+  --adm-danger-contrast: #fff;
   /* Paleta de datos: roles distinguibles, no decoración. */
   --rep-c1: #0f766e;
   --rep-c2: #0e7490;
@@ -27,11 +28,61 @@
   --rep-c5: #be123c;
   --adm-ok-bg: #ddf4ef;
   --adm-ok-line: #b3e1d7;
+  --adm-ok-ink: #0f6a3f;
   --adm-err-bg: #fbeae8;
   --adm-err-line: #e7beb6;
+  --adm-danger-ink: #8f2f24;
+  --adm-warn-bg: #fdf4e3;
+  --adm-warn-line: #ecd9a8;
+  --adm-warn-ink: #7a5a12;
+  --adm-surface-2: #f4f9f8;
+  --adm-surface-hover: #f7fcfb;
+  --adm-link: #0f766e;
+  --adm-focus: #0f766e;
+  --adm-bar: #5eead4;
+  --adm-bar-strong: #14b8a6;
   --adm-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --adm-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --adm-radius: 16px;
+}
+
+/* Modo oscuro del panel. La clase `.dark` la aplica el layout antes del
+   primer pintado según la preferencia guardada o el sistema. */
+.dark {
+  color-scheme: dark;
+  --adm-ink: #e6edf3;
+  --adm-muted: #94a3b8;
+  --adm-paper: #080f1c;
+  --adm-surface: #0f1a2b;
+  --adm-surface-2: #16233a;
+  --adm-surface-hover: #1a2a44;
+  --adm-line: #24334a;
+  --adm-line-strong: #33475f;
+  --adm-brand: #0f766e;
+  --adm-brand-deep: #0b3d38;
+  --adm-brand-soft: #0f3d3a;
+  --adm-brand-ink: #0b5d56;
+  --adm-accent: #fbbf24;
+  --adm-danger: #f87171;
+  --adm-danger-contrast: #2a0808;
+  --adm-danger-ink: #fca5a5;
+  --adm-ok-bg: #0d2f2b;
+  --adm-ok-line: #1f5a52;
+  --adm-ok-ink: #6ee7b7;
+  --adm-err-bg: #3a1518;
+  --adm-err-line: #7f2a2f;
+  --adm-warn-bg: #3a2a12;
+  --adm-warn-line: #6b4e1a;
+  --adm-warn-ink: #fbbf24;
+  --adm-link: #5eead4;
+  --adm-focus: #5eead4;
+  --adm-bar: #2dd4bf;
+  --adm-bar-strong: #5eead4;
+  --rep-c1: #2dd4bf;
+  --rep-c2: #38bdf8;
+  --rep-c3: #fbbf24;
+  --rep-c4: #a78bfa;
+  --rep-c5: #fb7185;
 }
 
 * {

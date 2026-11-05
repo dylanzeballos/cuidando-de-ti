@@ -23,7 +23,7 @@ table.adm-table {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--adm-muted);
-  background: #f4f9f8;
+  background: var(--adm-surface-2);
   border-bottom: 1px solid var(--adm-line);
 }
 
@@ -47,7 +47,7 @@ table.adm-table {
 
 @media (hover: hover) and (pointer: fine) {
   .adm-table tbody tr:hover {
-    background: #f3faf8;
+    background: var(--adm-surface-2);
   }
 }
 
@@ -59,18 +59,18 @@ table.adm-table {
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 600;
-  background: #eef3ef;
+  background: var(--adm-surface-2);
   color: var(--adm-muted);
 }
 
 .adm-chip--on {
   background: var(--adm-brand-soft);
-  color: #0f766e;
+  color: var(--adm-link);
 }
 
 .adm-chip--alert {
   background: var(--adm-err-bg);
-  color: #8f2f24;
+  color: var(--adm-danger-ink);
 }
 
 .adm-session {
@@ -142,7 +142,7 @@ table.adm-table {
 
 @media (hover: hover) and (pointer: fine) {
   .adm-list a:hover .adm-chip {
-    background: #e3ebe4;
+    background: var(--adm-surface-2);
   }
 }
 
@@ -170,16 +170,16 @@ table.adm-table {
 
 .adm-badge--on {
   background: var(--adm-ok-bg);
-  color: #0f6a3f;
+  color: var(--adm-ok-ink);
 }
 
 .adm-badge--off {
-  background: #f0f1ee;
-  color: #7a857d;
+  background: var(--adm-surface-2);
+  color: var(--adm-muted);
 }
 
 .adm-badge--warn {
-  background: #fdf4e3;
-  color: #7a5a12;
+  background: var(--adm-warn-bg);
+  color: var(--adm-warn-ink);
 }
 

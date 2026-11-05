@@ -1,6 +1,6 @@
 /* ---------- Home dashboard ---------- */
 .rep-inline-link {
-  color: var(--adm-brand);
+  color: var(--adm-link);
   font-size: 0.78rem;
   font-weight: 600;
   text-decoration: none;
@@ -152,7 +152,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .dash-gallery-card:hover {
-    border-color: var(--adm-brand);
+    border-color: var(--adm-link);
   }
 
   .dash-gallery-card:hover img {

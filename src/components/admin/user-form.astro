@@ -1,0 +1,78 @@
+---
+interface Props {
+  fieldError: string | null;
+  submittedEmail: string;
+  submittedName: string;
+}
+
+const { fieldError, submittedEmail, submittedName } = Astro.props;
+---
+
+<details class="adm-card adm-details" open={fieldError !== null}>
+  <summary class="adm-details-summary">
+    <span>
+      <strong>Nuevo usuario</strong>
+      <small>Correo, nombre y contraseña temporal</small>
+    </span>
+    <span class="adm-chip">Crear</span>
+  </summary>
+
+  <form
+    class="adm-form"
+    method="post"
+    aria-describedby={fieldError ? 'create-user-error' : undefined}
+  >
+    <input type="hidden" name="action" value="create" />
+    <div class="adm-field">
+      <label for="new-email">Correo</label>
+      <input
+        id="new-email"
+        name="email"
+        type="email"
+        required
+        maxlength="200"
+        autocomplete="off"
+        value={submittedEmail}
+        aria-invalid={fieldError ? 'true' : undefined}
+        aria-describedby={fieldError ? 'create-user-error' : undefined}
+      />
+    </div>
+    <div class="adm-field">
+      <label for="new-name">Nombre</label>
+      <input
+        id="new-name"
+        name="displayName"
+        required
+        maxlength="160"
+        autocomplete="off"
+        value={submittedName}
+        aria-invalid={fieldError ? 'true' : undefined}
+        aria-describedby={fieldError ? 'create-user-error' : undefined}
+      />
+    </div>
+    <div class="adm-field">
+      <label for="new-password">Contraseña</label>
+      <input
+        id="new-password"
+        name="password"
+        type="password"
+        required
+        minlength="8"
+        maxlength="72"
+        autocomplete="new-password"
+        aria-describedby={fieldError ? 'create-user-error' : undefined}
+      />
+    </div>
+    <div class="adm-field">
+      <span class="adm-check">
+        <input id="new-active" name="active" type="checkbox" />
+        <label for="new-active">Activo</label>
+      </span>
+    </div>
+    <div class="adm-actions">
+      <button class="adm-btn" type="submit">Crear usuario</button>
+    </div>
+  </form>
+
+  {fieldError && <p id="create-user-error" class="adm-field-error" role="alert">{fieldError}</p>}
+</details>

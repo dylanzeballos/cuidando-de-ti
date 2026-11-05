@@ -24,6 +24,18 @@ const style = themeStyle(resolveTheme(theme));
     {description && <meta name="description" content={description} />}
     {noindex && <meta name="robots" content="noindex" />}
     <title>{title}</title>
+    <script is:inline>
+      (() => {
+        try {
+          const stored = localStorage.getItem('cuidando:theme');
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const dark = stored === 'dark' || (stored === null && prefersDark);
+          document.documentElement.classList.toggle('dark', dark);
+        } catch {
+          // Sin almacenamiento disponible: se usa el tema claro.
+        }
+      })();
+    </script>
   </head>
   <body style={style}>
     <slot />

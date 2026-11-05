@@ -20,6 +20,11 @@
   transition: background-color 160ms var(--adm-ease-out), color 160ms var(--adm-ease-out);
 }
 
+.adm-gear[aria-current="page"] {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+}
+
 .adm-gear svg {
   flex: 0 0 auto;
   opacity: 0.85;

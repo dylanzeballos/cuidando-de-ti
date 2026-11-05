@@ -16,6 +16,17 @@ const { title, heading, message, code = '' } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>{title}</title>
+    <script is:inline>
+      try {
+        const stored = localStorage.getItem('cuidando:theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (stored === 'dark' || (stored === null && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch {
+        // Sin almacenamiento: se usa el tema claro.
+      }
+    </script>
   </head>
   <body>
     <main>
@@ -91,5 +102,19 @@ const { title, heading, message, code = '' } = Astro.props;
   @media (prefers-reduced-motion: reduce) {
     main { animation: none; }
     a:active { transform: none; }
+  }
+  :global(html.dark) body {
+    background: #080f1c;
+    color: #e6edf3;
+  }
+  :global(html.dark) p {
+    color: #94a3b8;
+  }
+  :global(html.dark) a {
+    color: #5eead4;
+    background: #0f3d3a;
+  }
+  :global(html.dark) .code {
+    color: #5eead4;
   }
 </style>

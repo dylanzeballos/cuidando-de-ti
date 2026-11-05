@@ -157,6 +157,11 @@
   }
 
   .adm-header-actions {
+    display: flex;
+    padding-top: 0;
+  }
+
+  .adm-header-actions .adm-date {
     display: none;
   }
 

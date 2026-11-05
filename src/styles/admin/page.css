@@ -79,7 +79,7 @@
 }
 
 .adm-dashboard-icon {
-  color: var(--adm-brand);
+  color: var(--adm-link);
 }
 
 .adm-dashboard-title {
@@ -96,7 +96,7 @@
 .adm-dashboard-link {
   margin-top: auto;
   align-self: flex-start;
-  color: var(--adm-brand);
+  color: var(--adm-link);
   font-weight: 620;
   text-decoration: none;
 }
@@ -143,6 +143,45 @@
 }
 
 .svc-summary a {
-  color: var(--adm-brand);
+  color: var(--adm-link);
 }
 
+
+/* Toggle de tema */
+.adm-theme-toggle {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--adm-muted);
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 150ms var(--adm-ease-out), border-color 150ms var(--adm-ease-out),
+    background-color 150ms var(--adm-ease-out);
+}
+
+.adm-theme-toggle:hover {
+  color: var(--adm-ink);
+  border-color: var(--adm-line-strong);
+}
+
+.adm-theme-icon--sun {
+  display: none;
+}
+
+.dark .adm-theme-icon--moon {
+  display: none;
+}
+
+.dark .adm-theme-icon--sun {
+  display: block;
+}
+
+.adm-theme-toggle:focus-visible {
+  outline: 2px solid var(--adm-focus);
+  outline-offset: 2px;
+}

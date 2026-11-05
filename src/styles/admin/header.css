@@ -36,7 +36,7 @@
 }
 
 .adm-context svg {
-  color: var(--adm-brand);
+  color: var(--adm-link);
 }
 
 .adm-subnav {
@@ -114,7 +114,7 @@
 }
 
 .adm-date svg {
-  color: var(--adm-brand);
+  color: var(--adm-link);
 }
 
 /* ---------- Menú móvil ---------- */

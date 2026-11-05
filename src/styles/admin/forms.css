@@ -31,7 +31,7 @@
 .adm-field input:focus,
 .adm-field select:focus {
   outline: none;
-  border-color: var(--adm-brand);
+  border-color: var(--adm-link);
   box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.16);
 }
 
@@ -62,7 +62,7 @@
 }
 
 .adm-btn--ghost {
-  color: var(--adm-brand);
+  color: var(--adm-link);
   background: var(--adm-brand-soft);
   box-shadow: none;
 }
@@ -76,7 +76,7 @@
     background: var(--adm-brand-ink);
   }
   .adm-btn--ghost:hover {
-    background: #cdeae5;
+    background: var(--adm-brand-soft);
   }
   .adm-nav-link:hover {
     background: rgba(255, 255, 255, 0.1);
@@ -101,7 +101,7 @@
 
 .adm-check input {
   width: auto;
-  accent-color: var(--adm-brand);
+  accent-color: var(--adm-link);
 }
 
 .adm-roles {
@@ -158,12 +158,13 @@
 
 .adm-btn--danger {
   background: var(--adm-danger);
+  color: var(--adm-danger-contrast);
   box-shadow: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .adm-btn--danger:hover {
-    background: #9c3327;
+    background: var(--adm-danger);
   }
 }
 
@@ -174,7 +175,7 @@
 .adm-table tfoot th,
 .adm-table tfoot td {
   padding: 0.7rem 0.85rem;
-  background: #f8fbfa;
+  background: var(--adm-surface-2);
   border-top: 1px solid var(--adm-line);
   font-size: 0.85rem;
   font-weight: 650;

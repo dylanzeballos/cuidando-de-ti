@@ -1,0 +1,116 @@
+/* Búsqueda, detalles plegables y celdas de usuario/rol. */
+.adm-search {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.adm-search input {
+  min-width: 220px;
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+  color: var(--adm-ink);
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line-strong);
+  border-radius: 10px;
+}
+
+.adm-search input:focus-visible {
+  outline: 2px solid var(--adm-focus);
+  outline-offset: 1px;
+}
+
+.adm-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.adm-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.adm-details-summary > span:first-child {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.adm-details-summary strong {
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.adm-details-summary small {
+  color: var(--adm-muted);
+  font-size: 0.78rem;
+}
+
+.adm-details[open] > summary {
+  margin-bottom: 1.1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--adm-line);
+}
+
+.adm-user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.adm-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  color: var(--adm-link);
+  font-size: 0.76rem;
+  font-weight: 700;
+  background: var(--adm-brand-soft);
+  border-radius: 10px;
+}
+
+.adm-user-name {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.adm-user-name strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.adm-user-name small {
+  overflow: hidden;
+  color: var(--adm-muted);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adm-row-details > summary {
+  color: var(--adm-link);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.adm-row-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.adm-row-details[open] > summary {
+  margin-bottom: 0.55rem;
+}
+
+.adm-row-details .adm-role-grid {
+  margin: 0.35rem 0 0.65rem;
+}

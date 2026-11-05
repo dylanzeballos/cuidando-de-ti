@@ -1,0 +1,96 @@
+---
+import { describeModule } from '@/lib/module-catalog';
+import type { PermissionGroup, Role } from '@/lib/admin/identity-api';
+
+interface Props {
+  editingRole: Role | null;
+  fieldError: string | null;
+  permissionsGroups: PermissionGroup[];
+  hiddenPermissions: string[];
+}
+
+const { editingRole, fieldError, permissionsGroups, hiddenPermissions } = Astro.props;
+const selected = new Set(editingRole?.permissions ?? []);
+---
+
+<section class="adm-card" aria-labelledby="rol-form-title">
+  <div class="adm-card-head">
+    <h2 id="rol-form-title">
+      {editingRole ? `Editar «${editingRole.name}»` : 'Nuevo rol'}
+    </h2>
+    {editingRole && <a class="adm-link" href="/admin/roles">Cancelar edición</a>}
+  </div>
+
+  <form method="post">
+    <input type="hidden" name="action" value="save-role" />
+    <input type="hidden" name="roleId" value={editingRole?.id ?? ''} />
+
+    <div class="adm-form">
+      <div class="adm-field">
+        <label for="role-name">Nombre</label>
+        <input
+          id="role-name"
+          name="name"
+          required
+          maxlength="80"
+          value={editingRole?.name ?? ''}
+          aria-invalid={fieldError !== null}
+          aria-describedby={fieldError ? 'role-name-error' : undefined}
+        />
+        {fieldError && <p id="role-name-error" class="adm-field-error" role="alert">{fieldError}</p>}
+      </div>
+      <div class="adm-field">
+        <label for="role-description">Descripción</label>
+        <input
+          id="role-description"
+          name="description"
+          maxlength="240"
+          value={editingRole?.description ?? ''}
+        />
+      </div>
+    </div>
+
+    {hiddenPermissions.length > 0 && (
+      <p class="adm-banner adm-banner--warn" role="status">
+        Permisos de módulos no habilitados que no se ofrecen ni se concederán:{' '}
+        {hiddenPermissions.join(', ')}.
+      </p>
+    )}
+
+    <fieldset class="adm-roles">
+      <legend>Permisos por módulo habilitado</legend>
+      {permissionsGroups.length === 0 ? (
+        <p class="adm-note">
+          No hay módulos con permisos habilitados. Activa módulos en la configuración de la
+          empresa para asignar permisos.
+        </p>
+      ) : (
+        permissionsGroups.map((group) => (
+          <div class="adm-role-group">
+            <p class="adm-role-group-title">{describeModule(group.moduleCode).name}</p>
+            <div class="adm-role-grid">
+              {group.permissions.map((permission) => (
+                <span class="adm-check">
+                  <input
+                    id={`perm-${permission.code}`}
+                    name="permissions"
+                    type="checkbox"
+                    value={permission.code}
+                    checked={selected.has(permission.code)}
+                  />
+                  <label for={`perm-${permission.code}`}>
+                    {permission.description || permission.code}
+                  </label>
+                </span>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+    </fieldset>
+
+    <div class="adm-actions">
+      <button class="adm-btn" type="submit">{editingRole ? 'Guardar rol' : 'Crear rol'}</button>
+    </div>
+  </form>
+</section>

@@ -42,12 +42,12 @@
 
 /* Barras verticales del visual mensual */
 .rep-bar-rect {
-  fill: #5eead4;
+  fill: var(--adm-bar);
   transition: fill 150ms var(--adm-ease-out);
 }
 
 .rep-bar-rect:hover {
-  fill: #14b8a6;
+  fill: var(--adm-bar-strong);
 }
 
 /* Lista de barras horizontales */

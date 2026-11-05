@@ -89,7 +89,7 @@
   background: var(--kpi-color, var(--adm-brand));
 }
 
-.rep-kpi-icon--teal { --kpi-color: #0f766e; }
+.rep-kpi-icon--teal { --kpi-color: var(--adm-brand); }
 .rep-kpi-icon--blue { --kpi-color: #2563eb; }
 .rep-kpi-icon--amber { --kpi-color: #d97706; }
 .rep-kpi-icon--violet { --kpi-color: #7c3aed; }
@@ -124,7 +124,7 @@
 }
 
 .rep-delta--up {
-  color: #0f766e;
+  color: var(--adm-ok-ink);
   font-weight: 600;
 }
 
