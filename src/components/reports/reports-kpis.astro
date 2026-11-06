@@ -1,0 +1,103 @@
+---
+import Kpi from '@/components/reports/kpi.astro';
+import { LOW_STOCK_THRESHOLD, type ReportStats } from '@/lib/admin/reports';
+import { formatMoney } from '@/lib/sales/cart';
+
+interface Props {
+  stats: ReportStats;
+}
+
+const { stats } = Astro.props;
+
+const money = (value: number | null | undefined): string =>
+  value === null || value === undefined ? '—' : formatMoney(value);
+const percent = (value: number | null): string => (value === null ? '—' : `${value.toFixed(1)} %`);
+const number = (value: number): string => new Intl.NumberFormat('es-BO').format(value);
+
+const deltaNote = (value: number | null, suffix: string): string => {
+  if (value === null) return suffix;
+  const sign = value > 0 ? '+' : '';
+  return `${sign}${value.toFixed(1)} % ${suffix}`;
+};
+
+const trend = (value: number | null, invert = false): 'good' | 'bad' | 'flat' => {
+  if (value === null || value === 0) return 'flat';
+  const favorable = value > 0 !== invert;
+  return favorable ? 'good' : 'bad';
+};
+
+const coveragePct =
+  stats.activeProducts === 0 ? null : (stats.productsWithCost / stats.activeProducts) * 100;
+---
+
+<section class="rep-summary" aria-label="Resumen del periodo">
+  <div class="rep-summary-group">
+    <h2 class="rep-summary-title">Resultado</h2>
+    <ul class="rep-kpis">
+      <Kpi
+        kind="revenue"
+        label="Ingresos"
+        value={money(stats.revenue)}
+        note={deltaNote(stats.revenueDeltaPct, 'vs periodo anterior')}
+        trend={trend(stats.revenueDeltaPct)}
+        tone="teal"
+      />
+      <Kpi
+        kind="expenses"
+        label="Gastos del mes"
+        value={money(stats.expensesTotal)}
+        note={deltaNote(stats.expensesDeltaPct, 'vs mes anterior')}
+        trend={trend(stats.expensesDeltaPct, true)}
+        tone="rose"
+      />
+      <Kpi
+        kind="margin"
+        label="Margen catálogo"
+        value={percent(stats.catalogMarginPct)}
+        note={`${stats.productsWithCost} de ${stats.activeProducts} con costo`}
+        tone="amber"
+      />
+      <Kpi
+        kind="ticket"
+        label="Venta promedio"
+        value={money(stats.averageTicket)}
+        note="Por venta completada"
+        tone="violet"
+      />
+    </ul>
+  </div>
+
+  <div class="rep-summary-group">
+    <h2 class="rep-summary-title">Operación</h2>
+    <ul class="rep-kpis">
+      <Kpi
+        kind="sales"
+        label="Ventas"
+        value={number(stats.salesCount)}
+        note={stats.annulledCount > 0 ? `${stats.annulledCount} anulada(s)` : 'Sin anuladas'}
+        tone="blue"
+      />
+      <Kpi
+        kind="products"
+        label="Productos activos"
+        value={number(stats.activeProducts)}
+        note="En catálogo"
+        tone="blue"
+      />
+      <Kpi
+        kind="stock"
+        label="Existencias bajas"
+        value={number(stats.lowStockCount)}
+        note={`≤ ${LOW_STOCK_THRESHOLD} unidades`}
+        tone="slate"
+      />
+      <Kpi
+        kind="coverage"
+        label="Cobertura de costos"
+        value={percent(coveragePct)}
+        note="Base para calcular margen"
+        tone="teal"
+      />
+    </ul>
+  </div>
+</section>

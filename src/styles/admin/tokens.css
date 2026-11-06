@@ -1,84 +1,92 @@
 /*
  * Sistema visual del panel de administración.
- * Identidad: farmacia Cuidando de Ti — teal de marca (#0f766e) sobre papel
- * frío, ámbar como acento de datos, tipografía Geist con tracking por tamaño.
+ * Identidad: farmacia Cuidando de Ti - azul de marca (#2196d3, tomado del
+ * logotipo de la varita farmacéutica) sobre papel frío, ámbar como acento de
+ * datos, tipografía Geist con tracking por tamaño.
  * El sidebar usa el color principal de la farmacia; el contenido respira con
  * superficies blancas y hairlines. Motion: un solo gesto de entrada, press-scale
  * en controles, ease-out fuerte, todo bajo prefers-reduced-motion.
  */
 :root {
-  --adm-ink: #0f172a;
-  --adm-muted: #64748b;
-  --adm-paper: #f4f7f9;
+  --adm-ink: #0f1c2e;
+  --adm-muted: #5b7186;
+  --adm-paper: #f3f7fa;
   --adm-surface: #ffffff;
-  --adm-line: #e4ebf1;
-  --adm-line-strong: #cfdbe5;
-  --adm-brand: #0f766e;
-  --adm-brand-deep: #0f766e;
-  --adm-brand-soft: #dff3ef;
-  --adm-brand-ink: #0b5d56;
+  --adm-line: #dfe9f1;
+  --adm-line-strong: #c9dae7;
+  /* Marca derivada del azul del logo (#2196d3). En modo claro, los tonos de
+     texto/enlace usan una variante oscurecida (#1a7fb8) para cumplir WCAG AA
+     sobre blanco; el relleno sólido (sidebar, botones) mantiene el azul vivo. */
+  --adm-brand: #2196d3;
+  --adm-brand-deep: #1672a6;
+  --adm-brand-solid: #1a7fb8;
+  --adm-brand-soft: #e3f2fb;
+  --adm-brand-ink: #12628f;
   --adm-accent: #d97706;
   --adm-danger: #b23b2e;
   --adm-danger-contrast: #fff;
   /* Paleta de datos: roles distinguibles, no decoración. */
-  --rep-c1: #0f766e;
+  --rep-c1: #1a7fb8;
   --rep-c2: #0e7490;
   --rep-c3: #b45309;
   --rep-c4: #6d28d9;
   --rep-c5: #be123c;
-  --adm-ok-bg: #ddf4ef;
-  --adm-ok-line: #b3e1d7;
-  --adm-ok-ink: #0f6a3f;
+  --adm-ok-bg: #ddf1fb;
+  --adm-ok-line: #b3dcef;
+  --adm-ok-ink: #0f5f8f;
   --adm-err-bg: #fbeae8;
   --adm-err-line: #e7beb6;
   --adm-danger-ink: #8f2f24;
   --adm-warn-bg: #fdf4e3;
   --adm-warn-line: #ecd9a8;
   --adm-warn-ink: #7a5a12;
-  --adm-surface-2: #f4f9f8;
-  --adm-surface-hover: #f7fcfb;
-  --adm-link: #0f766e;
-  --adm-focus: #0f766e;
-  --adm-bar: #5eead4;
-  --adm-bar-strong: #14b8a6;
+  --adm-surface-2: #f2f8fc;
+  --adm-surface-hover: #f6fafd;
+  --adm-link: #1a7fb8;
+  --adm-focus: #1a7fb8;
+  --adm-bar: #7cccf2;
+  --adm-bar-strong: #2196d3;
   --adm-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --adm-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --adm-radius: 16px;
 }
 
 /* Modo oscuro del panel. La clase `.dark` la aplica el layout antes del
-   primer pintado según la preferencia guardada o el sistema. */
+   primer pintado según la preferencia guardada o el sistema. El azul del
+   logo se aclara hacia #4db3e6 para conservar contraste sobre superficies
+   oscuras; los enlaces suben aún más (#7cccf2) para texto pequeño. */
 .dark {
   color-scheme: dark;
-  --adm-ink: #e6edf3;
-  --adm-muted: #94a3b8;
-  --adm-paper: #080f1c;
-  --adm-surface: #0f1a2b;
-  --adm-surface-2: #16233a;
-  --adm-surface-hover: #1a2a44;
-  --adm-line: #24334a;
-  --adm-line-strong: #33475f;
-  --adm-brand: #0f766e;
-  --adm-brand-deep: #0b3d38;
-  --adm-brand-soft: #0f3d3a;
-  --adm-brand-ink: #0b5d56;
+  --adm-ink: #e8f1f8;
+  --adm-muted: #92a8bc;
+  --adm-paper: #071522;
+  --adm-surface: #0d2233;
+  --adm-surface-2: #14293d;
+  --adm-surface-hover: #183148;
+  --adm-line: #21384e;
+  --adm-line-strong: #31506a;
+  --adm-brand: #4db3e6;
+  --adm-brand-deep: #0f3a56;
+  --adm-brand-solid: #2e9ed6;
+  --adm-brand-soft: #10304a;
+  --adm-brand-ink: #8fd4f2;
   --adm-accent: #fbbf24;
   --adm-danger: #f87171;
   --adm-danger-contrast: #2a0808;
   --adm-danger-ink: #fca5a5;
-  --adm-ok-bg: #0d2f2b;
-  --adm-ok-line: #1f5a52;
-  --adm-ok-ink: #6ee7b7;
+  --adm-ok-bg: #0e2c40;
+  --adm-ok-line: #1f4d6b;
+  --adm-ok-ink: #7cccf2;
   --adm-err-bg: #3a1518;
   --adm-err-line: #7f2a2f;
   --adm-warn-bg: #3a2a12;
   --adm-warn-line: #6b4e1a;
   --adm-warn-ink: #fbbf24;
-  --adm-link: #5eead4;
-  --adm-focus: #5eead4;
-  --adm-bar: #2dd4bf;
-  --adm-bar-strong: #5eead4;
-  --rep-c1: #2dd4bf;
+  --adm-link: #7cccf2;
+  --adm-focus: #7cccf2;
+  --adm-bar: #38a8dd;
+  --adm-bar-strong: #7cccf2;
+  --rep-c1: #4db3e6;
   --rep-c2: #38bdf8;
   --rep-c3: #fbbf24;
   --rep-c4: #a78bfa;
@@ -110,4 +118,3 @@ a {
   outline-offset: 2px;
   border-radius: 6px;
 }
-

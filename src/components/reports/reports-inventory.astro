@@ -1,0 +1,150 @@
+---
+import MixChart from '@/components/reports/mix-chart.astro';
+import ReportTile from '@/components/reports/report-tile.astro';
+import { LOW_STOCK_THRESHOLD, type ReportView } from '@/lib/admin/reports';
+import { formatMoney } from '@/lib/sales/cart';
+
+interface Props {
+  view: ReportView;
+  hasStockData: boolean;
+}
+
+const { view, hasStockData } = Astro.props;
+
+const money = (value: number | null | undefined): string =>
+  value === null || value === undefined ? '—' : formatMoney(value);
+const percent = (value: number | null): string => (value === null ? '—' : `${value.toFixed(1)} %`);
+
+const coveragePct =
+  view.stats.activeProducts === 0
+    ? null
+    : (view.stats.productsWithCost / view.stats.activeProducts) * 100;
+const coverageSegments = [
+  { label: 'Con costo registrado', value: view.stats.productsWithCost },
+  {
+    label: 'Sin costo registrado',
+    value: Math.max(view.stats.activeProducts - view.stats.productsWithCost, 0),
+  },
+].filter((segment) => segment.value > 0);
+
+const marginWidth = (value: number | null): number => {
+  if (value === null) return 0;
+  return Math.max(0, Math.min(value, 100));
+};
+---
+
+<div class="rep-grid rep-grid--inventory">
+  <ReportTile id="rep-margins" title="Margen por producto" meta="Precio · costo · margen" span={8}>
+    {
+      view.marginRows.length > 0 ? (
+        <div class="adm-table-wrap">
+          <table class="rep-table rep-table--margins">
+            <caption class="rep-sr">Margen vigente de los productos con costo registrado</caption>
+            <thead>
+              <tr>
+                <th scope="col">Producto</th>
+                <th scope="col" class="rep-num">Precio</th>
+                <th scope="col" class="rep-num rep-col-cost">Costo</th>
+                <th scope="col" class="rep-num">Margen</th>
+                <th scope="col" class="rep-num rep-col-stock">Stock</th>
+              </tr>
+            </thead>
+            <tbody>
+              {view.marginRows.slice(0, 8).map((row) => (
+                <tr>
+                  <td>
+                    <strong>{row.name}</strong>
+                    <div class="rep-muted">{row.sku}</div>
+                  </td>
+                  <td class="rep-num">{money(row.unitPrice)}</td>
+                  <td class="rep-num rep-col-cost">{money(row.cost)}</td>
+                  <td class={`rep-num ${row.margin < 0 ? 'rep-negative' : ''}`}>
+                    <span class="rep-margin-amount">{money(row.margin)}</span>
+                    <span class="rep-margin-track" aria-hidden="true">
+                      <span style={`width:${marginWidth(row.marginPct)}%`} />
+                    </span>
+                    {row.marginPct !== null && (
+                      <span class="rep-muted">{row.marginPct.toFixed(1)} %</span>
+                    )}
+                  </td>
+                  <td class="rep-num rep-col-stock">
+                    {row.stock === null ? '—' : `${row.stock} u.`}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div class="rep-empty">
+          <strong>Sin costos registrados</strong>
+          <span>Registra el costo de compra para comparar el margen de cada producto.</span>
+          <a href="/admin/costos">Abrir costos</a>
+        </div>
+      )
+    }
+  </ReportTile>
+
+  <ReportTile
+    id="rep-coverage"
+    title="Cobertura de costos"
+    meta={`${view.stats.productsWithCost} de ${view.stats.activeProducts}`}
+    span={4}
+  >
+    {
+      coverageSegments.length > 0 ? (
+        <MixChart
+          segments={coverageSegments}
+          centerText={percent(coveragePct)}
+          centerLabel="Del catálogo"
+          kind="number"
+          label="Productos con costo registrado"
+        />
+      ) : (
+        <div class="rep-empty">
+          <strong>Sin productos activos</strong>
+          <span>Activa productos en el catálogo para medir la cobertura de costos.</span>
+          <a href="/admin/catalogo">Abrir catálogo</a>
+        </div>
+      )
+    }
+  </ReportTile>
+
+  <ReportTile
+    id="rep-stock"
+    title="Inventario bajo"
+    meta={`≤ ${LOW_STOCK_THRESHOLD} unidades`}
+    span={12}
+  >
+    {
+      view.lowStock.length > 0 ? (
+        <ul class="rep-stock rep-stock--wide" aria-label="Productos con existencias bajas">
+          {view.lowStock.slice(0, 8).map((row) => (
+            <li>
+              <span class="rep-stock-name">
+                <strong>{row.name}</strong>
+                <small>{row.sku}</small>
+              </span>
+              <span class="rep-stock-meter" aria-hidden="true">
+                <span
+                  style={`width:${Math.max((row.stock / LOW_STOCK_THRESHOLD) * 100, 4)}%`}
+                />
+              </span>
+              <span class="rep-stock-qty">{row.stock} u.</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="rep-empty">
+          <strong>{hasStockData ? 'Sin alertas de existencias' : 'Sin datos de existencias'}</strong>
+          <span>
+            {hasStockData
+              ? `Todos los productos superan las ${LOW_STOCK_THRESHOLD} unidades.`
+              : 'Registra movimientos de inventario para activar esta alerta.'}
+          </span>
+          <a href="/admin/inventario">Revisar inventario</a>
+        </div>
+      )
+    }
+  </ReportTile>
+</div>

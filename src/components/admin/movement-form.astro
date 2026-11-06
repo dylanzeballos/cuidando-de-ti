@@ -130,30 +130,35 @@ const hint = {
   </form>
 </dialog>
 
-<script>
-  const dialog = document.getElementById('movement-dialog');
-  const typeSelect = dialog?.querySelector<HTMLSelectElement>('#movement-type');
-  const title = dialog?.querySelector<HTMLElement>('[data-dialog-title]');
-  const hint = dialog?.querySelector<HTMLElement>('[data-field-hint]');
+<script is:inline data-astro-rerun>
+  // Script propio de esta página: `data-astro-rerun` lo vuelve a ejecutar
+  // cuando el router la muestra sin recargar el navegador. El IIFE evita
+  // redeclarar constantes globales en cada transición.
+  (() => {
+    const dialog = document.getElementById('movement-dialog');
+    const typeSelect = dialog?.querySelector('#movement-type');
+    const title = dialog?.querySelector('[data-dialog-title]');
+    const hint = dialog?.querySelector('[data-field-hint]');
 
-  const COPY: Record<string, { title: string; hint: string }> = {
-    ENTRY: {
-      title: 'Registrar entrada',
-      hint: 'La cantidad se suma a las existencias actuales.',
-    },
-    EXIT: {
-      title: 'Registrar salida',
-      hint: 'La cantidad se resta de las existencias actuales.',
-    },
-    ADJUSTMENT: {
-      title: 'Ajustar existencias',
-      hint: 'La cantidad reemplaza las existencias actuales.',
-    },
-  };
+    const COPY = {
+      ENTRY: {
+        title: 'Registrar entrada',
+        hint: 'La cantidad se suma a las existencias actuales.',
+      },
+      EXIT: {
+        title: 'Registrar salida',
+        hint: 'La cantidad se resta de las existencias actuales.',
+      },
+      ADJUSTMENT: {
+        title: 'Ajustar existencias',
+        hint: 'La cantidad reemplaza las existencias actuales.',
+      },
+    };
 
-  typeSelect?.addEventListener('change', () => {
-    const copy = COPY[typeSelect.value] ?? COPY.ENTRY;
-    if (title) title.textContent = copy.title;
-    if (hint) hint.textContent = copy.hint;
-  });
+    typeSelect?.addEventListener('change', () => {
+      const copy = COPY[typeSelect.value] ?? COPY.ENTRY;
+      if (title) title.textContent = copy.title;
+      if (hint) hint.textContent = copy.hint;
+    });
+  })();
 </script>

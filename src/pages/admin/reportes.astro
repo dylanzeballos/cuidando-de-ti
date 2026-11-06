@@ -1,21 +1,15 @@
 ---
 import AdminShell from '@/components/admin/admin-shell.astro';
-import BarList from '@/components/reports/bar-list.astro';
-import ColumnChart from '@/components/reports/column-chart.astro';
-import DonutChart from '@/components/reports/donut-chart.astro';
-import Kpi from '@/components/reports/kpi.astro';
-import { formatMoney } from '@/lib/sales/cart';
-import { INSTALLATION } from '@/lib/installation';
-import {
-  buildReportView,
-  LOW_STOCK_THRESHOLD,
-  REPORT_PERIODS,
-  type ReportPeriod,
-} from '@/lib/admin/reports';
+import ChartRuntime from '@/components/reports/chart-runtime.astro';
+import ReportsHeader from '@/components/reports/reports-header.astro';
+import ReportsInventory from '@/components/reports/reports-inventory.astro';
+import ReportsKpis from '@/components/reports/reports-kpis.astro';
+import ReportsVisuals from '@/components/reports/reports-visuals.astro';
+import { buildReportView, type ReportPeriod } from '@/lib/admin/reports';
 import { loadReportsData } from '@/lib/admin/reports-service';
 
 // El token viene de la sesión de servidor; el navegador nunca lo recibe. El
-// panel se renderiza completo en servidor, sin hidratación de React.
+// panel se renderiza completo en servidor y solo los gráficos se hidratan.
 const auth = await Astro.session?.get('auth');
 if (!auth) {
   return Astro.redirect('/entrar?redirect=%2Fadmin%2Freportes', 303);
@@ -37,330 +31,27 @@ const view = buildReportView({
   months,
 });
 
-const money = (value: number | null | undefined): string =>
-  value === null || value === undefined ? '—' : formatMoney(value);
-const percent = (value: number | null): string =>
-  value === null ? '—' : `${value.toFixed(1)} %`;
-const number = (value: number): string => new Intl.NumberFormat('es-BO').format(value);
-
-const deltaNote = (value: number | null, suffix: string): string => {
-  if (value === null) return suffix;
-  const sign = value > 0 ? '+' : '';
-  return `${sign}${value.toFixed(1)} % ${suffix}`;
-};
-
 const hasStockData = Object.keys(data.stockByProduct).length > 0;
-const coverageSegments = [
-  { label: 'Con costo registrado', value: view.stats.productsWithCost },
-  {
-    label: 'Sin costo registrado',
-    value: Math.max(view.stats.activeProducts - view.stats.productsWithCost, 0),
-  },
-].filter((segment) => segment.value > 0);
-const coveragePct =
-  view.stats.activeProducts === 0
-    ? null
-    : (view.stats.productsWithCost / view.stats.activeProducts) * 100;
-
-const currentMonthLabel = new Intl.DateTimeFormat('es-BO', {
-  month: 'long',
-  year: 'numeric',
-}).format(new Date());
-
-const periodHref = (value: ReportPeriod): string => `/admin/reportes?periodo=${value}`;
 ---
 
 <AdminShell title="Reportes" active="/admin/reportes">
-  <header class="rep-head">
-    <div>
-      <h1>Reportes</h1>
-      <p class="rep-lead">
-        Ventas, margen, gastos e inventario de los {view.periodLabel}, calculados en el servidor.
-      </p>
-    </div>
-    <nav class="rep-periods" aria-label="Periodo del reporte">
-      {
-        REPORT_PERIODS.map((value) => (
-          <a href={periodHref(value)} aria-current={value === months ? 'page' : undefined}>
-            {value} meses
-          </a>
-        ))
-      }
-    </nav>
-  </header>
+  <ReportsHeader
+    months={months}
+    periodLabel={view.periodLabel}
+    partial={data.partial}
+    messages={data.messages}
+  />
 
-  {
-    data.partial && (
-      <p class="adm-banner adm-banner--warn" role="status">
-        Algunas fuentes no respondieron: {data.messages.join(' ')} El resto del panel muestra los
-        datos disponibles.
-      </p>
-    )
-  }
+  <ReportsKpis stats={view.stats} />
 
-  <ul class="rep-kpis" aria-label="Resumen del periodo">
-    <Kpi
-      kind="revenue"
-      label="Ingresos"
-      value={money(view.stats.revenue)}
-      note={deltaNote(view.stats.revenueDeltaPct, 'vs periodo anterior')}
-      tone="teal"
-    />
-    <Kpi
-      kind="sales"
-      label="Ventas"
-      value={number(view.stats.salesCount)}
-      note={view.stats.annulledCount > 0 ? `${view.stats.annulledCount} anulada(s)` : 'Sin anuladas'}
-      tone="blue"
-    />
-    <Kpi
-      kind="ticket"
-      label="Venta promedio"
-      value={money(view.stats.averageTicket)}
-      note="Por venta completada"
-      tone="violet"
-    />
-    <Kpi
-      kind="margin"
-      label="Margen catálogo"
-      value={percent(view.stats.catalogMarginPct)}
-      note={`${view.stats.productsWithCost} de ${view.stats.activeProducts} con costo`}
-      tone="amber"
-    />
-    <Kpi
-      kind="expenses"
-      label="Gastos del mes"
-      value={money(view.stats.expensesTotal)}
-      note={deltaNote(view.stats.expensesDeltaPct, 'vs mes anterior')}
-      tone="rose"
-    />
-    <Kpi
-      kind="stock"
-      label="Existencias bajas"
-      value={number(view.stats.lowStockCount)}
-      note={`≤ ${LOW_STOCK_THRESHOLD} unidades`}
-      tone="slate"
-    />
-    <Kpi
-      kind="products"
-      label="Productos activos"
-      value={number(view.stats.activeProducts)}
-      note="En catálogo"
-      tone="blue"
-    />
-    <Kpi
-      kind="coverage"
-      label="Cobertura de costos"
-      value={percent(coveragePct)}
-      note="Base para calcular margen"
-      tone="teal"
-    />
-  </ul>
+  <ReportsVisuals view={view} />
 
-  <div class="rep-grid">
-    <section class="rep-tile rep-tile--8" aria-labelledby="rep-trend">
-      <div class="rep-tile-head">
-        <h2 id="rep-trend">Ingresos por mes</h2>
-        <span>Ventas completadas · BOB</span>
-      </div>
-      <div class="rep-tile-body">
-        {
-          view.monthly.some((point) => point.revenue > 0) ? (
-            <ColumnChart
-              points={view.monthly.map((point) => ({
-                label: point.label,
-                value: point.revenue,
-                detail: `${point.sales} venta${point.sales === 1 ? '' : 's'}`,
-              }))}
-              label="Ingresos mensuales"
-            />
-          ) : (
-            <div class="rep-empty">
-              <strong>Aún no hay ventas en este periodo</strong>
-              <span>Las barras se dibujan con las ventas que registres en el registro de venta.</span>
-              <a href="/admin/ventas">Registrar una venta</a>
-            </div>
-          )
-        }
-      </div>
-    </section>
-
-    <section class="rep-tile rep-tile--4" aria-labelledby="rep-payments">
-      <div class="rep-tile-head">
-        <h2 id="rep-payments">Mix de cobro</h2>
-        <span>{view.stats.salesCount} ventas</span>
-      </div>
-      <div class="rep-tile-body">
-        {
-          view.paymentMix.length > 0 ? (
-            <DonutChart
-              segments={view.paymentMix.map((item) => ({ label: item.label, value: item.value }))}
-              centerValue={money(view.stats.revenue).replace('Bs ', '')}
-              centerLabel="Total cobrado"
-              label="Cobros por método de pago"
-            />
-          ) : (
-            <div class="rep-empty">
-              <strong>Sin cobros todavía</strong>
-              <span>El desglose por efectivo, tarjeta, transferencia y QR aparecerá aquí.</span>
-            </div>
-          )
-        }
-      </div>
-    </section>
-
-    <section class="rep-tile rep-tile--5" aria-labelledby="rep-top">
-      <div class="rep-tile-head">
-        <h2 id="rep-top">Top productos</h2>
-        <span>Por ingreso</span>
-      </div>
-      <div class="rep-tile-body">
-        {
-          view.topProducts.length > 0 ? (
-            <BarList items={view.topProducts} label="Productos con más ingresos" />
-          ) : (
-            <div class="rep-empty">
-              <strong>Sin productos vendidos</strong>
-              <span>Cuando vendas, verás qué productos sostienen la facturación.</span>
-            </div>
-          )
-        }
-      </div>
-    </section>
-
-    <section class="rep-tile rep-tile--3" aria-labelledby="rep-expenses">
-      <div class="rep-tile-head">
-        <h2 id="rep-expenses">Gastos del mes</h2>
-        <span>{currentMonthLabel}</span>
-      </div>
-      <div class="rep-tile-body">
-        {
-          view.expenseBreakdown.length > 0 ? (
-            <BarList items={view.expenseBreakdown} colors label="Gastos por categoría" />
-          ) : (
-            <div class="rep-empty">
-              <strong>Sin gastos este mes</strong>
-              <span>Registra los gastos operativos para ver su peso en el resultado.</span>
-              <a href="/admin/gastos">Registrar un gasto</a>
-            </div>
-          )
-        }
-      </div>
-    </section>
-
-    <section class="rep-tile rep-tile--4" aria-labelledby="rep-stock">
-      <div class="rep-tile-head">
-        <h2 id="rep-stock">Inventario bajo</h2>
-        <span>≤ {LOW_STOCK_THRESHOLD} u.</span>
-      </div>
-      <div class="rep-tile-body">
-        {
-          view.lowStock.length > 0 ? (
-            <ul class="rep-stock" aria-label="Productos con existencias bajas">
-              {view.lowStock.slice(0, 6).map((row) => (
-                <li>
-                  <span class="rep-stock-name">
-                    <strong>{row.name}</strong>
-                    <small>{row.sku}</small>
-                  </span>
-                  <span class="rep-stock-qty">{row.stock} u.</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div class="rep-empty">
-              <strong>{hasStockData ? 'Sin alertas de existencias' : 'Sin datos de existencias'}</strong>
-              <span>
-                {hasStockData
-                  ? `Todos los productos superan las ${LOW_STOCK_THRESHOLD} unidades.`
-                  : 'Registra movimientos de inventario para activar esta alerta.'}
-              </span>
-              <a href="/admin/inventario">Revisar inventario</a>
-            </div>
-          )
-        }
-      </div>
-    </section>
-
-    <section class="rep-tile rep-tile--7" aria-labelledby="rep-margins">
-      <div class="rep-tile-head">
-        <h2 id="rep-margins">Margen por producto</h2>
-        <span>Precio · costo · margen</span>
-      </div>
-      <div class="rep-tile-body">
-        {
-          view.marginRows.length > 0 ? (
-            <div class="adm-table-wrap">
-              <table class="rep-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Producto</th>
-                    <th scope="col" class="rep-num">Precio</th>
-                    <th scope="col" class="rep-num rep-col-cost">Costo</th>
-                    <th scope="col" class="rep-num">Margen</th>
-                    <th scope="col" class="rep-num rep-col-stock">Existencias</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {view.marginRows.slice(0, 8).map((row) => (
-                    <tr>
-                      <td>
-                        <strong>{row.name}</strong>
-                        <div class="rep-muted">{row.sku}</div>
-                      </td>
-                      <td class="rep-num">{money(row.unitPrice)}</td>
-                      <td class="rep-num rep-col-cost">{money(row.cost)}</td>
-                      <td class={`rep-num ${row.margin < 0 ? 'rep-negative' : ''}`}>
-                        {money(row.margin)}
-                        {row.marginPct !== null && (
-                          <div class="rep-muted">{row.marginPct.toFixed(1)} %</div>
-                        )}
-                      </td>
-                      <td class="rep-num rep-col-stock">{row.stock === null ? '—' : `${row.stock} u.`}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div class="rep-empty">
-              <strong>Sin costos registrados</strong>
-              <span>Registra el costo de compra para comparar el margen de cada producto.</span>
-              <a href="/admin/costos">Abrir costos</a>
-            </div>
-          )
-        }
-      </div>
-    </section>
-
-    <section class="rep-tile rep-tile--5" aria-labelledby="rep-coverage">
-      <div class="rep-tile-head">
-        <h2 id="rep-coverage">Cobertura de costos</h2>
-        <span>{view.stats.productsWithCost} de {view.stats.activeProducts}</span>
-      </div>
-      <div class="rep-tile-body">
-        {
-          coverageSegments.length > 0 ? (
-            <DonutChart
-              segments={coverageSegments}
-              centerValue={percent(coveragePct)}
-              centerLabel="Del catálogo"
-              label="Productos con costo registrado"
-            />
-          ) : (
-            <div class="rep-empty">
-              <strong>Sin productos activos</strong>
-              <span>Activa productos en el catálogo para medir la cobertura de costos.</span>
-              <a href="/admin/catalogo">Abrir catálogo</a>
-            </div>
-          )
-        }
-      </div>
-    </section>
-  </div>
+  <ReportsInventory view={view} hasStockData={hasStockData} />
 
   <p class="rep-source">
-    Cálculo en servidor sobre ventas, catálogo, costos e inventario de la empresa. Importes en
-    bolivianos (BOB).
+    Cálculo en servidor sobre ventas, catálogo, costos e inventario de la empresa. Los gráficos se
+    dibujan en el navegador con Chart.js; importes en bolivianos (BOB).
   </p>
+
+  <ChartRuntime />
 </AdminShell>

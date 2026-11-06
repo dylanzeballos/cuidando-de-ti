@@ -6,9 +6,9 @@ import { contrastRatio, isSafeColor, type SiteTheme } from '@/lib/site-contract'
  * renderizar (colores inválidos o contraste insuficiente).
  */
 export const DEFAULT_THEME: SiteTheme = {
-  primary: '#0f766e',
+  primary: '#1a7fb8',
   background: '#ffffff',
-  foreground: '#0f1f1c',
+  foreground: '#0f1c2e',
 };
 
 /** Contraste mínimo de texto normal (WCAG AA). */

@@ -1,0 +1,80 @@
+/* ---------- Gráfico principal del inicio ---------- */
+.dash-chart {
+  gap: 0.55rem;
+}
+
+.dash-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.dash-chart-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--adm-paper);
+  border-radius: 10px;
+}
+
+.dash-chart-tabs button {
+  padding: 0.36rem 0.74rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--adm-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 150ms var(--adm-ease-out), color 150ms var(--adm-ease-out);
+}
+
+.dash-chart-tabs button[aria-pressed="true"] {
+  color: var(--adm-ink);
+  background: var(--adm-surface);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dash-chart-tabs button:not([aria-pressed="true"]):hover {
+    color: var(--adm-ink);
+    background: var(--adm-surface);
+  }
+}
+
+.dash-chart-period {
+  color: var(--adm-muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.dash-chart-value {
+  margin: 0.35rem 0 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-chart-note {
+  margin: 0.15rem 0 0.25rem;
+  color: var(--adm-muted);
+  font-size: 0.8rem;
+}
+
+.rep-chart-canvas--hero {
+  height: 246px;
+}
+
+@media (max-width: 720px) {
+  .rep-chart-canvas--hero {
+    height: 210px;
+  }
+
+  .dash-chart-value {
+    font-size: 2rem;
+  }
+}

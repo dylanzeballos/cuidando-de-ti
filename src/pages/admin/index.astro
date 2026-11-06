@@ -1,14 +1,14 @@
 ---
 import AdminShell from '@/components/admin/admin-shell.astro';
-import BarList from '@/components/reports/bar-list.astro';
-import DonutChart from '@/components/reports/donut-chart.astro';
-import HeroChart from '@/components/dashboard/hero-chart.astro';
+import ChartRuntime from '@/components/reports/chart-runtime.astro';
+import DashboardGallery from '@/components/dashboard/dashboard-gallery.astro';
+import DashboardInsights from '@/components/dashboard/dashboard-insights.astro';
+import DashboardStats from '@/components/dashboard/dashboard-stats.astro';
+import HomeChart from '@/components/dashboard/home-chart.astro';
 import LoadingState from '@/components/primitives/loading-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
-import { buildReportView, LOW_STOCK_THRESHOLD } from '@/lib/admin/reports';
+import { buildReportView } from '@/lib/admin/reports';
 import { loadReportsData } from '@/lib/admin/reports-service';
-import { formatMoney } from '@/lib/sales/cart';
-import { INSTALLATION } from '@/lib/installation';
 
 const auth = await Astro.session?.get('auth');
 if (!auth) {
@@ -36,38 +36,9 @@ const view =
         months: 6,
       });
 
-const money = (value: number | null | undefined): string =>
-  value === null || value === undefined ? '—' : formatMoney(value);
-const percent = (value: number | null): string =>
-  value === null ? '—' : `${value.toFixed(1)} %`;
-const number = (value: number): string => new Intl.NumberFormat('es-BO').format(value);
-
-const chartSeries = view
-  ? [
-      {
-        id: 'revenue',
-        label: 'Ingresos',
-        unit: 'money' as const,
-        note:
-          view.stats.revenueDeltaPct === null
-            ? 'Sin periodo anterior comparable'
-            : `${view.stats.revenueDeltaPct > 0 ? '+' : ''}${view.stats.revenueDeltaPct.toFixed(1)} % vs periodo anterior`,
-        points: view.monthly.map((point) => ({ label: point.label, value: point.revenue })),
-      },
-      {
-        id: 'sales',
-        label: 'Ventas',
-        unit: 'number' as const,
-        note:
-          view.stats.annulledCount > 0
-            ? `${view.stats.annulledCount} anulada${view.stats.annulledCount === 1 ? '' : 's'} en el periodo`
-            : 'Sin ventas anuladas en el periodo',
-        points: view.monthly.map((point) => ({ label: point.label, value: point.sales })),
-      },
-    ]
-  : [];
-
 const hasStockData = data !== null && Object.keys(data.stockByProduct).length > 0;
+const hasActivity =
+  view !== null && view.monthly.some((point) => point.revenue > 0 || point.sales > 0);
 ---
 
 <AdminShell title="Inicio" active="/admin">
@@ -86,212 +57,27 @@ const hasStockData = data !== null && Object.keys(data.stockByProduct).length > 
               <h2 id="dash-pulse-title">Pulso de la farmacia</h2>
               <a class="rep-inline-link" href="/admin/reportes">Ver reportes</a>
             </div>
-            <HeroChart series={chartSeries} caption="Últimos 6 meses" />
+            {
+              hasActivity ? (
+                <HomeChart view={view} />
+              ) : (
+                <div class="rep-empty">
+                  <strong>Aún no hay movimientos en el periodo</strong>
+                  <span>Registra una venta para empezar a ver el pulso de la farmacia.</span>
+                  <a href="/admin/ventas">Nueva venta</a>
+                </div>
+              )
+            }
           </section>
 
-          <div class="dash-hero-stats">
-            <article class="dash-stat">
-              <span class="dash-stat-icon dash-stat-icon--violet" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M5 4h14v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" />
-                  <path d="M9 12v8l3-2 3 2v-8" />
-                </svg>
-              </span>
-              <p class="dash-stat-label">Venta promedio</p>
-              <p class="dash-stat-value">{money(view.stats.averageTicket)}</p>
-              <p class="dash-stat-note">Por venta completada</p>
-            </article>
-
-            <article class="dash-stat">
-              <span class="dash-stat-icon dash-stat-icon--amber" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M5 19 19 5" />
-                  <circle cx="7.5" cy="7.5" r="2.5" />
-                  <circle cx="16.5" cy="16.5" r="2.5" />
-                </svg>
-              </span>
-              <p class="dash-stat-label">Margen catálogo</p>
-              <p class="dash-stat-value">{percent(view.stats.catalogMarginPct)}</p>
-              <p class="dash-stat-note">
-                {view.stats.productsWithCost} de {view.stats.activeProducts} productos con costo
-              </p>
-            </article>
-
-            <article class="dash-stat">
-              <span class="dash-stat-icon dash-stat-icon--rose" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="8" />
-                  <path d="M12 7.5v9" />
-                  <path d="M9.4 10.2h4.3a1.8 1.8 0 0 1 0 3.6H9.4" />
-                </svg>
-              </span>
-              <p class="dash-stat-label">Gastos del mes</p>
-              <p class="dash-stat-value">{money(view.stats.expensesTotal)}</p>
-              <p class="dash-stat-note">Costos operativos registrados</p>
-            </article>
-
-            <article class="dash-stat">
-              <span class="dash-stat-icon dash-stat-icon--slate" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 8l8-4 8 4-8 4z" />
-                  <path d="M4 8v8l8 4 8-4V8" />
-                  <path d="M12 12v8" />
-                </svg>
-              </span>
-              <p class="dash-stat-label">Existencias bajas</p>
-              <p class="dash-stat-value">{number(view.stats.lowStockCount)}</p>
-              <p class="dash-stat-note">≤ {LOW_STOCK_THRESHOLD} unidades</p>
-            </article>
-          </div>
+          <DashboardStats view={view} />
         </div>
 
-        <div class="rep-grid">
-          <section class="rep-tile rep-tile--4" aria-labelledby="dash-payments">
-            <div class="rep-tile-head">
-              <h2 id="dash-payments">Mix de cobro</h2>
-              <span>{view.stats.salesCount} ventas</span>
-            </div>
-            <div class="rep-tile-body">
-              {
-                view.paymentMix.length > 0 ? (
-                  <DonutChart
-                    segments={view.paymentMix.map((item) => ({ label: item.label, value: item.value }))}
-                    centerValue={money(view.stats.revenue).replace('Bs ', '')}
-                    centerLabel="Total cobrado"
-                    label="Cobros por método de pago"
-                  />
-                ) : (
-                  <div class="rep-empty">
-                    <strong>Sin cobros todavía</strong>
-                    <span>Registra una venta para ver el desglose por método de pago.</span>
-                    <a href="/admin/ventas">Nueva venta</a>
-                  </div>
-                )
-              }
-            </div>
-          </section>
+        <DashboardInsights view={view} hasStockData={hasStockData} />
 
-          <section class="rep-tile rep-tile--4" aria-labelledby="dash-top">
-            <div class="rep-tile-head">
-              <h2 id="dash-top">Top productos</h2>
-              <span>Por ingreso</span>
-            </div>
-            <div class="rep-tile-body">
-              {
-                view.topProducts.length > 0 ? (
-                  <BarList items={view.topProducts} label="Productos con más ingresos" />
-                ) : (
-                  <div class="rep-empty">
-                    <strong>Aún no hay productos vendidos</strong>
-                    <span>Cuando vendas, verás aquí los que sostienen la facturación.</span>
-                  </div>
-                )
-              }
-            </div>
-          </section>
+        <DashboardGallery />
 
-          <section class="rep-tile rep-tile--4" aria-labelledby="dash-stock">
-            <div class="rep-tile-head">
-              <h2 id="dash-stock">Inventario bajo</h2>
-              <span>≤ {LOW_STOCK_THRESHOLD} u.</span>
-            </div>
-            <div class="rep-tile-body">
-              {
-                view.lowStock.length > 0 ? (
-                  <ul class="rep-stock" aria-label="Productos con existencias bajas">
-                    {view.lowStock.slice(0, 5).map((row) => (
-                      <li>
-                        <span class="rep-stock-name">
-                          <strong>{row.name}</strong>
-                          <small>{row.sku}</small>
-                        </span>
-                        <span class="rep-stock-qty">{row.stock} u.</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div class="rep-empty">
-                    <strong>{hasStockData ? 'Sin alertas de existencias' : 'Sin datos de existencias'}</strong>
-                    <span>
-                      {hasStockData
-                        ? `Todos los productos superan las ${LOW_STOCK_THRESHOLD} unidades.`
-                        : 'Registra movimientos de inventario para activar esta alerta.'}
-                    </span>
-                    <a href="/admin/inventario">Revisar inventario</a>
-                  </div>
-                )
-              }
-            </div>
-          </section>
-        </div>
-        <section class="dash-gallery" aria-labelledby="dash-gallery-title">
-          <div class="rep-tile-head">
-            <h2 id="dash-gallery-title">La farmacia en imágenes</h2>
-            <span>Categorías y espacios</span>
-          </div>
-          <ul class="dash-gallery-grid">
-            <li>
-              <a class="dash-gallery-card" href="/admin/catalogo">
-                <img
-                  src="/images/medicamentos.jpg"
-                  alt="Blisters de medicamentos sobre una superficie azul"
-                  loading="eager"
-                  width="900"
-                  height="600"
-                />
-                <span>
-                  <strong>Medicamentos</strong>
-                  <small>Analgésicos, antibióticos y más</small>
-                </span>
-              </a>
-            </li>
-            <li>
-              <a class="dash-gallery-card" href="/admin/catalogo">
-                <img
-                  src="/images/farmacia.jpg"
-                  alt="Cápsulas y pastillas de colores"
-                  loading="eager"
-                  width="900"
-                  height="600"
-                />
-                <span>
-                  <strong>Vitaminas y bienestar</strong>
-                  <small>Suplementos y cuidado diario</small>
-                </span>
-              </a>
-            </li>
-            <li>
-              <a class="dash-gallery-card" href="/admin/catalogo">
-                <img
-                  src="/images/pastillas.jpg"
-                  alt="Cápsulas naranjas junto a un frasco"
-                  loading="eager"
-                  width="900"
-                  height="600"
-                />
-                <span>
-                  <strong>Cuidado personal</strong>
-                  <small>Dermocosmética y primeros auxilios</small>
-                </span>
-              </a>
-            </li>
-            <li>
-              <a class="dash-gallery-card" href="/admin/inventario">
-                <img
-                  src="/images/cuidado.jpg"
-                  alt="Interior luminoso de una farmacia"
-                  loading="eager"
-                  width="900"
-                  height="600"
-                />
-                <span>
-                  <strong>Tu farmacia</strong>
-                  <small>Existencias y sucursales</small>
-                </span>
-              </a>
-            </li>
-          </ul>
-        </section>
+        <ChartRuntime />
       </>
     )
   }

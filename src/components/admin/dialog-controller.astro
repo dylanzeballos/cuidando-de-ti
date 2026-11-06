@@ -69,21 +69,31 @@
     }
   });
 
-  // Cerrar al hacer clic fuera de la tarjeta (backdrop) o con Escape.
-  document.querySelectorAll<HTMLDialogElement>('dialog.adm-modal').forEach((dialog) => {
-    dialog.addEventListener('click', (event) => {
-      if (event.target === dialog) closeDialog(dialog);
+  // Los diálogos son parte del HTML que el router reemplaza en cada navegación:
+  // se vuelven a enlazar tras cada transición. La delegación de clics de arriba
+  // sí vive en el documento y no necesita repetirse.
+  const bindDialogs = (): void => {
+    // Cerrar al hacer clic fuera de la tarjeta (backdrop) o con Escape.
+    document.querySelectorAll<HTMLDialogElement>('dialog.adm-modal').forEach((dialog) => {
+      if (dialog.dataset.dialogReady === 'true') return;
+      dialog.dataset.dialogReady = 'true';
+      dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) closeDialog(dialog);
+      });
+      dialog.addEventListener('close', syncScrollLock);
+      dialog.addEventListener('cancel', syncScrollLock);
     });
-    dialog.addEventListener('close', syncScrollLock);
-    dialog.addEventListener('cancel', syncScrollLock);
-  });
 
-  // Reabrir el diálogo que falló al enviar su formulario.
-  const autoOpen = document.querySelector<HTMLDialogElement>('dialog[data-dialog-auto-open]');
-  if (autoOpen && !autoOpen.open) {
-    autoOpen.showModal();
-    syncScrollLock();
-  }
+    // Reabrir el diálogo que falló al enviar su formulario.
+    const autoOpen = document.querySelector<HTMLDialogElement>('dialog[data-dialog-auto-open]');
+    if (autoOpen && !autoOpen.open) {
+      autoOpen.showModal();
+      syncScrollLock();
+    }
+  };
+
+  bindDialogs();
+  document.addEventListener('astro:page-load', bindDialogs);
 
   // Confirmación opcional en formularios destructivos: <form data-confirm="…">.
   document.addEventListener('submit', (event) => {

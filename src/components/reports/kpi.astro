@@ -14,10 +14,12 @@ interface Props {
   label: string;
   value: string;
   note?: string;
+  /** Color de la nota cuando expresa una variación favorable o desfavorable. */
+  trend?: 'good' | 'bad' | 'flat';
   tone?: 'teal' | 'blue' | 'amber' | 'violet' | 'rose' | 'slate';
 }
 
-const { kind, label, value, note, tone = 'teal' } = Astro.props;
+const { kind, label, value, note, trend, tone = 'teal' } = Astro.props;
 
 const icons: Record<KpiKind, string> = {
   revenue:
@@ -56,6 +58,6 @@ const icons: Record<KpiKind, string> = {
   <span class="rep-kpi-text">
     <small>{label}</small>
     <strong>{value}</strong>
-    {note && <em>{note}</em>}
+    {note && <em class:list={['rep-kpi-note', trend && `rep-kpi-note--${trend}`]}>{note}</em>}
   </span>
 </li>

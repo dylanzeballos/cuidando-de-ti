@@ -23,10 +23,13 @@
 @import './admin/feedback.css';
 @import './admin/modules.css';
 @import './admin/reports.css';
+@import './admin/reports-grid.css';
 @import './admin/charts.css';
+@import './admin/reports-charts.css';
+@import './admin/reports-inventory.css';
 @import './admin/reports-tables.css';
 @import './admin/dashboard.css';
-@import './admin/hero-chart.css';
+@import './admin/dashboard-chart.css';
 @import './admin/pos-catalog.css';
 @import './admin/pos-sale.css';
 @import './admin/pos-payment.css';

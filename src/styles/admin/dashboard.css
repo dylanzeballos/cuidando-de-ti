@@ -170,3 +170,15 @@
   }
 }
 
+@media (max-width: 1050px) {
+  .dash-hero-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 380px) {
+  .dash-hero-stats {
+    grid-template-columns: 1fr;
+  }
+}
+

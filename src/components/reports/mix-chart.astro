@@ -1,0 +1,66 @@
+---
+import { formatMoney } from '@/lib/sales/cart';
+
+interface Segment {
+  label: string;
+  value: number;
+}
+
+interface Props {
+  segments: Segment[];
+  /** Texto ya formateado del centro del anillo. */
+  centerText: string;
+  centerLabel: string;
+  label: string;
+  kind?: 'money' | 'number';
+}
+
+const { segments, centerText, centerLabel, label, kind = 'money' } = Astro.props;
+
+const total = segments.reduce((sum, segment) => sum + segment.value, 0);
+const spec = {
+  kind: 'doughnut' as const,
+  labels: segments.map((segment) => segment.label),
+  values: segments.map((segment) => segment.value),
+  centerValue: centerText,
+  centerLabel,
+  valueKind: kind,
+};
+const payload = JSON.stringify(spec).replace(/</g, '\\u003c');
+const percent = (value: number) => (total > 0 ? Math.round((value / total) * 100) : 0);
+const display = (value: number) =>
+  kind === 'number' ? new Intl.NumberFormat('es-BO').format(value) : formatMoney(value);
+---
+
+<div class="rep-chart-host rep-chart-host--donut" data-chart-host>
+  <div class="rep-chart-canvas rep-chart-canvas--donut">
+    <canvas
+      data-chart
+      role="img"
+      aria-label={`${label}. ${segments.map((segment) => `${segment.label}: ${display(segment.value)}`).join('. ')}`}
+    ></canvas>
+  </div>
+  <script is:inline type="application/json" data-chart-spec set:html={payload} />
+  <ul class="rep-chart-legend" aria-label={label}>
+    {
+      segments.map((segment, index) => (
+        <li>
+          <button
+            type="button"
+            class="rep-chart-legend-btn"
+            data-chart-toggle={index}
+            aria-pressed="true"
+            style={`--rep-color: var(--rep-c${(index % 5) + 1})`}
+          >
+            <span class="rep-chart-swatch" aria-hidden="true"></span>
+            <span class="rep-chart-legend-label">{segment.label}</span>
+            <span class="rep-chart-legend-value">
+              {display(segment.value)}
+              <small>{percent(segment.value)} %</small>
+            </span>
+          </button>
+        </li>
+      ))
+    }
+  </ul>
+</div>

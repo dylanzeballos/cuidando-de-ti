@@ -1,0 +1,57 @@
+/* Lienzo de visuales: columnas de 12 con tamaños variados. */
+.rep-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1.15rem;
+}
+
+.rep-grid + .rep-grid {
+  margin-top: 1.15rem;
+}
+
+.rep-tile {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.05rem 1.15rem 1.2rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: var(--adm-radius);
+}
+
+.rep-tile--8 { grid-column: span 8; }
+.rep-tile--12 { grid-column: span 12; }
+
+.rep-tile-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.rep-tile-head h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: -0.015em;
+}
+
+.rep-tile-head span {
+  max-width: 55%;
+  color: var(--adm-muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.rep-tile-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.rep-source {
+  margin: 1.25rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.76rem;
+}

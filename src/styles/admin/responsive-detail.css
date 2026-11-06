@@ -94,27 +94,6 @@
   .rep-table {
     min-width: 0;
   }
-  .rep-donut {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .rep-donut svg {
-    width: 128px;
-    height: 128px;
-  }
-  .rep-legend {
-    flex: 1 1 auto;
-    width: 100%;
-  }
-  .hero-bars {
-    gap: 0.35rem;
-  }
-  .rep-axis {
-    font-size: 20px;
-  }
-  .hero-bar-fill {
-    max-width: 44px;
-  }
   .pos-catalog,
   .pos-sale {
     padding: 1rem;
@@ -143,9 +122,6 @@
   }
   .adm-catalog-filters select {
     flex-basis: 100%;
-  }
-  .hero-bars {
-    height: 160px;
   }
   .pos-line-actions {
     flex-wrap: wrap;

@@ -1,0 +1,106 @@
+---
+import BarChart from '@/components/reports/bar-chart.astro';
+import MixChart from '@/components/reports/mix-chart.astro';
+import ReportTile from '@/components/reports/report-tile.astro';
+import RevenueChart from '@/components/reports/revenue-chart.astro';
+import { compactMoney } from '@/lib/admin/chart-config';
+import type { ReportView } from '@/lib/admin/reports';
+
+interface Props {
+  view: ReportView;
+}
+
+const { view } = Astro.props;
+
+const hasRevenue = view.monthly.some((point) => point.revenue > 0);
+const currentMonthLabel = new Intl.DateTimeFormat('es-BO', {
+  month: 'long',
+  year: 'numeric',
+}).format(new Date());
+---
+
+<div class="rep-grid">
+  <ReportTile id="rep-trend" title="Ingresos por mes" meta="Línea punteada: periodo anterior" span={8}>
+    {
+      hasRevenue ? (
+        <RevenueChart
+          current={view.monthly.map((point) => ({
+            label: point.label,
+            revenue: point.revenue,
+            sales: point.sales,
+          }))}
+          previous={view.previousMonthly.map((point) => ({ revenue: point.revenue }))}
+        />
+      ) : (
+        <div class="rep-empty">
+          <strong>Aún no hay ventas en este periodo</strong>
+          <span>Las series se dibujan con las ventas que registres en el punto de venta.</span>
+          <a href="/admin/ventas">Registrar una venta</a>
+        </div>
+      )
+    }
+  </ReportTile>
+
+  <ReportTile id="rep-payments" title="Mix de cobro" meta={`${view.stats.salesCount} ventas`} span={4}>
+    {
+      view.paymentMix.length > 0 ? (
+        <MixChart
+          segments={view.paymentMix.map((item) => ({ label: item.label, value: item.value }))}
+          centerText={compactMoney(view.stats.revenue)}
+          centerLabel="Cobrado"
+          label="Cobros por método de pago"
+        />
+      ) : (
+        <div class="rep-empty">
+          <strong>Sin cobros todavía</strong>
+          <span>El desglose por efectivo, tarjeta, transferencia y QR aparecerá aquí.</span>
+        </div>
+      )
+    }
+  </ReportTile>
+
+  <ReportTile id="rep-top" title="Top productos" meta="Por ingreso" span={4}>
+    {
+      view.topProducts.length > 0 ? (
+        <BarChart items={view.topProducts} label="Productos con más ingresos" />
+      ) : (
+        <div class="rep-empty">
+          <strong>Sin productos vendidos</strong>
+          <span>Cuando vendas, verás qué productos sostienen la facturación.</span>
+        </div>
+      )
+    }
+  </ReportTile>
+
+  <ReportTile id="rep-categories" title="Categorías" meta="Por ingreso" span={4}>
+    {
+      view.categoryMix.length > 0 ? (
+        <BarChart items={view.categoryMix.slice(0, 6)} label="Ingresos por categoría" />
+      ) : (
+        <div class="rep-empty">
+          <strong>Sin ventas por categoría</strong>
+          <span>Clasifica tus productos para comparar el peso de cada categoría.</span>
+          <a href="/admin/catalogo">Abrir catálogo</a>
+        </div>
+      )
+    }
+  </ReportTile>
+
+  <ReportTile id="rep-expenses" title="Gastos del mes" meta={currentMonthLabel} span={4}>
+    {
+      view.expenseBreakdown.length > 0 ? (
+        <BarChart
+          items={view.expenseBreakdown.slice(0, 6)}
+          label="Gastos por categoría"
+          datasetLabel="Gastos"
+        />
+      ) : (
+        <div class="rep-empty">
+          <strong>Sin gastos este mes</strong>
+          <span>Registra los gastos operativos para ver su peso en el resultado.</span>
+          <a href="/admin/gastos">Registrar un gasto</a>
+        </div>
+      )
+    }
+  </ReportTile>
+</div>

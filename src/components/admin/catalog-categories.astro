@@ -1,0 +1,67 @@
+---
+import type { Category } from '@/lib/admin/catalog-api';
+
+interface Props {
+  categories: Category[];
+}
+
+const { categories } = Astro.props;
+const activeCount = categories.filter((category) => category.active).length;
+---
+
+<section class="adm-card adm-catalog-side" aria-labelledby="categorias-title">
+  <div class="adm-card-head">
+    <div>
+      <h2 id="categorias-title">Categorías</h2>
+      <p class="adm-card-sub">{activeCount} activas de {categories.length}</p>
+    </div>
+    <span class="adm-chip">{categories.length}</span>
+  </div>
+
+  <form class="adm-inline-form" method="post">
+    <input type="hidden" name="action" value="category" />
+    <label class="adm-sr" for="category-name">Nueva categoría</label>
+    <input
+      id="category-name"
+      name="name"
+      required
+      maxlength="120"
+      placeholder="Nueva categoría…"
+      autocomplete="off"
+    />
+    <button class="adm-btn adm-btn--small" type="submit">Agregar</button>
+  </form>
+
+  {
+    categories.length === 0 ? (
+      <p class="adm-note">Aún no hay categorías. Crea la primera para agrupar productos.</p>
+    ) : (
+      <ul class="adm-list" role="list">
+        {categories.map((category) => (
+          <li class="adm-list-row">
+            <span class={`adm-badge ${category.active ? 'adm-badge--on' : 'adm-badge--off'}`}>
+              {category.name}
+              {!category.active ? ' · inactiva' : ''}
+            </span>
+            <form method="post">
+              <input type="hidden" name="action" value="category-status" />
+              <input type="hidden" name="categoryId" value={category.id} />
+              <input type="hidden" name="active" value={category.active ? 'false' : 'true'} />
+              <button
+                class="adm-btn adm-btn--small adm-btn--ghost"
+                type="submit"
+                data-confirm={
+                  category.active
+                    ? `¿Desactivar la categoría “${category.name}”? Sus productos no se eliminan.`
+                    : undefined
+                }
+              >
+                {category.active ? 'Desactivar' : 'Activar'}
+              </button>
+            </form>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</section>

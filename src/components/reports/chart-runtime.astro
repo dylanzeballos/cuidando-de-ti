@@ -1,0 +1,194 @@
+---
+// Isla mínima de gráficos: monta Chart.js sobre los canvas declarativos que
+// renderiza el servidor. Se incluye una sola vez por página.
+---
+
+<script>
+  import {
+    ArcElement,
+    BarController,
+    BarElement,
+    CategoryScale,
+    Chart,
+    DoughnutController,
+    Filler,
+    Legend,
+    LineController,
+    LineElement,
+    LinearScale,
+    PointElement,
+    Tooltip,
+  } from 'chart.js';
+  import { buildChart, type ChartSpec, type ChartTheme } from '@/lib/admin/chart-config';
+
+  Chart.register(
+    ArcElement,
+    BarController,
+    BarElement,
+    CategoryScale,
+    DoughnutController,
+    Filler,
+    Legend,
+    LineController,
+    LineElement,
+    LinearScale,
+    PointElement,
+    Tooltip,
+  );
+
+  type Variant = {
+    label: string;
+    ariaLabel: string;
+    total: string;
+    note: string;
+    spec: ChartSpec;
+  };
+
+  const cleanups: Array<() => void> = [];
+
+  function readTheme(): ChartTheme {
+    const styles = getComputedStyle(document.documentElement);
+    const read = (name: string, fallback: string) => styles.getPropertyValue(name).trim() || fallback;
+    return {
+      ink: read('--adm-ink', '#0f172a'),
+      muted: read('--adm-muted', '#64748b'),
+      line: read('--adm-line', '#e4ebf1'),
+      surface: read('--adm-surface', '#ffffff'),
+      palette: [1, 2, 3, 4, 5].map((index) => read(`--rep-c${index}`, '#2196d3')),
+    };
+  }
+
+  function attachLegend(
+    host: HTMLElement,
+    chart: Chart,
+    signal: AbortSignal,
+  ): void {
+    host.querySelectorAll<HTMLButtonElement>('[data-chart-toggle]').forEach((button) => {
+      button.addEventListener(
+        'click',
+        () => {
+          const index = Number(button.dataset.chartToggle);
+          chart.toggleDataVisibility(index);
+          chart.update();
+          button.setAttribute('aria-pressed', String(chart.getDataVisibility(index)));
+        },
+        { signal },
+      );
+    });
+  }
+
+  function createChart(
+    host: HTMLElement,
+    canvas: HTMLCanvasElement,
+    spec: ChartSpec,
+    theme: ChartTheme,
+    reducedMotion: boolean,
+    signal: AbortSignal,
+  ): Chart {
+    const { config } = buildChart(spec, theme, reducedMotion);
+    const chart = new Chart(canvas, config);
+    attachLegend(host, chart, signal);
+    return chart;
+  }
+
+  function mountVariants(
+    host: HTMLElement,
+    canvas: HTMLCanvasElement,
+    variants: Variant[],
+    theme: ChartTheme,
+    reducedMotion: boolean,
+  ): void {
+    if (variants.length === 0) return;
+
+    const controller = new AbortController();
+    const buttons = Array.from(host.querySelectorAll<HTMLButtonElement>('[data-chart-variant]'));
+    const valueNode = host.querySelector<HTMLElement>('[data-chart-value]');
+    const noteNode = host.querySelector<HTMLElement>('[data-chart-note]');
+    let chart: Chart | null = null;
+
+    const show = (index: number): void => {
+      const variant = variants[index];
+      if (!variant) return;
+      chart?.destroy();
+      chart = createChart(host, canvas, variant.spec, theme, reducedMotion, controller.signal);
+      canvas.setAttribute('aria-label', variant.ariaLabel);
+      if (valueNode) valueNode.textContent = variant.total;
+      if (noteNode) noteNode.textContent = variant.note;
+      buttons.forEach((button, position) => {
+        button.setAttribute('aria-pressed', String(position === index));
+      });
+    };
+
+    buttons.forEach((button, index) => {
+      button.addEventListener('click', () => show(index), { signal: controller.signal });
+    });
+
+    show(0);
+    cleanups.push(() => {
+      controller.abort();
+      chart?.destroy();
+    });
+  }
+
+  function mountSingle(
+    host: HTMLElement,
+    canvas: HTMLCanvasElement,
+    source: HTMLScriptElement,
+    theme: ChartTheme,
+    reducedMotion: boolean,
+  ): void {
+    let spec: ChartSpec;
+    try {
+      spec = JSON.parse(source.textContent ?? '') as ChartSpec;
+    } catch {
+      return;
+    }
+
+    const controller = new AbortController();
+    const chart = createChart(host, canvas, spec, theme, reducedMotion, controller.signal);
+    cleanups.push(() => {
+      controller.abort();
+      chart.destroy();
+    });
+  }
+
+  function mountAll(): void {
+    cleanups.splice(0).forEach((cleanup) => cleanup());
+    if (document.querySelector('[data-chart-host]') === null) return;
+
+    const theme = readTheme();
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    document.querySelectorAll<HTMLElement>('[data-chart-host]').forEach((host) => {
+      const canvas = host.querySelector<HTMLCanvasElement>('canvas[data-chart]');
+      if (!canvas) return;
+
+      const variantsNode = host.querySelector<HTMLScriptElement>('script[data-chart-variants]');
+      if (variantsNode) {
+        try {
+          const variants = JSON.parse(variantsNode.textContent ?? '') as Variant[];
+          mountVariants(host, canvas, variants, theme, reducedMotion);
+        } catch {
+          // Sin datos válidos no se dibuja nada; el respaldo textual sigue visible.
+        }
+        return;
+      }
+
+      const specNode = host.querySelector<HTMLScriptElement>('script[data-chart-spec]');
+      if (specNode) mountSingle(host, canvas, specNode, theme, reducedMotion);
+    });
+  }
+
+  mountAll();
+  // Con el router de Astro el módulo se ejecuta una sola vez; este evento vuelve
+  // a montar los canvas de cada página que se visita sin recargar el navegador.
+  document.addEventListener('astro:page-load', mountAll);
+
+  // El tema cambia con una clase en <html>: los gráficos se recalculan con los
+  // tokens nuevos para conservar contraste en modo oscuro.
+  let frame = 0;
+  new MutationObserver(() => {
+    window.cancelAnimationFrame(frame);
+    frame = window.requestAnimationFrame(mountAll);
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+</script>

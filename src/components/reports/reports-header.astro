@@ -1,0 +1,43 @@
+---
+import { REPORT_PERIODS, type ReportPeriod } from '@/lib/admin/reports';
+
+interface Props {
+  months: ReportPeriod;
+  periodLabel: string;
+  partial: boolean;
+  messages: string[];
+}
+
+const { months, periodLabel, partial, messages } = Astro.props;
+
+const periodHref = (value: ReportPeriod): string => `/admin/reportes?periodo=${value}`;
+---
+
+<header class="rep-head">
+  <div class="rep-head-copy">
+    <h1>Reportes</h1>
+    <p class="rep-lead">
+      Ventas, margen, gastos e inventario de los {periodLabel}. Importes en bolivianos (BOB).
+    </p>
+  </div>
+
+  <nav class="rep-periods" aria-label="Periodo del reporte">
+    <span class="rep-periods-label">Periodo</span>
+    {
+      REPORT_PERIODS.map((value) => (
+        <a href={periodHref(value)} aria-current={value === months ? 'page' : undefined}>
+          {value} meses
+        </a>
+      ))
+    }
+  </nav>
+</header>
+
+{
+  partial && (
+    <p class="adm-banner adm-banner--warn" role="status">
+      Algunas fuentes no respondieron: {messages.join(' ')} El resto del panel muestra los datos
+      disponibles.
+    </p>
+  )
+}

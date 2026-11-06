@@ -86,6 +86,8 @@ export type ReportView = {
   periodLabel: string;
   stats: ReportStats;
   monthly: MonthlyPoint[];
+  /** Misma cantidad de puntos que `monthly`, alineados por posición. */
+  previousMonthly: MonthlyPoint[];
   paymentMix: RankedItem[];
   topProducts: RankedItem[];
   categoryMix: RankedItem[];
@@ -336,6 +338,7 @@ export function buildReportView(input: ReportInput): ReportView {
       lowStockCount: lowStock.length,
     },
     monthly: monthly.current,
+    previousMonthly: monthly.previous,
     paymentMix: buildPaymentMix(currentSales),
     topProducts: buildTopProducts(currentSales, input.products),
     categoryMix: buildCategoryMix(currentSales, input.products, input.categories),

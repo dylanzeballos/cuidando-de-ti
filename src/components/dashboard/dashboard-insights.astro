@@ -1,0 +1,86 @@
+---
+import BarChart from '@/components/reports/bar-chart.astro';
+import MixChart from '@/components/reports/mix-chart.astro';
+import ReportTile from '@/components/reports/report-tile.astro';
+import { compactMoney } from '@/lib/admin/chart-config';
+import { LOW_STOCK_THRESHOLD, type ReportView } from '@/lib/admin/reports';
+
+interface Props {
+  view: ReportView;
+  hasStockData: boolean;
+}
+
+const { view, hasStockData } = Astro.props;
+---
+
+<div class="rep-grid">
+  <ReportTile
+    id="dash-payments"
+    title="Mix de cobro"
+    meta={`${view.stats.salesCount} ventas`}
+    span={4}
+  >
+    {
+      view.paymentMix.length > 0 ? (
+        <MixChart
+          segments={view.paymentMix.map((item) => ({ label: item.label, value: item.value }))}
+          centerText={compactMoney(view.stats.revenue)}
+          centerLabel="Total cobrado"
+          label="Cobros por método de pago"
+        />
+      ) : (
+        <div class="rep-empty">
+          <strong>Sin cobros todavía</strong>
+          <span>Registra una venta para ver el desglose por método de pago.</span>
+          <a href="/admin/ventas">Nueva venta</a>
+        </div>
+      )
+    }
+  </ReportTile>
+
+  <ReportTile id="dash-top" title="Top productos" meta="Por ingreso" span={4}>
+    {
+      view.topProducts.length > 0 ? (
+        <BarChart items={view.topProducts} label="Productos con más ingresos" />
+      ) : (
+        <div class="rep-empty">
+          <strong>Aún no hay productos vendidos</strong>
+          <span>Cuando vendas, verás aquí los que sostienen la facturación.</span>
+        </div>
+      )
+    }
+  </ReportTile>
+
+  <ReportTile
+    id="dash-stock"
+    title="Inventario bajo"
+    meta={`≤ ${LOW_STOCK_THRESHOLD} u.`}
+    span={4}
+  >
+    {
+      view.lowStock.length > 0 ? (
+        <ul class="rep-stock" aria-label="Productos con existencias bajas">
+          {view.lowStock.slice(0, 5).map((row) => (
+            <li>
+              <span class="rep-stock-name">
+                <strong>{row.name}</strong>
+                <small>{row.sku}</small>
+              </span>
+              <span class="rep-stock-qty">{row.stock} u.</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="rep-empty">
+          <strong>{hasStockData ? 'Sin alertas de existencias' : 'Sin datos de existencias'}</strong>
+          <span>
+            {hasStockData
+              ? `Todos los productos superan las ${LOW_STOCK_THRESHOLD} unidades.`
+              : 'Registra movimientos de inventario para activar esta alerta.'}
+          </span>
+          <a href="/admin/inventario">Revisar inventario</a>
+        </div>
+      )
+    }
+  </ReportTile>
+</div>

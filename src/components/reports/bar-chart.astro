@@ -1,0 +1,53 @@
+---
+import { formatMoney } from '@/lib/sales/cart';
+
+interface Item {
+  label: string;
+  value: number;
+  detail?: string;
+}
+
+interface Props {
+  items: Item[];
+  label: string;
+  datasetLabel?: string;
+}
+
+const { items, label, datasetLabel = 'Ingresos' } = Astro.props;
+
+const spec = {
+  kind: 'bar' as const,
+  labels: items.map((item) => item.label),
+  values: items.map((item) => item.value),
+  details: items.map((item) => item.detail ?? ''),
+  datasetLabel,
+};
+const payload = JSON.stringify(spec).replace(/</g, '\\u003c');
+---
+
+<div class="rep-chart-host" data-chart-host>
+  <div class="rep-chart-canvas rep-chart-canvas--bar">
+    <canvas
+      data-chart
+      role="img"
+      aria-label={`${label}. ${items.map((item) => `${item.label}: ${formatMoney(item.value)}${item.detail ? `, ${item.detail}` : ''}`).join('. ')}`}
+    ></canvas>
+  </div>
+  <script is:inline type="application/json" data-chart-spec set:html={payload} />
+  <table class="rep-sr">
+    <caption>{label}</caption>
+    <thead>
+      <tr><th scope="col">Concepto</th><th scope="col">Importe</th></tr>
+    </thead>
+    <tbody>
+      {
+        items.map((item) => (
+          <tr>
+            <th scope="row">{item.label}</th>
+            <td>{formatMoney(item.value)}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

@@ -49,18 +49,6 @@ const pathname = Astro.url.pathname;
 type HeaderTab = { label: string; href: string; anchor?: boolean };
 
 const HEADER_TABS: Record<string, HeaderTab[]> = {
-  '/admin': [
-    { label: 'Resumen', href: '#dash-activity', anchor: true },
-    { label: 'Cobros', href: '#dash-payments', anchor: true },
-    { label: 'Productos', href: '#dash-top', anchor: true },
-    { label: 'Existencias', href: '#dash-stock', anchor: true },
-  ],
-  '/admin/reportes': [
-    { label: 'Ingresos', href: '#rep-trend', anchor: true },
-    { label: 'Cobros', href: '#rep-payments', anchor: true },
-    { label: 'Productos', href: '#rep-top', anchor: true },
-    { label: 'Márgenes', href: '#rep-margins', anchor: true },
-  ],
   '/admin/ventas': [
     { label: 'Registro', href: '/admin/ventas' },
     { label: 'Historial', href: '/admin/ventas/historial' },
@@ -234,7 +222,7 @@ const today = new Intl.DateTimeFormat('es-BO', {
             {accountEmail ?? 'Sesión activa'}
           </span>
         </div>
-        <form method="post" action="/api/auth/logout">
+        <form method="post" action="/api/auth/logout" data-astro-reload>
           <button class="adm-logout" type="submit" title="Cerrar sesión">
             <svg
               class="adm-logout-icon"
@@ -274,26 +262,30 @@ const today = new Intl.DateTimeFormat('es-BO', {
           <span class="adm-menu-line"></span>
           <span class="adm-menu-line"></span>
         </button>
-        <div class="adm-greeting-block">
-          <p class="adm-greeting">{greeting}, {displayName}</p>
-          <span class="adm-context">
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            {INSTALLATION.name} · {workspace.label}
-          </span>
-        </div>
+        {
+          isHome && (
+            <div class="adm-greeting-block">
+              <p class="adm-greeting">{greeting}, {displayName}</p>
+              <span class="adm-context">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                {INSTALLATION.name} · {workspace.label}
+              </span>
+            </div>
+          )
+        }
         <div class="adm-header-actions">
           <button
             class="adm-theme-toggle"
@@ -371,8 +363,19 @@ const today = new Intl.DateTimeFormat('es-BO', {
 </BaseLayout>
 
 <script>
-  const shell = document.getElementById('adm-shell');
-  if (shell) {
+  let shellController: AbortController | null = null;
+
+  const setupShell = () => {
+    const shell = document.getElementById('adm-shell');
+    if (!shell || shell.dataset.admReady === 'true') return;
+    shell.dataset.admReady = 'true';
+
+    // Los listeners de documento sobreviven a la navegación; se cancelan los de
+    // la página anterior para no acumular manejadores en cada transición.
+    shellController?.abort();
+    shellController = new AbortController();
+    const { signal } = shellController;
+
     const RAIL_KEY = 'cuidando:sidebar-rail';
 
     const applyRail = (rail: boolean) => {
@@ -433,12 +436,16 @@ const today = new Intl.DateTimeFormat('es-BO', {
         menuButton?.focus();
       });
 
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && shell.classList.contains('adm-shell--nav-open')) {
-          closeNav();
-          menuButton?.focus();
-        }
-      });
+      document.addEventListener(
+        'keydown',
+        (event) => {
+          if (event.key === 'Escape' && shell.classList.contains('adm-shell--nav-open')) {
+            closeNav();
+            menuButton?.focus();
+          }
+        },
+        { signal },
+      );
 
       sidebar?.querySelectorAll('a').forEach((link) => {
         link.addEventListener('click', () => {
@@ -446,9 +453,13 @@ const today = new Intl.DateTimeFormat('es-BO', {
         });
       });
 
-      mobileQuery.addEventListener('change', () => {
-        if (!mobileQuery.matches) closeNav();
-      });
+      mobileQuery.addEventListener(
+        'change',
+        () => {
+          if (!mobileQuery.matches) closeNav();
+        },
+        { signal },
+      );
 
       const themeButton = shell.querySelector<HTMLButtonElement>('[data-theme-toggle]');
       const syncTheme = () => {
@@ -482,5 +493,8 @@ const today = new Intl.DateTimeFormat('es-BO', {
     } catch {
       // Sin almacenamiento disponible: el menú funciona con los valores por defecto.
     }
-  }
+  };
+
+  setupShell();
+  document.addEventListener('astro:page-load', setupShell);
 </script>

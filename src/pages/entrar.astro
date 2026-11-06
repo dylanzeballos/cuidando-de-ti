@@ -51,7 +51,7 @@ const fieldError = error === 'email' || error === 'password' ? error : null;
 
         {message && <p class="entrar-alert" role="alert">{message}</p>}
 
-        <form class="entrar-form" method="post" action="/api/auth/login">
+        <form class="entrar-form" method="post" action="/api/auth/login" data-astro-reload>
           <input type="hidden" name="redirect" value={redirect} />
 
           <div class="entrar-field">

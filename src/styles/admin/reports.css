@@ -5,24 +5,30 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem 1.5rem;
-  margin-bottom: 1.35rem;
+  margin-bottom: 1.15rem;
+}
+
+.rep-head-copy {
+  min-width: 0;
 }
 
 .rep-head h1 {
   margin: 0;
-  font-size: clamp(1.6rem, 2.6vw, 2.15rem);
+  font-size: 1.9rem;
   letter-spacing: -0.03em;
   line-height: 1.05;
 }
 
-.rep-head p {
+.rep-lead {
   margin: 0.35rem 0 0;
   max-width: 64ch;
   color: var(--adm-muted);
 }
 
+/* Control de periodo: un solo grupo segmentado, sin pestañas sueltas. */
 .rep-periods {
   display: inline-flex;
+  align-items: center;
   gap: 2px;
   padding: 3px;
   border: 1px solid var(--adm-line);
@@ -30,8 +36,17 @@
   background: var(--adm-surface);
 }
 
+.rep-periods-label {
+  padding: 0 0.45rem 0 0.35rem;
+  color: var(--adm-muted);
+  font-size: 0.66rem;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
 .rep-periods a {
-  padding: 0.38rem 0.66rem;
+  padding: 0.38rem 0.7rem;
   border-radius: 7px;
   color: var(--adm-muted);
   font-size: 0.82rem;
@@ -52,41 +67,63 @@
   }
 }
 
-.rep-lead {
-  margin: 0.35rem 0 0;
-  max-width: 64ch;
-  color: var(--adm-muted);
+.rep-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.15rem;
 }
 
-/* KPIs compactos en pills, como una barra de estado. */
+.rep-summary-group {
+  min-width: 0;
+  padding: 0.85rem 1rem 0.9rem;
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-line);
+  border-radius: var(--adm-radius);
+}
+
+.rep-summary-title {
+  margin: 0 0 0.7rem;
+  color: var(--adm-ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
 .rep-kpis {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0 0 1rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .rep-kpi {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.48rem 0.95rem 0.48rem 0.45rem;
-  background: var(--adm-surface);
-  border: 1px solid var(--adm-line);
-  border-radius: 999px;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0 0.8rem;
+  border-left: 1px solid var(--adm-line);
+}
+
+.rep-kpi:first-child {
+  padding-left: 0;
+  border-left: 0;
 }
 
 .rep-kpi-icon {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  color: #fff;
-  background: var(--kpi-color, var(--adm-brand));
+  width: 28px;
+  height: 28px;
+  margin-top: 0.1rem;
+  border-radius: 9px;
+  color: var(--kpi-color, var(--adm-brand));
+  background: color-mix(in srgb, var(--kpi-color, var(--adm-brand)) 13%, transparent);
 }
 
 .rep-kpi-icon--teal { --kpi-color: var(--adm-brand); }
@@ -99,95 +136,36 @@
 .rep-kpi-text {
   display: flex;
   flex-direction: column;
-  line-height: 1.15;
+  min-width: 0;
+  line-height: 1.2;
 }
 
 .rep-kpi-text small {
   color: var(--adm-muted);
-  font-size: 0.65rem;
+  font-size: 0.66rem;
   font-weight: 650;
-  letter-spacing: 0.06em;
+  min-height: 2.6em;
+  letter-spacing: 0.045em;
+  line-height: 1.3;
   text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .rep-kpi-text strong {
-  font-size: 1rem;
+  font-size: 1.02rem;
   font-weight: 650;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   font-variant-numeric: tabular-nums;
 }
 
 .rep-kpi-text em {
   color: var(--adm-muted);
-  font-size: 0.72rem;
+  font-size: 0.71rem;
   font-style: normal;
-}
-
-.rep-delta--up {
-  color: var(--adm-ok-ink);
-  font-weight: 600;
-}
-
-.rep-delta--down {
-  color: var(--adm-danger);
-  font-weight: 600;
-}
-
-/* Lienzo de visuales: columnas de 12 con tamaños variados. */
-.rep-grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 1.15rem;
-}
-
-.rep-tile {
-  grid-column: span 4;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding: 1.05rem 1.15rem 1.2rem;
-  background: var(--adm-surface);
-  border: 1px solid var(--adm-line);
-  border-radius: var(--adm-radius);
-}
-
-.rep-tile--8 { grid-column: span 8; }
-.rep-tile--7 { grid-column: span 7; }
-.rep-tile--6 { grid-column: span 6; }
-.rep-tile--5 { grid-column: span 5; }
-.rep-tile--4 { grid-column: span 4; }
-.rep-tile--3 { grid-column: span 3; }
-.rep-tile--12 { grid-column: span 12; }
-
-.rep-tile-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.9rem;
-}
-
-.rep-tile-head h2 {
-  margin: 0;
-  font-size: 0.95rem;
-  letter-spacing: -0.015em;
-}
-
-.rep-tile-head span {
-  color: var(--adm-muted);
-  font-size: 0.74rem;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
-.rep-tile-body {
-  flex: 1 1 auto;
-  min-height: 0;
-}
+.rep-kpi-note--good { color: var(--adm-ok-ink); font-weight: 600; }
+.rep-kpi-note--bad { color: var(--adm-danger); font-weight: 600; }
 
-.rep-source {
-  margin: 1.25rem 0 0;
-  color: var(--adm-muted);
-  font-size: 0.76rem;
-}
 

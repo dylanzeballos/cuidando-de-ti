@@ -1,0 +1,107 @@
+---
+import type { ReportView } from '@/lib/admin/reports';
+import { formatMoney } from '@/lib/sales/cart';
+
+interface Props {
+  view: ReportView;
+}
+
+const { view } = Astro.props;
+
+const labels = view.monthly.map((point) => point.label);
+const revenue = view.monthly.reduce((sum, point) => sum + point.revenue, 0);
+const sales = view.monthly.reduce((sum, point) => sum + point.sales, 0);
+const numberFormat = new Intl.NumberFormat('es-BO');
+const delta = view.stats.revenueDeltaPct;
+
+const variants = [
+  {
+    label: 'Ingresos',
+    ariaLabel: 'Ingresos por mes, periodo actual y anterior',
+    total: formatMoney(revenue),
+    note:
+      delta === null
+        ? 'Sin periodo anterior comparable'
+        : `${delta > 0 ? '+' : ''}${delta.toFixed(1)} % vs periodo anterior`,
+    spec: {
+      kind: 'line' as const,
+      unit: 'money' as const,
+      labels,
+      series: [
+        { label: 'Periodo actual', data: view.monthly.map((point) => point.revenue), emphasis: true },
+        { label: 'Periodo anterior', data: view.previousMonthly.map((point) => point.revenue) },
+      ],
+    },
+  },
+  {
+    label: 'Ventas',
+    ariaLabel: 'Ventas por mes, periodo actual y anterior',
+    total: numberFormat.format(sales),
+    note:
+      view.stats.annulledCount > 0
+        ? `${view.stats.annulledCount} anulada${view.stats.annulledCount === 1 ? '' : 's'} en el periodo`
+        : 'Sin ventas anuladas en el periodo',
+    spec: {
+      kind: 'line' as const,
+      unit: 'number' as const,
+      labels,
+      series: [
+        { label: 'Periodo actual', data: view.monthly.map((point) => point.sales), emphasis: true },
+        { label: 'Periodo anterior', data: view.previousMonthly.map((point) => point.sales) },
+      ],
+    },
+  },
+];
+
+const payload = JSON.stringify(variants).replace(/</g, '\\u003c');
+---
+
+<div class="dash-chart rep-chart-host" data-chart-host>
+  <div class="dash-chart-head">
+    <div class="dash-chart-tabs" role="group" aria-label="Métrica del gráfico">
+      {
+        variants.map((variant, index) => (
+          <button
+            type="button"
+            data-chart-variant={index}
+            aria-pressed={index === 0 ? 'true' : 'false'}
+          >
+            {variant.label}
+          </button>
+        ))
+      }
+    </div>
+    <span class="dash-chart-period">Últimos 6 meses</span>
+  </div>
+
+  <p class="dash-chart-value" data-chart-value aria-live="polite">{variants[0].total}</p>
+  <p class="dash-chart-note" data-chart-note>{variants[0].note}</p>
+
+  <div class="rep-chart-canvas rep-chart-canvas--hero">
+    <canvas data-chart role="img" aria-label={variants[0].ariaLabel}></canvas>
+  </div>
+
+  <script is:inline type="application/json" data-chart-variants set:html={payload} />
+
+  <table class="rep-sr">
+    <caption>Ingresos y ventas de los últimos 6 meses</caption>
+    <thead>
+      <tr>
+        <th scope="col">Mes</th>
+        <th scope="col">Ingresos</th>
+        <th scope="col">Ventas</th>
+      </tr>
+    </thead>
+    <tbody>
+      {
+        view.monthly.map((point) => (
+          <tr>
+            <th scope="row">{point.label}</th>
+            <td>{formatMoney(point.revenue)}</td>
+            <td>{point.sales}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

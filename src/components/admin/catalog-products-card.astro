@@ -1,0 +1,55 @@
+---
+import CatalogFilters from '@/components/admin/catalog-filters.astro';
+import ProductsTable from '@/components/admin/products-table.astro';
+import EmptyState from '@/components/primitives/empty-state.astro';
+import type { Category, Product } from '@/lib/admin/catalog-api';
+
+interface Props {
+  products: Product[];
+  total: number;
+  categories: Category[];
+  query: string;
+  categoryId: string;
+  status: string;
+  loadError: string | null;
+  openProductId?: string;
+}
+
+const { products, total, categories, query, categoryId, status, loadError, openProductId } =
+  Astro.props;
+
+const hasFilters = query.length > 0 || categoryId.length > 0 || status.length > 0;
+---
+
+<section class="adm-card adm-catalog-products" aria-labelledby="productos-title">
+  <div class="adm-card-head">
+    <div>
+      <h2 id="productos-title">Productos</h2>
+      <p class="adm-card-sub">
+        {products.length} en esta vista · {total} en total
+      </p>
+    </div>
+    {hasFilters && <a class="adm-chip adm-chip--link" href="/admin/catalogo">Limpiar filtros</a>}
+  </div>
+
+  <CatalogFilters query={query} categoryId={categoryId} status={status} categories={categories} />
+
+  {
+    products.length === 0 ? (
+      <EmptyState
+        title={loadError ? 'No se pudieron cargar los productos' : 'Sin productos para este filtro'}
+        message={
+          loadError
+            ? 'Inténtalo de nuevo en unos minutos.'
+            : 'Prueba con otro filtro o crea el primero desde “Nuevo producto”.'
+        }
+      />
+    ) : (
+      <ProductsTable
+        products={products}
+        categories={categories}
+        openProductId={openProductId}
+      />
+    )
+  }
+</section>

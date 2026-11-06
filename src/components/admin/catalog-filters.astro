@@ -9,10 +9,9 @@ interface Props {
 }
 
 const { query, categoryId, status, categories } = Astro.props;
-const hasFilters = query.length > 0 || categoryId.length > 0 || status.length > 0;
 ---
 
-<form class="adm-catalog-filters" method="get">
+<form class="adm-catalog-filters" method="get" role="search">
   <div class="adm-search">
     <label class="adm-sr" for="catalog-search">Buscar productos</label>
     <span class="adm-search-icon" aria-hidden="true">
@@ -48,6 +47,4 @@ const hasFilters = query.length > 0 || categoryId.length > 0 || status.length > 
     <option value="activos" selected={status === 'activos'}>Activos</option>
     <option value="inactivos" selected={status === 'inactivos'}>Inactivos</option>
   </select>
-
-  {hasFilters && <a class="adm-link" href="/admin/catalogo">Limpiar</a>}
 </form>

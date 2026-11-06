@@ -1,0 +1,56 @@
+---
+import { compactMoney } from '@/lib/admin/chart-config';
+import { formatMoney } from '@/lib/sales/cart';
+
+interface Point {
+  label: string;
+  revenue: number;
+  sales: number;
+}
+
+interface Props {
+  current: Point[];
+  previous: { revenue: number }[];
+  label?: string;
+}
+
+const { current, previous, label = 'Ingresos mensuales' } = Astro.props;
+
+const spec = {
+  kind: 'line' as const,
+  labels: current.map((point) => point.label),
+  series: [
+    { label: 'Periodo actual', data: current.map((point) => point.revenue), emphasis: true },
+    { label: 'Periodo anterior', data: previous.map((point) => point.revenue) },
+  ],
+};
+const payload = JSON.stringify(spec).replace(/</g, '\\u003c');
+const total = current.reduce((sum, point) => sum + point.revenue, 0);
+const summary = current
+  .map((point) => `${point.label}: ${formatMoney(point.revenue)}, ${point.sales} ventas`)
+  .join('. ');
+---
+
+<div class="rep-chart-host" data-chart-host>
+  <div class="rep-chart-canvas rep-chart-canvas--line">
+    <canvas data-chart role="img" aria-label={`${label}. Total ${compactMoney(total)}. ${summary}`}></canvas>
+  </div>
+  <script is:inline type="application/json" data-chart-spec set:html={payload} />
+  <table class="rep-sr">
+    <caption>{label}</caption>
+    <thead>
+      <tr><th scope="col">Mes</th><th scope="col">Ingresos</th><th scope="col">Ventas</th></tr>
+    </thead>
+    <tbody>
+      {
+        current.map((point) => (
+          <tr>
+            <th scope="row">{point.label}</th>
+            <td>{formatMoney(point.revenue)}</td>
+            <td>{point.sales}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

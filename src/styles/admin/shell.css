@@ -49,8 +49,12 @@
   gap: 1.75rem;
   padding: 1.6rem 1.1rem 1.25rem;
   color: #f2fbf9;
-  /* El color principal de la farmacia es el color del sidebar. */
-  background: var(--empresa-primary, var(--adm-brand));
+  /* El color principal de la farmacia es el color del sidebar. Se parte del
+     azul vivo del logo (--adm-brand) y se oscurece lo justo para que el texto
+     blanco cumpla WCAG AA; en modo oscuro --adm-brand ya es una variante
+     clara sobre superficie oscura, así que el propio mix se aclara y el
+     sidebar acompaña al resto del tema. */
+  background: color-mix(in oklab, var(--adm-brand), #000 18%);
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.12);
 }
 
