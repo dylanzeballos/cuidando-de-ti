@@ -1,0 +1,46 @@
+---
+import type { BillingEvent } from '@/lib/billing/billing-types';
+
+interface Props {
+  events: BillingEvent[];
+}
+
+const { events } = Astro.props;
+
+const eventLabel = (type: string): string => {
+  const labels: Record<string, string> = {
+    CREATED: 'Documento creado',
+    SUBMIT_ATTEMPT: 'Intento de envío',
+    PROCESSED: 'Procesado por el SIAT',
+    OBSERVED: 'Observado por el SIAT',
+    REJECTED: 'Rechazado por el SIAT',
+    FAILED: 'Error de integración',
+    CANCELLED: 'Documento anulado',
+  };
+  return labels[type] ?? type;
+};
+---
+
+<section class="adm-card" aria-labelledby="bil-bitacora">
+  <div class="adm-card-head">
+    <h2 id="bil-bitacora">Bitácora</h2>
+    <span class="adm-chip">{events.length} eventos</span>
+  </div>
+  <ol class="bil-timeline">
+    {events.map((event) => (
+      <li>
+        <span class="bil-timeline-dot" aria-hidden="true" />
+        <div>
+          <strong>{eventLabel(event.type)}</strong>
+          <p>{event.message ?? 'Sin detalle.'}</p>
+          <small>
+            {new Date(event.createdAt).toLocaleString('es-BO')} · {event.actor}
+            {event.statusFrom && event.statusTo
+              ? ` · ${event.statusFrom} → ${event.statusTo}`
+              : ''}
+          </small>
+        </div>
+      </li>
+    ))}
+  </ol>
+</section>

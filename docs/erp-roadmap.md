@@ -6,7 +6,7 @@ farmacia antes de integrar la facturación.
 ## Implementado
 
 - **Identidad**: sesión BFF, usuarios, roles y permisos, refresh de token.
-- **Catálogo**: categorías, productos, precios, impuesto y filtros; edición de
+- **Catálogo**: categorías, productos, marca, precios y filtros; edición de
   producto en modal, activar/desactivar productos y categorías.
 - **Inventario**: sucursales, stock por sucursal, movimientos (entrada, salida,
   ajuste), transferencias entre sucursales, filtros por estado y stock bajo.

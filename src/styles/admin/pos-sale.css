@@ -142,10 +142,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.pos-total-muted {
-  font-size: 0.78rem !important;
-}
-
 .pos-total {
   margin-top: 0.35rem;
   padding-top: 0.55rem;

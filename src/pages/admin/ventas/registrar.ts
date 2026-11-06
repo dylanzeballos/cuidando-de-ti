@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { resolveSalesClient } from '@/lib/sales/sales-service';
 import { validateCart, type CartLine } from '@/lib/sales/cart';
+import { validateInvoiceInput } from '@/lib/billing/validation';
 import type { PaymentMethod } from '@/lib/sales/sales-api';
 
 export const prerender = false;
@@ -21,6 +22,8 @@ type SaleBody = {
   items?: unknown;
   payments?: unknown;
   discount?: unknown;
+  invoiceRequired?: unknown;
+  customer?: unknown;
 };
 
 /**
@@ -55,7 +58,6 @@ export const POST: APIRoute = async ({ request, session }) => {
     quantity: Number(item.quantity),
     unitPrice: Number(item.unitPrice),
     discount: item.discount === undefined ? 0 : Number(item.discount),
-    taxRate: 0,
   }));
 
   // Validación en servidor antes de llamar a la API.
@@ -80,6 +82,21 @@ export const POST: APIRoute = async ({ request, session }) => {
     )
   ) {
     return json({ status: 'validation', message: 'Elige un método de pago válido.' }, 400);
+  }
+
+  const rawCustomer =
+    body.customer !== null && typeof body.customer === 'object'
+      ? (body.customer as Record<string, unknown>)
+      : undefined;
+  const invoice = validateInvoiceInput({
+    invoiceRequired: body.invoiceRequired === true,
+    nit: rawCustomer?.documentNumber,
+    name: rawCustomer?.name,
+    email: rawCustomer?.email,
+    address: rawCustomer?.address,
+  });
+  if (!invoice.ok) {
+    return json({ status: 'validation', message: invoice.message }, 400);
   }
 
   const sales = resolveSalesClient(auth.accessToken);
@@ -117,12 +134,21 @@ export const POST: APIRoute = async ({ request, session }) => {
       })),
       discount,
       payments,
+      invoiceRequired: invoice.invoiceRequired,
+      ...(invoice.customer ? { customer: invoice.customer } : {}),
     },
     idempotencyKey,
   );
 
   if (result.status === 'ok') {
-    return json({ status: 'ok', saleId: result.data.id, number: result.data.number });
+    return json({
+      status: 'ok',
+      saleId: result.data.id,
+      number: result.data.number,
+      billingDocumentId: result.data.billing?.documentId,
+      invoiceNumber: result.data.billing?.number,
+      billingStatus: result.data.billing?.status,
+    });
   }
   if (result.status === 'unauthorized') {
     return json({ status: 'unauthorized', message: result.message }, 401);

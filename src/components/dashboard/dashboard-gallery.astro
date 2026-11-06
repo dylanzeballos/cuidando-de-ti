@@ -1,6 +1,16 @@
 ---
+import { canAccessModule } from '@/lib/admin/access';
+
+interface Props {
+  /** Permisos efectivos de la cuenta; `null` conserva la vista completa. */
+  permissions?: string[] | null;
+}
+
+const { permissions = null } = Astro.props;
+
 const items = [
   {
+    module: 'commerce',
     href: '/admin/catalogo',
     src: '/images/medicamentos.jpg',
     alt: 'Blisters de medicamentos sobre una superficie azul',
@@ -8,6 +18,7 @@ const items = [
     note: 'Analgésicos, antibióticos y más',
   },
   {
+    module: 'commerce',
     href: '/admin/catalogo',
     src: '/images/farmacia.jpg',
     alt: 'Cápsulas y pastillas de colores',
@@ -15,6 +26,7 @@ const items = [
     note: 'Suplementos y cuidado diario',
   },
   {
+    module: 'commerce',
     href: '/admin/catalogo',
     src: '/images/pastillas.jpg',
     alt: 'Cápsulas naranjas junto a un frasco',
@@ -22,33 +34,38 @@ const items = [
     note: 'Dermocosmética y primeros auxilios',
   },
   {
+    module: 'inventory',
     href: '/admin/inventario',
     src: '/images/cuidado.jpg',
     alt: 'Interior luminoso de una farmacia',
     title: 'Tu farmacia',
     note: 'Existencias y sucursales',
   },
-];
+].filter((item) => permissions === null || canAccessModule(item.module, permissions));
+
+const visible = items.length > 0;
 ---
 
-<section class="dash-gallery" aria-labelledby="dash-gallery-title">
-  <div class="rep-tile-head">
-    <h2 id="dash-gallery-title">La farmacia en imágenes</h2>
-    <span>Categorías y espacios</span>
-  </div>
-  <ul class="dash-gallery-grid">
-    {
-      items.map((item) => (
-        <li>
-          <a class="dash-gallery-card" href={item.href}>
-            <img src={item.src} alt={item.alt} loading="eager" width="900" height="600" />
-            <span>
-              <strong>{item.title}</strong>
-              <small>{item.note}</small>
-            </span>
-          </a>
-        </li>
-      ))
-    }
-  </ul>
-</section>
+{visible && (
+  <section class="dash-gallery" aria-labelledby="dash-gallery-title">
+    <div class="rep-tile-head">
+      <h2 id="dash-gallery-title">La farmacia en imágenes</h2>
+      <span>Categorías y espacios</span>
+    </div>
+    <ul class="dash-gallery-grid">
+      {
+        items.map((item) => (
+          <li>
+            <a class="dash-gallery-card" href={item.href}>
+              <img src={item.src} alt={item.alt} loading="eager" width="900" height="600" />
+              <span>
+                <strong>{item.title}</strong>
+                <small>{item.note}</small>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+)}

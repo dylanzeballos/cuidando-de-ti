@@ -43,6 +43,10 @@ const { branches, selectedBranchId } = Astro.props;
       message="Crea la primera para controlar las existencias por punto de atención."
     />
   ) : (
-    <BranchPicker branches={branches} selectedId={selectedBranchId} />
+    <BranchPicker
+      branches={branches}
+      selectedId={selectedBranchId}
+      basePath="/admin/inventario"
+    />
   )}
 </section>

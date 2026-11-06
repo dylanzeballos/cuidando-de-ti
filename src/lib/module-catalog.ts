@@ -78,7 +78,7 @@ const CATALOG: Record<string, Omit<ModulePresentation, 'code'>> = {
   },
   billing: {
     name: 'Facturación',
-    description: 'Documentos y procesos fiscales para cada empresa.',
+    description: 'Facturas con NIT, estados del SIAT y anulaciones.',
     icon: 'billing',
     group: 'finanzas',
     route: '/admin/facturacion',

@@ -1,0 +1,56 @@
+---
+import ProductFields from '@/components/admin/product-fields.astro';
+import type { Category } from '@/lib/admin/catalog-api';
+
+interface Props {
+  categories: Category[];
+  open?: boolean;
+  error?: string | null;
+}
+
+const { categories, open = false, error = null } = Astro.props;
+const dialogId = 'product-create';
+---
+
+<dialog
+  id={dialogId}
+  class="adm-modal adm-modal--wide"
+  aria-labelledby={`${dialogId}-title`}
+  data-dialog-auto-open={open ? '' : undefined}
+>
+  <form method="post" data-catalog-form="product" novalidate>
+    <input type="hidden" name="action" value="product" />
+
+    <header class="adm-modal-head">
+      <div>
+        <h2 id={`${dialogId}-title`}>Nuevo producto</h2>
+        <p>El SKU se genera automáticamente al guardar.</p>
+      </div>
+      <button class="adm-modal-close" type="button" data-dialog-close aria-label="Cerrar">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
+
+    {error && <p class="adm-banner adm-banner--error adm-modal-banner" role="alert">{error}</p>}
+
+    <div class="adm-modal-body adm-form">
+      <ProductFields idPrefix="product-new" categories={categories} />
+    </div>
+
+    <footer class="adm-modal-foot">
+      <button class="adm-btn adm-btn--ghost" type="button" data-dialog-close>Cancelar</button>
+      <button class="adm-btn" type="submit">Crear producto</button>
+    </footer>
+  </form>
+</dialog>

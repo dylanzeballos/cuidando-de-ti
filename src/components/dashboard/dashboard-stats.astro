@@ -1,12 +1,22 @@
 ---
+import { canAccessModule } from '@/lib/admin/access';
 import { LOW_STOCK_THRESHOLD, type ReportView } from '@/lib/admin/reports';
 import { formatMoney } from '@/lib/sales/cart';
 
 interface Props {
   view: ReportView;
+  /** Permisos efectivos; `null` conserva todas las tarjetas. */
+  permissions?: string[] | null;
 }
 
-const { view } = Astro.props;
+const { view, permissions = null } = Astro.props;
+
+const allowed = (code: string): boolean =>
+  permissions === null || canAccessModule(code, permissions);
+
+const showSales = allowed('sales');
+const showCosts = allowed('costs');
+const showInventory = allowed('inventory');
 
 const money = (value: number | null | undefined): string =>
   value === null || value === undefined ? '—' : formatMoney(value);
@@ -15,56 +25,72 @@ const number = (value: number): string => new Intl.NumberFormat('es-BO').format(
 ---
 
 <div class="dash-hero-stats">
-  <article class="dash-stat">
-    <span class="dash-stat-icon dash-stat-icon--violet" aria-hidden="true">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 4h14v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" />
-        <path d="M9 12v8l3-2 3 2v-8" />
-      </svg>
-    </span>
-    <p class="dash-stat-label">Venta promedio</p>
-    <p class="dash-stat-value">{money(view.stats.averageTicket)}</p>
-    <p class="dash-stat-note">Por venta completada</p>
-  </article>
+  {
+    showSales && (
+      <article class="dash-stat">
+        <span class="dash-stat-icon dash-stat-icon--violet" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 4h14v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z" />
+            <path d="M9 12v8l3-2 3 2v-8" />
+          </svg>
+        </span>
+        <p class="dash-stat-label">Venta promedio</p>
+        <p class="dash-stat-value">{money(view.stats.averageTicket)}</p>
+        <p class="dash-stat-note">Por venta completada</p>
+      </article>
+    )
+  }
 
-  <article class="dash-stat">
-    <span class="dash-stat-icon dash-stat-icon--amber" aria-hidden="true">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 19 19 5" />
-        <circle cx="7.5" cy="7.5" r="2.5" />
-        <circle cx="16.5" cy="16.5" r="2.5" />
-      </svg>
-    </span>
-    <p class="dash-stat-label">Margen catálogo</p>
-    <p class="dash-stat-value">{percent(view.stats.catalogMarginPct)}</p>
-    <p class="dash-stat-note">
-      {view.stats.productsWithCost} de {view.stats.activeProducts} productos con costo
-    </p>
-  </article>
+  {
+    showCosts && (
+      <article class="dash-stat">
+        <span class="dash-stat-icon dash-stat-icon--amber" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 19 19 5" />
+            <circle cx="7.5" cy="7.5" r="2.5" />
+            <circle cx="16.5" cy="16.5" r="2.5" />
+          </svg>
+        </span>
+        <p class="dash-stat-label">Margen catálogo</p>
+        <p class="dash-stat-value">{percent(view.stats.catalogMarginPct)}</p>
+        <p class="dash-stat-note">
+          {view.stats.productsWithCost} de {view.stats.activeProducts} productos con costo
+        </p>
+      </article>
+    )
+  }
 
-  <article class="dash-stat">
-    <span class="dash-stat-icon dash-stat-icon--rose" aria-hidden="true">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="8" />
-        <path d="M12 7.5v9" />
-        <path d="M9.4 10.2h4.3a1.8 1.8 0 0 1 0 3.6H9.4" />
-      </svg>
-    </span>
-    <p class="dash-stat-label">Gastos del mes</p>
-    <p class="dash-stat-value">{money(view.stats.expensesTotal)}</p>
-    <p class="dash-stat-note">Costos operativos registrados</p>
-  </article>
+  {
+    showCosts && (
+      <article class="dash-stat">
+        <span class="dash-stat-icon dash-stat-icon--rose" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="8" />
+            <path d="M12 7.5v9" />
+            <path d="M9.4 10.2h4.3a1.8 1.8 0 0 1 0 3.6H9.4" />
+          </svg>
+        </span>
+        <p class="dash-stat-label">Gastos del mes</p>
+        <p class="dash-stat-value">{money(view.stats.expensesTotal)}</p>
+        <p class="dash-stat-note">Costos operativos registrados</p>
+      </article>
+    )
+  }
 
-  <article class="dash-stat">
-    <span class="dash-stat-icon dash-stat-icon--slate" aria-hidden="true">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 8l8-4 8 4-8 4z" />
-        <path d="M4 8v8l8 4 8-4V8" />
-        <path d="M12 12v8" />
-      </svg>
-    </span>
-    <p class="dash-stat-label">Existencias bajas</p>
-    <p class="dash-stat-value">{number(view.stats.lowStockCount)}</p>
-    <p class="dash-stat-note">≤ {LOW_STOCK_THRESHOLD} unidades</p>
-  </article>
+  {
+    showInventory && (
+      <article class="dash-stat">
+        <span class="dash-stat-icon dash-stat-icon--slate" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 8l8-4 8 4-8 4z" />
+            <path d="M4 8v8l8 4 8-4V8" />
+            <path d="M12 12v8" />
+          </svg>
+        </span>
+        <p class="dash-stat-label">Existencias bajas</p>
+        <p class="dash-stat-value">{number(view.stats.lowStockCount)}</p>
+        <p class="dash-stat-note">≤ {LOW_STOCK_THRESHOLD} unidades</p>
+      </article>
+    )
+  }
 </div>

@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { API_BASE_URL } from 'astro:env/server';
+import { canAccessPath, firstAllowedRoute } from '@/lib/admin/access';
 import { createAuthClient } from '@/lib/auth/auth-api';
+import { loadAccessProfile } from '@/lib/auth/profile-service';
 
 export const prerender = false;
 
@@ -46,5 +48,14 @@ export const POST: APIRoute = async ({ request, session }) => {
     expiresAt: Date.now() + result.tokens.expiresIn * 1000,
   });
 
-  return new Response(null, { status: 303, headers: { location: target } });
+  // Si la cuenta no puede ver la ruta solicitada, se la lleva a su primera
+  // sección disponible. El backend sigue siendo la autoridad final.
+  const profile = await loadAccessProfile(result.tokens.accessToken);
+  const targetPath = target.split('?')[0] ?? target;
+  const destination =
+    profile.status === 'ok' && !canAccessPath(targetPath, profile.profile.permissions)
+      ? firstAllowedRoute(profile.profile.permissions)
+      : target;
+
+  return new Response(null, { status: 303, headers: { location: destination } });
 };

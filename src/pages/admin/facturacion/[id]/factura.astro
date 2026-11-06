@@ -1,0 +1,120 @@
+---
+import BaseLayout from '@/layouts/base-layout.astro';
+import ErrorState from '@/components/primitives/error-state.astro';
+import { resolveBillingClient } from '@/lib/billing/billing-service';
+import { formatMoney } from '@/lib/sales/cart';
+
+const auth = await Astro.session?.get('auth');
+const documentId = Astro.params.id ?? '';
+if (!auth) {
+  return Astro.redirect(
+    `/entrar?redirect=${encodeURIComponent(`/admin/facturacion/${documentId}/factura`)}`,
+    303,
+  );
+}
+
+const billing = resolveBillingClient(auth.accessToken);
+const current = await billing.get(documentId);
+const document = current.status === 'ok' ? current.data : null;
+const empresaName = Astro.locals.empresa?.name ?? null;
+---
+
+<BaseLayout title={document ? `Factura #${document.number}` : 'Factura'} noindex>
+  <style>
+    .fac-page { max-width: 50rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    .fac-actions { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .fac-actions a { color: var(--adm-brand); font-weight: 600; }
+    .fac { background: #fff; color: #10201a; border: 1px solid var(--adm-line); border-radius: 14px; padding: 1.75rem; }
+    .fac h1 { margin: 0 0 0.2rem; font-size: 1.35rem; letter-spacing: -0.02em; }
+    .fac-head { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; border-bottom: 1px solid var(--adm-line); padding-bottom: 1rem; }
+    .fac-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.72rem; word-break: break-all; }
+    .fac table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .fac th, .fac td { text-align: left; padding: 0.4rem; border-bottom: 1px dashed var(--adm-line); font-size: 0.82rem; }
+    .fac .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .fac-totals { margin-left: auto; width: min(22rem, 100%); display: grid; gap: 0.25rem; }
+    .fac-totals p { display: flex; justify-content: space-between; margin: 0; }
+    .fac-totals .grand { border-top: 1px solid var(--adm-line); padding-top: 0.35rem; font-weight: 700; font-size: 1.05rem; }
+    .fac-muted { color: var(--adm-muted); font-size: 0.78rem; }
+    @media print { .fac-actions { display: none; } .fac { border: 0; padding: 0; } }
+  </style>
+
+  <main class="fac-page">
+    <div class="fac-actions">
+      <a href={`/admin/facturacion/${documentId}`}>Volver al detalle</a>
+      <button type="button" class="adm-btn" onclick="window.print()">Imprimir</button>
+    </div>
+
+    {document === null ? (
+      <ErrorState
+        title={current.status === 'notFound' ? 'Factura no encontrada' : 'No se pudo cargar la factura'}
+        message="No pudimos cargar el documento fiscal. Inténtalo de nuevo en unos minutos."
+      />
+    ) : (
+      <article class="fac" aria-labelledby="fac-title">
+        <header class="fac-head">
+          <div>
+            {empresaName && <p class="fac-muted">{empresaName}</p>}
+            <h1 id="fac-title">Factura de compra y venta</h1>
+            <p class="fac-muted">N.º {document.number} · {new Date(document.issuedAt).toLocaleString('es-BO')}</p>
+            <p class="fac-muted">Estado: {document.status === 'CANCELLED' ? 'ANULADA' : document.status}</p>
+          </div>
+          <div>
+            <p class="fac-muted">CUF</p>
+            <p class="fac-code">{document.cuf ?? 'Pendiente de asignación por el SIAT'}</p>
+            <p class="fac-muted">Venta #{document.saleNumber}</p>
+          </div>
+        </header>
+
+        <section aria-label="Datos del comprador">
+          <p><strong>{document.customerName}</strong></p>
+          <p class="fac-muted">{document.customerDocumentType}: {document.customerDocumentNumber}</p>
+          {document.customerAddress && <p class="fac-muted">{document.customerAddress}</p>}
+          {document.customerEmail && <p class="fac-muted">{document.customerEmail}</p>}
+        </section>
+
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Producto</th>
+                <th scope="col" class="num">Cant.</th>
+                <th scope="col" class="num">Precio</th>
+                <th scope="col" class="num">Desc.</th>
+                <th scope="col" class="num">IVA</th>
+                <th scope="col" class="num">Importe</th>
+              </tr>
+            </thead>
+            <tbody>
+              {document.items.map((item) => (
+                <tr>
+                  <td>{item.sku} · {item.name}</td>
+                  <td class="num">{item.quantity}</td>
+                  <td class="num">{formatMoney(item.unitPrice)}</td>
+                  <td class="num">{formatMoney(item.discount)}</td>
+                  <td class="num">{formatMoney(item.taxAmount)}</td>
+                  <td class="num">{formatMoney(item.lineTotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="fac-totals">
+          <p><span>Subtotal</span><span>{formatMoney(document.subtotal)}</span></p>
+          <p><span>Descuentos</span><span>{formatMoney(document.discountTotal)}</span></p>
+          <p><span>IVA incluido</span><span>{formatMoney(document.taxTotal)}</span></p>
+          <p class="grand"><span>Total</span><span>{formatMoney(document.total)}</span></p>
+        </div>
+
+        {document.cancelReason && (
+          <p class="fac-muted">Motivo de anulación: {document.cancelReason}</p>
+        )}
+        <p class="fac-muted">
+          {document.cuf
+            ? 'Documento fiscal emitido por el ERP.'
+            : 'Documento pendiente de validación en el SIAT.'}
+        </p>
+      </article>
+    )}
+  </main>
+</BaseLayout>

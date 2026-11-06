@@ -30,7 +30,7 @@ export const WORKSPACES: readonly Workspace[] = [
     label: 'Ventas',
     landing: '/admin/ventas',
     hint: 'Caja y registro de venta',
-    modules: ['sales', 'commerce', 'catalog', 'crm', 'reports'],
+    modules: ['sales', 'billing', 'commerce', 'catalog', 'crm', 'reports'],
   },
   {
     id: 'almacen',

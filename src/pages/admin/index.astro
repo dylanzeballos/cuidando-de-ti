@@ -7,6 +7,7 @@ import DashboardStats from '@/components/dashboard/dashboard-stats.astro';
 import HomeChart from '@/components/dashboard/home-chart.astro';
 import LoadingState from '@/components/primitives/loading-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
+import { canAccessModule } from '@/lib/admin/access';
 import { buildReportView } from '@/lib/admin/reports';
 import { loadReportsData } from '@/lib/admin/reports-service';
 
@@ -39,6 +40,12 @@ const view =
 const hasStockData = data !== null && Object.keys(data.stockByProduct).length > 0;
 const hasActivity =
   view !== null && view.monthly.some((point) => point.revenue > 0 || point.sales > 0);
+const permissions = Astro.locals.access?.permissions ?? null;
+const enabledModules = empresa?.modules ?? [];
+const canViewSales = permissions === null || canAccessModule('sales', permissions);
+const canViewReports =
+  enabledModules.includes('reports') &&
+  (permissions === null || canAccessModule('reports', permissions));
 ---
 
 <AdminShell title="Inicio" active="/admin">
@@ -55,7 +62,7 @@ const hasActivity =
           <section class="dash-hero-panel" aria-labelledby="dash-pulse-title">
             <div class="dash-panel-head">
               <h2 id="dash-pulse-title">Pulso de la farmacia</h2>
-              <a class="rep-inline-link" href="/admin/reportes">Ver reportes</a>
+              {canViewReports && <a class="rep-inline-link" href="/admin/reportes">Ver reportes</a>}
             </div>
             {
               hasActivity ? (
@@ -63,19 +70,27 @@ const hasActivity =
               ) : (
                 <div class="rep-empty">
                   <strong>Aún no hay movimientos en el periodo</strong>
-                  <span>Registra una venta para empezar a ver el pulso de la farmacia.</span>
-                  <a href="/admin/ventas">Nueva venta</a>
+                  <span>
+                    {canViewSales
+                      ? 'Registra una venta para empezar a ver el pulso de la farmacia.'
+                      : 'Tu cuenta no tiene acceso al resumen de ventas.'}
+                  </span>
+                  {canViewSales && <a href="/admin/ventas">Nueva venta</a>}
                 </div>
               )
             }
           </section>
 
-          <DashboardStats view={view} />
+          <DashboardStats view={view} permissions={permissions} />
         </div>
 
-        <DashboardInsights view={view} hasStockData={hasStockData} />
+        <DashboardInsights
+          view={view}
+          hasStockData={hasStockData}
+          permissions={permissions}
+        />
 
-        <DashboardGallery />
+        <DashboardGallery permissions={permissions} />
 
         <ChartRuntime />
       </>

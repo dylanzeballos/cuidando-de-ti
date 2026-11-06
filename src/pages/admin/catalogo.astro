@@ -3,7 +3,8 @@ import AdminShell from '@/components/admin/admin-shell.astro';
 import CatalogCategories from '@/components/admin/catalog-categories.astro';
 import CatalogMetrics from '@/components/admin/catalog-metrics.astro';
 import CatalogProductsCard from '@/components/admin/catalog-products-card.astro';
-import ProductForm from '@/components/admin/product-form.astro';
+import CategoryFormDialog from '@/components/admin/category-form-dialog.astro';
+import ProductFormDialog from '@/components/admin/product-form-dialog.astro';
 import LoadingState from '@/components/primitives/loading-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
 import { API_BASE_URL } from 'astro:env/server';
@@ -40,6 +41,7 @@ if (Astro.request.method === 'POST') {
   if (result.status === 'ok') return back({ ok: result.message });
   return back({
     error: result.message,
+    ...(result.form ? { openForm: result.form } : {}),
     ...(result.productId ? { openProductId: result.productId } : {}),
   });
 }
@@ -68,15 +70,36 @@ if (productsResult.status === 'ok') {
 
 const okMessage = Astro.url.searchParams.get('ok');
 const pageError = Astro.url.searchParams.get('error');
+const openForm = Astro.url.searchParams.get('openForm');
 const status = empresa === null ? 'loading' : empresa.status;
 ---
 
 <AdminShell title="Catálogo" active="/admin/catalogo">
-  <header class="adm-page-head">
-    <h1>Catálogo</h1>
-    <p class="adm-sub">
-      Medicamentos y productos de {empresaName} con su precio, impuesto y categoría.
-    </p>
+  <header class="adm-page-head adm-page-head--row">
+    <div>
+      <h1>Catálogo</h1>
+      <p class="adm-sub">
+        Medicamentos y productos de {empresaName} con su marca, precio y categoría.
+      </p>
+    </div>
+    <div class="adm-page-actions">
+      <button class="adm-btn" type="button" data-dialog-target="product-create">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Nuevo producto
+      </button>
+    </div>
   </header>
 
   {okMessage && <p class="adm-banner adm-banner--ok" role="status">{okMessage}</p>}
@@ -96,7 +119,6 @@ const status = empresa === null ? 'loading' : empresa.status;
           <CatalogCategories categories={categories} />
 
           <div class="adm-catalog-main">
-            <ProductForm categories={categories} open={pageError !== null} />
             <CatalogProductsCard
               products={products}
               total={total}
@@ -105,11 +127,25 @@ const status = empresa === null ? 'loading' : empresa.status;
               categoryId={categoryId}
               status={estado}
               loadError={loadError}
+              error={openForm === 'product-update' ? pageError : null}
               openProductId={Astro.url.searchParams.get('openProductId') ?? undefined}
             />
           </div>
         </div>
+        <ProductFormDialog
+          categories={categories}
+          open={openForm === 'product'}
+          error={openForm === 'product' ? pageError : null}
+        />
+        <CategoryFormDialog
+          open={openForm === 'category'}
+          error={openForm === 'category' ? pageError : null}
+        />
       </>
     )
   }
 </AdminShell>
+
+<script>
+  import '@/scripts/catalog-forms';
+</script>

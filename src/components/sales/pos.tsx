@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { computeCart, formatMoney, paymentMethodLabel, validateCart, type CartLine } from '@/lib/sales/cart';
+import { validateInvoiceInput } from '@/lib/billing/validation';
 import type { PaymentMethod } from '@/lib/sales/sales-api';
 
 /** Producto del catálogo que el registro de venta puede agregar a una línea. */
@@ -18,15 +19,27 @@ export type PosProduct = {
   name: string;
   unit: string;
   unitPrice: number;
-  taxRate: number;
 };
 
 const PAYMENT_METHODS: PaymentMethod[] = ['CASH', 'CARD', 'TRANSFER', 'QR'];
 
-type SaleCreated = { id: string; number: number };
+type SaleCreated = {
+  id: string;
+  number: number;
+  billingDocumentId?: string;
+  invoiceNumber?: number;
+  billingStatus?: string;
+};
 
 type RegisterResponse =
-  | { status: 'ok'; saleId: string; number: number }
+  | {
+      status: 'ok';
+      saleId: string;
+      number: number;
+      billingDocumentId?: string;
+      invoiceNumber?: number;
+      billingStatus?: string;
+    }
   | { status: 'validation' | 'conflict' | 'unauthorized' | 'notFound' | 'unavailable'; message: string };
 
 function newIdempotencyKey(): string {
@@ -66,6 +79,10 @@ export default function PosIsland({ branchId, branchName, registerEndpoint, prod
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<SaleCreated | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
+  const [invoiceRequested, setInvoiceRequested] = useState(false);
+  const [nit, setNit] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
 
   const totals = useMemo(() => computeCart(items), [items]);
@@ -103,7 +120,6 @@ export default function PosIsland({ branchId, branchName, registerEndpoint, prod
           quantity: 1,
           unitPrice: product.unitPrice,
           discount: 0,
-          taxRate: product.taxRate,
         },
       ];
     });
@@ -128,6 +144,10 @@ export default function PosIsland({ branchId, branchName, registerEndpoint, prod
     setError(null);
     setQuery('');
     setIdempotencyKey(null);
+    setInvoiceRequested(false);
+    setNit('');
+    setCustomerName('');
+    setCustomerEmail('');
     searchRef.current?.focus();
   }
 
@@ -135,6 +155,16 @@ export default function PosIsland({ branchId, branchName, registerEndpoint, prod
     const validation = validateCart(items);
     if (!validation.ok) {
       setError(validation.message);
+      return;
+    }
+    const invoice = validateInvoiceInput({
+      invoiceRequired: invoiceRequested,
+      nit,
+      name: customerName,
+      email: customerEmail,
+    });
+    if (!invoice.ok) {
+      setError(invoice.message);
       return;
     }
     const key = idempotencyKey ?? newIdempotencyKey();
@@ -155,11 +185,19 @@ export default function PosIsland({ branchId, branchName, registerEndpoint, prod
             discount: line.discount,
           })),
           payments: [{ method, amount: totals.total }],
+          invoiceRequired: invoice.invoiceRequired,
+          ...(invoice.customer ? { customer: invoice.customer } : {}),
         }),
       });
       const payload = (await response.json()) as RegisterResponse;
       if (payload.status === 'ok') {
-        setCreated({ id: payload.saleId, number: payload.number });
+        setCreated({
+          id: payload.saleId,
+          number: payload.number,
+          billingDocumentId: payload.billingDocumentId,
+          invoiceNumber: payload.invoiceNumber,
+          billingStatus: payload.billingStatus,
+        });
         setItems([]);
         setIdempotencyKey(null);
         return;
@@ -196,7 +234,7 @@ export default function PosIsland({ branchId, branchName, registerEndpoint, prod
           autoFocus
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Buscar por nombre, SKU o código…"
+          placeholder="Buscar por nombre o SKU…"
           className="pos-search"
         />
 
@@ -246,11 +284,23 @@ export default function PosIsland({ branchId, branchName, registerEndpoint, prod
               </svg>
             </span>
             <strong>Venta #{created.number} registrada</strong>
-            <span>El comprobante quedó disponible para imprimir.</span>
+            <span>
+              {created.billingDocumentId
+                ? `Factura #${created.invoiceNumber ?? ''} creada y pendiente de envío al SIAT.`
+                : 'El comprobante quedó disponible para imprimir.'}
+            </span>
             <div className="pos-success-actions">
               <a className="adm-btn adm-btn--small" href={`/admin/ventas/${created.id}/ticket`}>
                 Ver comprobante
               </a>
+              {created.billingDocumentId && (
+                <a
+                  className="adm-btn adm-btn--small adm-btn--ghost"
+                  href={`/admin/facturacion/${created.billingDocumentId}`}
+                >
+                  Ver factura
+                </a>
+              )}
               <button className="adm-btn adm-btn--small adm-btn--ghost" type="button" onClick={resetSale}>
                 Nueva venta
               </button>
@@ -320,17 +370,65 @@ export default function PosIsland({ branchId, branchName, registerEndpoint, prod
                 <dt>Descuentos</dt>
                 <dd>{formatMoney(totals.discountTotal)}</dd>
               </div>
-              {totals.taxIncluded > 0 && (
-                <div className="pos-total-muted">
-                  <dt>Impuesto incluido</dt>
-                  <dd>{formatMoney(totals.taxIncluded)}</dd>
-                </div>
-              )}
               <div className="pos-total">
                 <dt>Total</dt>
                 <dd data-testid="pos-total">{formatMoney(totals.total)}</dd>
               </div>
             </dl>
+
+            <div className="pos-invoice">
+              <label className="adm-check" htmlFor="pos-factura">
+                <input
+                  id="pos-factura"
+                  type="checkbox"
+                  checked={invoiceRequested}
+                  onChange={(event) => setInvoiceRequested(event.target.checked)}
+                />
+                <span>Facturar con NIT</span>
+              </label>
+              <p className="pos-payment-note">
+                Sin NIT la venta queda como comprobante interno, sin factura fiscal.
+              </p>
+              {invoiceRequested && (
+                <div className="pos-invoice-fields">
+                  <div>
+                    <Label htmlFor="pos-nit">NIT</Label>
+                    <Input
+                      id="pos-nit"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      value={nit}
+                      onChange={(event) => setNit(event.target.value)}
+                      placeholder="123456789"
+                      maxLength={20}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="pos-razon">Razón social</Label>
+                    <Input
+                      id="pos-razon"
+                      autoComplete="organization"
+                      value={customerName}
+                      onChange={(event) => setCustomerName(event.target.value)}
+                      placeholder="Nombre o empresa"
+                      maxLength={200}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="pos-correo">Correo (opcional)</Label>
+                    <Input
+                      id="pos-correo"
+                      type="email"
+                      autoComplete="email"
+                      value={customerEmail}
+                      onChange={(event) => setCustomerEmail(event.target.value)}
+                      placeholder="compras@empresa.bo"
+                      maxLength={255}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="pos-payment">
               <Label htmlFor="pos-metodo">Método de pago</Label>

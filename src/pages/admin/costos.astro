@@ -10,6 +10,7 @@ import LoadingState from '@/components/primitives/loading-state.astro';
 import EmptyState from '@/components/primitives/empty-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
 import { API_BASE_URL } from 'astro:env/server';
+import { canAccessModule } from '@/lib/admin/access';
 import { createAdminClient, type Branch, type Product } from '@/lib/admin/catalog-api';
 import { createCostsLiveClient, type CostMargin } from '@/lib/admin/costs-live-api';
 import { handleCostPost } from '@/lib/admin/costs-post';
@@ -42,10 +43,14 @@ const query = (Astro.url.searchParams.get('q') ?? '').trim();
 const marginStatus = parseMarginStatus(Astro.url.searchParams.get('estado'));
 const requestedBranchId = Astro.url.searchParams.get('branchId') ?? '';
 
+const activeFilters = {
+  ...(query ? { q: query } : {}),
+  ...(marginStatus !== 'todos' ? { estado: marginStatus } : {}),
+};
+
 const back = (params: Record<string, string>) =>
   redirectWith('/admin/costos', {
-    ...(query ? { q: query } : {}),
-    ...(marginStatus !== 'todos' ? { estado: marginStatus } : {}),
+    ...activeFilters,
     ...(requestedBranchId ? { branchId: requestedBranchId } : {}),
     ...params,
   });
@@ -103,13 +108,15 @@ const openForm = Astro.url.searchParams.get('form') ?? '';
 const okMessage = Astro.url.searchParams.get('ok');
 const pageError = Astro.url.searchParams.get('error');
 const status = empresa === null ? 'loading' : empresa.status;
+const permissions = Astro.locals.access?.permissions ?? null;
+const enabledModules = empresa?.modules ?? [];
+const canManageInventory =
+  enabledModules.includes('inventory') &&
+  (permissions === null || canAccessModule('inventory', permissions));
+const canManageCatalog =
+  (enabledModules.includes('commerce') || enabledModules.includes('catalog')) &&
+  (permissions === null || canAccessModule('catalog', permissions));
 
-const unitLabels: Record<string, string> = {
-  UNIT: 'Unidad',
-  KG: 'Kilogramo',
-  LITER: 'Litro',
-  PACK: 'Paquete',
-};
 const canOperate = branches.length > 0 && products.length > 0;
 ---
 
@@ -134,14 +141,14 @@ const canOperate = branches.length > 0 && products.length > 0;
         title="Aún no hay sucursales"
         message="Crea una sucursal en el inventario para registrar el costo por sucursal."
       >
-        <a class="adm-link" href="/admin/inventario">Ir al inventario</a>
+        {canManageInventory && <a class="adm-link" href="/admin/inventario">Ir al inventario</a>}
       </EmptyState>
     ) : products.length === 0 ? (
       <EmptyState
         title="Aún no hay productos"
         message="Registra productos en el catálogo para fijar su costo de compra."
       >
-        <a class="adm-link" href="/admin/catalogo">Ir al catálogo</a>
+        {canManageCatalog && <a class="adm-link" href="/admin/catalogo">Ir al catálogo</a>}
       </EmptyState>
     ) : (
       <>
@@ -150,6 +157,8 @@ const canOperate = branches.length > 0 && products.length > 0;
         <CostsBranchCard
           branches={branches}
           selectedBranchId={selectedBranch?.id ?? ''}
+          query={activeFilters}
+          showInventoryLink={canManageInventory}
         />
 
         <section class="adm-card" aria-labelledby="margenes-title">
@@ -172,11 +181,7 @@ const canOperate = branches.length > 0 && products.length > 0;
               message="Prueba con otro texto o estado de costo."
             />
           ) : (
-            <CostsTable
-              rows={rows}
-              branchId={selectedBranch?.id ?? ''}
-              unitLabels={unitLabels}
-            />
+            <CostsTable rows={rows} branchId={selectedBranch?.id ?? ''} />
           )}
 
           <p class="adm-note">

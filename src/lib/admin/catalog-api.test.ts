@@ -47,16 +47,15 @@ describe('createAdminClient', () => {
     const client = createAdminClient({ ...OPTIONS, fetchImpl });
 
     const result = await client.createProduct({
-      sku: 'AGUA-2L',
       name: 'Agua 2L',
+      brand: 'Manantial',
       unit: 'UNIT',
       unitPrice: 8.5,
-      taxRate: 13,
     });
 
     expect(result.status).toBe('ok');
     expect(calls[0]?.init?.method).toBe('POST');
-    expect(calls[0]?.init?.body).toContain('AGUA-2L');
+    expect(calls[0]?.init?.body).toContain('Manantial');
   });
 
   it('mapea 400 a validation con el mensaje del backend', async () => {
@@ -64,7 +63,7 @@ describe('createAdminClient', () => {
     const client = createAdminClient({ ...OPTIONS, fetchImpl });
 
     const result = await client.createProduct({
-      sku: 'X', name: 'X', unit: 'UNIT', unitPrice: -1, taxRate: 0,
+      name: 'X', unit: 'UNIT', unitPrice: -1,
     });
 
     expect(result).toEqual({ status: 'validation', message: 'precio inválido' });
@@ -75,7 +74,7 @@ describe('createAdminClient', () => {
     const client = createAdminClient({ ...OPTIONS, fetchImpl });
 
     const result = await client.createProduct({
-      sku: 'X', name: 'X', unit: 'UNIT', unitPrice: 1, taxRate: 0,
+      name: 'X', unit: 'UNIT', unitPrice: 1,
     });
 
     expect(result).toEqual({ status: 'conflict', message: 'SKU duplicado' });

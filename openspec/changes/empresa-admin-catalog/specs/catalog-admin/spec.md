@@ -6,7 +6,7 @@ Ofrece a la empresa de la instalación una pantalla de administración, dentro d
 
 ### Requirement: Administración de categorías y productos
 
-La pantalla `/admin/catalogo` MUST renderizarse dentro del shell de administración y MUST listar las categorías y los productos de la empresa de la instalación, y MUST permitir crear una categoría y un producto mediante formularios. El producto MUST enviarse con SKU, nombre, unidad, precio e impuesto.
+La pantalla `/admin/catalogo` MUST renderizarse dentro del shell de administración y MUST listar las categorías y los productos de la empresa de la instalación, y MUST permitir crear una categoría y un producto mediante formularios modales. El producto MUST enviarse con nombre, marca, unidad y precio; el SKU MUST generarlo el backend y no se solicita en el formulario.
 
 #### Scenario: Listar productos de la empresa
 
@@ -16,15 +16,15 @@ La pantalla `/admin/catalogo` MUST renderizarse dentro del shell de administraci
 
 #### Scenario: Crear un producto válido
 
-- **GIVEN** un formulario de alta con SKU, nombre, unidad, precio e impuesto válidos
+- **GIVEN** un formulario de alta con nombre, marca, unidad y precio válidos
 - **WHEN** se envía el formulario
-- **THEN** el producto se crea y aparece en la lista con un mensaje de éxito
+- **THEN** el producto se crea con un SKU generado y aparece en la lista con un mensaje de éxito
 
 #### Scenario: Producto rechazado por el backend
 
-- **GIVEN** un SKU que ya existe en la empresa
+- **GIVEN** un producto con una unidad no soportada
 - **WHEN** se envía el formulario de producto
-- **THEN** la página muestra un error legible y no duplica el producto
+- **THEN** la página muestra un error legible y no crea el producto
 
 #### Scenario: Datos inválidos en el formulario
 

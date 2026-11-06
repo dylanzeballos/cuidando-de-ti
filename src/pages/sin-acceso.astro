@@ -1,0 +1,17 @@
+---
+import StatusPage from '@/components/status-page.astro';
+
+const profileUnavailable = Astro.url.searchParams.get('motivo') === 'perfil';
+
+Astro.response.status = profileUnavailable ? 503 : 403;
+Astro.response.statusText = profileUnavailable ? 'Service Unavailable' : 'Forbidden';
+---
+
+<StatusPage
+  title={profileUnavailable ? 'Permisos no disponibles' : 'Acceso restringido'}
+  heading={profileUnavailable ? 'No pudimos verificar tus permisos' : 'No tienes acceso a esta sección'}
+  message={profileUnavailable
+    ? 'El servicio de permisos no está disponible en este momento. Vuelve a intentarlo en unos minutos.'
+    : 'Tu cuenta no tiene el permiso necesario para ver este contenido. Si lo necesitas, pide a un administrador que revise tu rol.'}
+  code={profileUnavailable ? '503' : '403'}
+/>

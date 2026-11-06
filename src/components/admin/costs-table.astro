@@ -1,14 +1,14 @@
 ---
 import type { CostRow } from '@/lib/admin/costs-ui';
 import { formatMoney } from '@/lib/sales/cart';
+import { unitLabel } from '@/lib/admin/catalog-schema';
 
 interface Props {
   rows: CostRow[];
   branchId: string;
-  unitLabels: Record<string, string>;
 }
 
-const { rows, branchId, unitLabels } = Astro.props;
+const { rows, branchId } = Astro.props;
 ---
 
 <div class="adm-table-wrap">
@@ -29,7 +29,7 @@ const { rows, branchId, unitLabels } = Astro.props;
           <td data-label="Producto">
             <strong>{product.name}</strong>
             <div class="adm-cell-muted">
-              {product.sku} · {unitLabels[product.unit] ?? product.unit}
+              {product.sku} · {unitLabel(product.unit)}
             </div>
           </td>
           <td data-label="Precio" class="adm-num">{formatMoney(product.unitPrice)}</td>

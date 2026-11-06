@@ -29,7 +29,11 @@ Cada fila renderiza un `<dialog class="adm-modal adm-modal--wide">` con el formu
 
 ### Validación y campos enviados
 
-La página delega en `handleCatalogPost` (lógica pura en `src/lib`). Se validan nombre, unidad, precio, impuesto y costo antes de llamar a la API. En la edición se omite `categoryId` vacío porque `null` significa "sin cambio" en el contrato; el SKU nunca se envía. El estado se actualiza por acciones separadas (`product-status`, `category-status`) para que el botón de la tabla funcione sin abrir el diálogo.
+La página delega en `handleCatalogPost` (lógica pura en `src/lib`). Las reglas viven en `catalog-schema.ts` con Zod y se comparten entre el servidor y el script de validación anticipada del navegador; el servidor sigue siendo la autoridad. Se validan nombre, marca, unidad, precio y costo antes de llamar a la API. En la edición se omite `categoryId` vacío porque `null` significa "sin cambio" en el contrato; el SKU nunca se envía y el backend lo genera a partir del UUID del producto. El estado se actualiza por acciones separadas (`product-status`, `category-status`) para que el botón de la tabla funcione sin abrir el diálogo.
+
+### Diálogos para el alta
+
+La creación de producto y de categoría usa `<dialog>` nativo con el controlador existente, igual que la edición. Los campos de producto se comparten en `product-fields.astro` para no duplicar markup ni identificadores entre alta y edición. Si la validación falla, la redirección incluye `openForm` para reabrir el diálogo correcto.
 
 ### Tipos separados
 

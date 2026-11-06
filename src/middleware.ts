@@ -1,4 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
+import { canAccessPath } from '@/lib/admin/access';
+import { loadAccessProfile } from '@/lib/auth/profile-service';
 import { needsRefresh, refreshSessionAuth } from '@/lib/auth/session';
 import { loadSite } from '@/lib/site-service';
 
@@ -40,11 +42,43 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     context.locals.account = { email: auth.accountEmail };
 
-    const lookup = await loadSite(context.url.hostname);
+    // La empresa define los módulos habilitados y el perfil define los permisos
+    // efectivos de la cuenta. Ambos se resuelven en paralelo en el servidor.
+    const [lookup, profileResult] = await Promise.all([
+      loadSite(context.url.hostname),
+      loadAccessProfile(auth.accessToken),
+    ]);
+
     context.locals.empresa =
       lookup.status === 'ok'
         ? { name: lookup.site.siteName, modules: lookup.site.modules, status: 'ok' }
         : { name: null, modules: [], status: 'unavailable' };
+
+    if (profileResult.status === 'ok') {
+      context.locals.access = {
+        roles: profileResult.profile.roles,
+        permissions: profileResult.profile.permissions,
+      };
+    } else if (profileResult.status === 'unauthorized') {
+      await context.session?.destroy();
+      return context.redirect('/entrar?error=session', 303);
+    } else {
+      // Sin perfil no se puede saber qué opciones mostrar ni qué rutas permitir.
+      // Se falla cerrado para no exhibir secciones no autorizadas.
+      context.locals.access = null;
+      const unavailable = context.redirect('/sin-acceso?motivo=perfil', 303);
+      unavailable.headers.set('Cache-Control', 'no-store');
+      unavailable.headers.set('X-Robots-Tag', 'noindex');
+      return unavailable;
+    }
+
+    const { permissions } = context.locals.access;
+    if (!canAccessPath(pathname, permissions)) {
+      const denied = context.redirect('/sin-acceso', 303);
+      denied.headers.set('Cache-Control', 'no-store');
+      denied.headers.set('X-Robots-Tag', 'noindex');
+      return denied;
+    }
   }
 
   const response = await next();

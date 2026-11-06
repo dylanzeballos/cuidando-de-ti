@@ -4,6 +4,7 @@ import LoadingState from '@/components/primitives/loading-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
 import { resolveSalesClient } from '@/lib/sales/sales-service';
 import { formatMoney, paymentMethodLabel, round2 } from '@/lib/sales/cart';
+import { billingStatusLabel, billingStatusTone } from '@/lib/billing/labels';
 import type { Sale, SaleReturn } from '@/lib/sales/sales-api';
 
 // El token viene de la sesión de servidor; el navegador nunca lo recibe. La
@@ -130,9 +131,30 @@ const loadError = current.status === 'unavailable' ? current.message : null;
             <div><dt>Fecha</dt><dd>{new Date(sale.createdAt).toLocaleString('es-BO')}</dd></div>
             <div><dt>Subtotal</dt><dd>{formatMoney(sale.subtotal)}</dd></div>
             <div><dt>Descuentos</dt><dd>{formatMoney(sale.discountTotal)}</dd></div>
+            <div><dt>IVA incluido</dt><dd>{formatMoney(sale.taxTotal)}</dd></div>
             <div><dt>Total</dt><dd>{formatMoney(sale.total)}</dd></div>
             <div><dt>Devuelto</dt><dd>{formatMoney(returnedTotal)}</dd></div>
+            <div><dt>Cliente</dt><dd>{sale.customer?.name ?? 'Consumidor final'}</dd></div>
+            <div><dt>{sale.customer?.documentType ?? 'Documento'}</dt><dd>{sale.customer?.documentNumber ?? 'Sin NIT'}</dd></div>
+            <div>
+              <dt>Factura</dt>
+              <dd>
+                {sale.billing ? (
+                  <a href={`/admin/facturacion/${sale.billing.documentId}`}>
+                    #{sale.billing.number} · {billingStatusLabel(sale.billing.status)}
+                  </a>
+                ) : 'Comprobante interno'}
+              </dd>
+            </div>
           </dl>
+          {sale.billing && (
+            <p class="adm-session">
+              <span class={`adm-badge ${billingStatusTone(sale.billing.status)}`}>
+                {billingStatusLabel(sale.billing.status)}
+              </span>
+              {sale.billing.cuf ? `CUF ${sale.billing.cuf}` : 'Pendiente de CUF del SIAT'}
+            </p>
+          )}
           {sale.status === 'ANNULLED' && (
             <p class="adm-sub">
               Anulada el {sale.annulledAt ? new Date(sale.annulledAt).toLocaleString('es-BO') : '—'}

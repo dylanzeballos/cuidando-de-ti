@@ -1,0 +1,68 @@
+---
+interface Props {
+  open?: boolean;
+  error?: string | null;
+}
+
+const { open = false, error = null } = Astro.props;
+const dialogId = 'category-create';
+---
+
+<dialog
+  id={dialogId}
+  class="adm-modal"
+  aria-labelledby={`${dialogId}-title`}
+  data-dialog-auto-open={open ? '' : undefined}
+>
+  <form method="post" data-catalog-form="category" novalidate>
+    <input type="hidden" name="action" value="category" />
+
+    <header class="adm-modal-head">
+      <div>
+        <h2 id={`${dialogId}-title`}>Nueva categoría</h2>
+        <p>Agrupa productos del catálogo por tipo.</p>
+      </div>
+      <button class="adm-modal-close" type="button" data-dialog-close aria-label="Cerrar">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
+
+    {error && <p class="adm-banner adm-banner--error adm-modal-banner" role="alert">{error}</p>}
+
+    <div class="adm-modal-body">
+      <div class="adm-field">
+        <label for={`${dialogId}-name`}>Nombre de la categoría</label>
+        <input
+          id={`${dialogId}-name`}
+          name="name"
+          required
+          maxlength="120"
+          placeholder="Ej. Analgésicos"
+          autocomplete="off"
+        />
+        <p
+          class="adm-field-error"
+          id={`${dialogId}-name-error`}
+          data-field-error="name"
+          hidden
+        ></p>
+      </div>
+    </div>
+
+    <footer class="adm-modal-foot">
+      <button class="adm-btn adm-btn--ghost" type="button" data-dialog-close>Cancelar</button>
+      <button class="adm-btn" type="submit">Crear categoría</button>
+    </footer>
+  </form>
+</dialog>

@@ -15,22 +15,17 @@ const activeCount = categories.filter((category) => category.active).length;
       <h2 id="categorias-title">Categorías</h2>
       <p class="adm-card-sub">{activeCount} activas de {categories.length}</p>
     </div>
-    <span class="adm-chip">{categories.length}</span>
+    <div class="adm-card-head-side">
+      <span class="adm-chip">{categories.length}</span>
+      <button
+        class="adm-btn adm-btn--small"
+        type="button"
+        data-dialog-target="category-create"
+      >
+        Nueva
+      </button>
+    </div>
   </div>
-
-  <form class="adm-inline-form" method="post">
-    <input type="hidden" name="action" value="category" />
-    <label class="adm-sr" for="category-name">Nueva categoría</label>
-    <input
-      id="category-name"
-      name="name"
-      required
-      maxlength="120"
-      placeholder="Nueva categoría…"
-      autocomplete="off"
-    />
-    <button class="adm-btn adm-btn--small" type="submit">Agregar</button>
-  </form>
 
   {
     categories.length === 0 ? (

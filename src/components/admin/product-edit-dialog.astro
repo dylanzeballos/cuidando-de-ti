@@ -1,23 +1,16 @@
 ---
+import ProductFields from '@/components/admin/product-fields.astro';
 import type { Category, Product } from '@/lib/admin/catalog-api';
 
 interface Props {
   product: Product;
   categories: Category[];
   open: boolean;
+  error?: string | null;
 }
 
-const { product, categories, open } = Astro.props;
+const { product, categories, open, error = null } = Astro.props;
 const dialogId = `product-${product.id}`;
-const units = [
-  { value: 'UNIT', label: 'Unidad' },
-  { value: 'KG', label: 'Kilogramo' },
-  { value: 'LITER', label: 'Litro' },
-  { value: 'PACK', label: 'Paquete' },
-];
-const availableCategories = categories.filter(
-  (category) => category.active || category.id === product.categoryId,
-);
 ---
 
 <dialog
@@ -26,7 +19,7 @@ const availableCategories = categories.filter(
   aria-labelledby={`${dialogId}-title`}
   data-dialog-auto-open={open ? '' : undefined}
 >
-  <form method="post">
+  <form method="post" data-catalog-form="product-update" novalidate>
     <input type="hidden" name="action" value="product-update" />
     <input type="hidden" name="productId" value={product.id} />
 
@@ -51,103 +44,15 @@ const availableCategories = categories.filter(
       </button>
     </header>
 
+    {error && <p class="adm-banner adm-banner--error adm-modal-banner" role="alert">{error}</p>}
+
     <div class="adm-modal-body adm-form">
-      <div class="adm-field">
-        <label for={`${dialogId}-name`}>Nombre</label>
-        <input
-          id={`${dialogId}-name`}
-          name="name"
-          required
-          maxlength="200"
-          value={product.name}
-          autocomplete="off"
-        />
-      </div>
-      <div class="adm-field">
-        <label for={`${dialogId}-description`}>Descripción</label>
-        <textarea
-          id={`${dialogId}-description`}
-          name="description"
-          maxlength="500"
-          rows="2"
-          placeholder="Presentación, laboratorio o notas">{product.description ?? ''}</textarea>
-      </div>
-      <div class="adm-field">
-        <label for={`${dialogId}-barcode`}>Código de barras</label>
-        <input
-          id={`${dialogId}-barcode`}
-          name="barcode"
-          maxlength="64"
-          value={product.barcode ?? ''}
-          autocomplete="off"
-        />
-      </div>
-      <div class="adm-field">
-        <label for={`${dialogId}-unit`}>Unidad</label>
-        <select id={`${dialogId}-unit`} name="unit" required>
-          {units.map((unit) => (
-            <option value={unit.value} selected={unit.value === product.unit}>
-              {unit.label}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div class="adm-field">
-        <label for={`${dialogId}-price`}>Precio de venta (Bs)</label>
-        <input
-          id={`${dialogId}-price`}
-          name="unitPrice"
-          type="number"
-          min="0"
-          step="0.01"
-          required
-          value={product.unitPrice}
-        />
-      </div>
-      <div class="adm-field">
-        <label for={`${dialogId}-cost`}>Costo (Bs)</label>
-        <input
-          id={`${dialogId}-cost`}
-          name="costPrice"
-          type="number"
-          min="0"
-          step="0.01"
-          value={product.costPrice ?? ''}
-          placeholder="Sin costo registrado"
-        />
-      </div>
-      <div class="adm-field">
-        <label for={`${dialogId}-tax`}>Impuesto (%)</label>
-        <input
-          id={`${dialogId}-tax`}
-          name="taxRate"
-          type="number"
-          min="0"
-          max="100"
-          step="0.01"
-          required
-          value={product.taxRate}
-        />
-      </div>
-      <div class="adm-field">
-        <label for={`${dialogId}-category`}>Categoría</label>
-        <select id={`${dialogId}-category`} name="categoryId">
-          <option value="" selected={product.categoryId === null}>Sin categoría</option>
-          {availableCategories.map((category) => (
-            <option value={category.id} selected={category.id === product.categoryId}>
-              {category.name}
-              {!category.active ? ' · inactiva' : ''}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div class="adm-field">
-        <label for={`${dialogId}-active`}>Estado</label>
-        <select id={`${dialogId}-active`} name="active">
-          <option value="true" selected={product.active}>Activo</option>
-          <option value="false" selected={!product.active}>Inactivo</option>
-        </select>
-      </div>
+      <ProductFields
+        idPrefix={dialogId}
+        categories={categories}
+        product={product}
+        includeStatus
+      />
     </div>
 
     <footer class="adm-modal-foot">

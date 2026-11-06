@@ -114,6 +114,11 @@
   padding: 1.15rem 1.25rem;
 }
 
+/* Aviso del servidor dentro del diálogo que se reabre. */
+.adm-modal-banner {
+  margin: 1rem 1.25rem 0;
+}
+
 .adm-modal-fieldset {
   margin: 0;
   padding: 0;

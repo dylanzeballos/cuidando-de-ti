@@ -6,13 +6,19 @@ Permitir que la empresa de la instalación mantenga su catálogo correcto y vige
 
 ### Requirement: Edición de productos
 
-La pantalla `/admin/catalogo` MUST permitir editar nombre, descripción, código de barras, unidad, precio de venta, costo, impuesto, categoría y estado de un producto. El SKU MUST NOT ser editable. La actualización MUST validarse en el servidor antes de llamar a la API.
+La pantalla `/admin/catalogo` MUST permitir editar nombre, marca, descripción, unidad, precio de venta, costo, categoría y estado de un producto. El SKU MUST NOT ser editable ni solicitarse al crear un producto: el backend lo genera a partir del identificador. La creación y la edición MUST abrirse en diálogos modales. La actualización MUST validarse en el servidor antes de llamar a la API con reglas compartidas con el navegador.
 
 #### Scenario: Edición válida
 
 - **GIVEN** un producto activo en el catálogo
 - **WHEN** se cambia el precio y se guarda
 - **THEN** la página confirma la actualización y la tabla muestra el nuevo precio
+
+#### Scenario: Alta con SKU automático y marca
+
+- **GIVEN** el formulario modal de nuevo producto
+- **WHEN** se guarda sin escribir un SKU
+- **THEN** el producto se crea con la marca indicada y un SKU generado visible en la tabla
 
 #### Scenario: Precio inválido
 

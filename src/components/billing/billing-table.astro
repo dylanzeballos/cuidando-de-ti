@@ -1,0 +1,84 @@
+---
+import { formatMoney } from '@/lib/sales/cart';
+import {
+  billingStatusLabel,
+  billingStatusTone,
+} from '@/lib/billing/labels';
+import type { BillingDocumentSummary } from '@/lib/billing/billing-types';
+
+interface Props {
+  rows: BillingDocumentSummary[];
+  total: number;
+  currentPage: number;
+  totalPages: number;
+  pageHref: (page: number) => string;
+}
+
+const { rows, total, currentPage, totalPages, pageHref } = Astro.props;
+const pageTotal = rows.reduce((sum, row) => sum + row.total, 0);
+const pageTax = rows.reduce((sum, row) => sum + row.taxTotal, 0);
+---
+
+<section class="adm-card" aria-labelledby="bil-lista">
+  <div class="adm-card-head">
+    <h2 id="bil-lista">Documentos fiscales</h2>
+    <span class="adm-chip">{total} en total</span>
+  </div>
+  <div class="adm-table-wrap">
+    <table class="adm-table adm-table--cards">
+      <caption class="adm-sr">Documentos fiscales filtrados</caption>
+      <thead>
+        <tr>
+          <th scope="col">Factura</th>
+          <th scope="col">Venta</th>
+          <th scope="col">Cliente / NIT</th>
+          <th scope="col">Emitida</th>
+          <th scope="col">Total</th>
+          <th scope="col">IVA</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((document) => (
+          <tr>
+            <td data-label="Factura">#{document.number}</td>
+            <td data-label="Venta">#{document.saleNumber}</td>
+            <td data-label="Cliente / NIT">
+              <strong>{document.customerName}</strong>
+              <span class="adm-cell-muted">
+                {document.customerDocumentType} {document.customerDocumentNumber}
+              </span>
+            </td>
+            <td data-label="Emitida">{new Date(document.issuedAt).toLocaleString('es-BO')}</td>
+            <td data-label="Total" class="adm-num">{formatMoney(document.total)}</td>
+            <td data-label="IVA" class="adm-num">{formatMoney(document.taxTotal)}</td>
+            <td data-label="Estado">
+              <span class={`adm-badge ${billingStatusTone(document.status)}`}>
+                {billingStatusLabel(document.status)}
+              </span>
+            </td>
+            <td data-label="Acciones">
+              <a class="adm-link" href={`/admin/facturacion/${document.id}`}>Ver detalle</a>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th scope="row" colspan="4">Totales de la página</th>
+          <td class="adm-num">{formatMoney(pageTotal)}</td>
+          <td class="adm-num">{formatMoney(pageTax)}</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  {totalPages > 1 && (
+    <nav class="bil-pagination" aria-label="Paginación de documentos">
+      {currentPage > 1 && <a class="adm-link" href={pageHref(currentPage - 1)}>Anterior</a>}
+      <span>Página {currentPage} de {totalPages}</span>
+      {currentPage < totalPages && <a class="adm-link" href={pageHref(currentPage + 1)}>Siguiente</a>}
+    </nav>
+  )}
+</section>

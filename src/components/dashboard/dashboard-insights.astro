@@ -2,18 +2,25 @@
 import BarChart from '@/components/reports/bar-chart.astro';
 import MixChart from '@/components/reports/mix-chart.astro';
 import ReportTile from '@/components/reports/report-tile.astro';
+import { canAccessModule } from '@/lib/admin/access';
 import { compactMoney } from '@/lib/admin/chart-config';
 import { LOW_STOCK_THRESHOLD, type ReportView } from '@/lib/admin/reports';
 
 interface Props {
   view: ReportView;
   hasStockData: boolean;
+  /** Permisos efectivos; `null` conserva todos los paneles. */
+  permissions?: string[] | null;
 }
 
-const { view, hasStockData } = Astro.props;
+const { view, hasStockData, permissions = null } = Astro.props;
+
+const showSales = permissions === null || canAccessModule('sales', permissions);
+const showInventory = permissions === null || canAccessModule('inventory', permissions);
 ---
 
 <div class="rep-grid">
+  {showSales && (
   <ReportTile
     id="dash-payments"
     title="Mix de cobro"
@@ -37,7 +44,9 @@ const { view, hasStockData } = Astro.props;
       )
     }
   </ReportTile>
+  )}
 
+  {showSales && (
   <ReportTile id="dash-top" title="Top productos" meta="Por ingreso" span={4}>
     {
       view.topProducts.length > 0 ? (
@@ -50,7 +59,9 @@ const { view, hasStockData } = Astro.props;
       )
     }
   </ReportTile>
+  )}
 
+  {showInventory && (
   <ReportTile
     id="dash-stock"
     title="Inventario bajo"
@@ -83,4 +94,5 @@ const { view, hasStockData } = Astro.props;
       )
     }
   </ReportTile>
+  )}
 </div>

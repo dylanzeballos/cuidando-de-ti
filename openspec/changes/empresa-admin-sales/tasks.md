@@ -5,7 +5,7 @@
 - [x] 1.1 Redactar `docs/contracts/empresa-sales-v1.md` (turnos, ventas, pagos, anulación, devoluciones y ticket) alineado con la forma esperada del backend hermano; verificar que documenta autenticación por sesión, empresa de la instalación y códigos de error.
 - [x] 1.2 Crear `src/lib/sales/sales-api.ts` con el cliente de servidor tipado (`createSalesClient` con `FetchLike` inyectable) que traduce las respuestas a `ok`/`validation`/`conflict`/`unauthorized`/`notFound`/`unavailable` sin lanzar; verificar con pruebas Vitest que usan un `fetch` inyectado.
 - [x] 1.3 Crear `src/lib/sales/fixtures.ts` con la forma del contrato (turno, venta, devolución y ticket) para desarrollar y probar mientras el backend no publica el contrato; verificar que las pruebas del cliente pasan contra el fixture.
-- [x] 1.4 Implementar los cálculos del detalle de venta como funciones puras en `src/lib/sales/cart.ts` (total por línea, impuestos y total de la venta); verificar con pruebas Vitest de cantidades, impuestos y redondeo.
+- [x] 1.4 Implementar los cálculos del detalle de venta como funciones puras en `src/lib/sales/cart.ts` (total por línea y total de la venta); verificar con pruebas Vitest de cantidades y redondeo.
 - [x] 1.5 Añadir el módulo `sales` al catálogo de presentación de `src/lib/module-catalog.ts` (etiqueta y descripción) y comprobar que la navegación del shell lo muestra solo cuando está habilitado.
 
 ## 2. Caja (turno)
@@ -23,7 +23,7 @@
 
 ## 4. Ticket, historial y detalle
 
-- [x] 4.1 Implementar la emisión del ticket de una venta registrada (folio, fecha, líneas, impuestos, total y método de pago) en servidor, imprimible; verificar el contenido del ticket para una venta de ejemplo.
+- [x] 4.1 Implementar la emisión del ticket de una venta registrada (folio, fecha, líneas, total y método de pago) en servidor, imprimible; verificar el contenido del ticket para una venta de ejemplo.
 - [x] 4.2 Implementar el historial de ventas en servidor con folio, fecha, total, método de pago y estado, más el estado vacío; verificar que una empresa sin ventas muestra el estado vacío sin datos.
 - [x] 4.3 Implementar el detalle de venta con sus líneas, método de pago, totales, devoluciones asociadas y acceso al ticket; verificar que el detalle coincide con la venta del historial.
 

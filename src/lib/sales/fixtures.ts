@@ -220,6 +220,8 @@ export function createSalesFixtureFetch(store: SalesFixture = createSalesFixture
           unitPrice,
           discount,
           lineTotal,
+          taxRate: 0,
+          taxAmount: 0,
         });
         lineNumber += 1;
       }
@@ -250,6 +252,7 @@ export function createSalesFixtureFetch(store: SalesFixture = createSalesFixture
         currency: 'BOB',
         subtotal,
         discountTotal: round2(discountTotal + globalDiscount),
+        taxTotal: 0,
         total,
         paidTotal,
         createdBy: 'fixture-user',
@@ -257,6 +260,8 @@ export function createSalesFixtureFetch(store: SalesFixture = createSalesFixture
         annulledAt: null,
         annulledBy: null,
         annulReason: null,
+        customer: null,
+        billing: null,
         items,
         payments,
       };
@@ -294,8 +299,11 @@ export function createSalesFixtureFetch(store: SalesFixture = createSalesFixture
         currency: sale.currency,
         subtotal: sale.subtotal,
         discountTotal: sale.discountTotal,
+        taxTotal: sale.taxTotal,
         total: sale.total,
         paidTotal: sale.paidTotal,
+        customer: sale.customer,
+        billing: sale.billing,
         items: sale.items,
         payments: sale.payments,
         annulledAt: sale.annulledAt,

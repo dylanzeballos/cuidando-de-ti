@@ -40,7 +40,7 @@ Se añade `src/lib/sales/sales-api.ts` siguiendo el patrón de `src/lib/admin/ca
 
 ### Cálculos del detalle de venta como funciones puras
 
-El total por línea, los impuestos y el total de la venta se calculan con funciones puras en `src/lib/sales/cart.ts` (probadas con Vitest), separadas de la isla. Así el mismo cálculo se reutiliza en el servidor para validar y en el cliente para mostrar, y se evita divergencia entre lo mostrado y lo registrado.
+El total por línea y el total de la venta se calculan con funciones puras en `src/lib/sales/cart.ts` (probadas con Vitest), separadas de la isla. Así el mismo cálculo se reutiliza en el servidor para validar y en el cliente para mostrar, y se evita divergencia entre lo mostrado y lo registrado.
 
 ### Estado del detalle de venta solo en memoria
 

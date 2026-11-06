@@ -1,24 +1,20 @@
 ---
 import type { Category, Product } from '@/lib/admin/catalog-api';
 import { formatMoney } from '@/lib/sales/cart';
+import { unitLabel } from '@/lib/admin/catalog-schema';
 import ProductEditDialog from '@/components/admin/product-edit-dialog.astro';
 
 interface Props {
   products: Product[];
   categories: Category[];
+  /** Mensaje del servidor para el diálogo que se reabre. */
+  error?: string | null;
   /** Producto cuyo diálogo de edición debe abrirse al cargar (tras un error). */
   openProductId?: string;
 }
 
-const { products, categories, openProductId } = Astro.props;
+const { products, categories, error = null, openProductId } = Astro.props;
 const categoryName = new Map(categories.map((category) => [category.id, category.name]));
-
-const unitLabels: Record<string, string> = {
-  UNIT: 'Unidad',
-  KG: 'Kilogramo',
-  LITER: 'Litro',
-  PACK: 'Paquete',
-};
 ---
 
 <div class="adm-table-wrap">
@@ -28,7 +24,6 @@ const unitLabels: Record<string, string> = {
         <th scope="col">Producto</th>
         <th scope="col">Categoría</th>
         <th scope="col">Precio</th>
-        <th scope="col">Impuesto</th>
         <th scope="col">Estado</th>
         <th scope="col" class="adm-col-actions">Acciones</th>
       </tr>
@@ -41,7 +36,8 @@ const unitLabels: Record<string, string> = {
             <td data-label="Producto">
               <strong>{product.name}</strong>
               <div class="adm-cell-muted">
-                {product.sku} · {unitLabels[product.unit] ?? product.unit}
+                {product.brand ? `${product.brand} · ` : ''}
+                {product.sku} · {unitLabel(product.unit)}
               </div>
             </td>
             <td data-label="Categoría">
@@ -50,7 +46,6 @@ const unitLabels: Record<string, string> = {
                 : (categoryName.get(product.categoryId) ?? '—')}
             </td>
             <td data-label="Precio" class="adm-num">{formatMoney(product.unitPrice)}</td>
-            <td data-label="Impuesto" class="adm-num">{product.taxRate.toFixed(1)} %</td>
             <td data-label="Estado">
               <span class={`adm-badge ${product.active ? 'adm-badge--on' : 'adm-badge--off'}`}>
                 {product.active ? 'Activo' : 'Inactivo'}
@@ -100,6 +95,7 @@ const unitLabels: Record<string, string> = {
                 product={product}
                 categories={categories}
                 open={openProductId === product.id}
+                error={openProductId === product.id ? error : null}
               />
             </td>
           </tr>

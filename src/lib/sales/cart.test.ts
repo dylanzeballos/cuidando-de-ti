@@ -5,7 +5,6 @@ import {
   isValidQuantity,
   lineDiscount,
   lineSubtotal,
-  lineTaxIncluded,
   lineTotal,
   paymentMethodLabel,
   round2,
@@ -22,7 +21,6 @@ function line(overrides: Partial<CartLine> = {}): CartLine {
     quantity: 2,
     unitPrice: 8.5,
     discount: 0,
-    taxRate: 13,
     ...overrides,
   };
 }
@@ -48,22 +46,15 @@ describe('cart', () => {
     expect(round2(8.5 * 3)).toBe(25.5);
   });
 
-  it('calcula el impuesto incluido a partir de la tasa del catálogo', () => {
-    // 17.00 con 13% incluido → impuesto ≈ 1.96.
-    expect(lineTaxIncluded(line({ quantity: 2, unitPrice: 8.5, taxRate: 13 }))).toBe(1.96);
-    expect(lineTaxIncluded(line({ taxRate: 0 }))).toBe(0);
-  });
-
   it('suma los totales del carrito con descuentos', () => {
     const totals = computeCart([
       line({ quantity: 2, unitPrice: 8.5, discount: 1 }),
-      line({ productId: 'p2', name: 'Pan', quantity: 1, unitPrice: 3, taxRate: 0 }),
+      line({ productId: 'p2', name: 'Pan', quantity: 1, unitPrice: 3 }),
     ]);
     expect(totals.subtotal).toBe(20);
     expect(totals.discountTotal).toBe(1);
     expect(totals.total).toBe(19);
     expect(totals.lines).toHaveLength(2);
-    expect(totals.taxIncluded).toBe(1.84);
   });
 
   it('valida una cantidad finita y positiva', () => {

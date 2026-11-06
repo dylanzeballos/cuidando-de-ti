@@ -14,8 +14,10 @@ campo `empresaId`, etc.) se ignora.
 
 Todas las rutas exigen `Authorization: Bearer <accessToken>` de una cuenta activa
 con el permiso efectivo `identity.manage` y el módulo `identity` habilitado en la
-empresa. La decisión se toma en el servidor; el cliente nunca declara sus permisos.
-Sin token válido → `401`; sin permiso o módulo → `403`.
+empresa. La excepción es `GET /api/v1/identity/me`, que solo exige un token válido
+para que cualquier cuenta lea sus propios roles y permisos. La decisión se toma en
+el servidor; el cliente nunca declara sus permisos. Sin token válido → `401`; sin
+permiso o módulo → `403`.
 
 ## Endpoints
 
@@ -33,6 +35,23 @@ Sin token válido → `401`; sin permiso o módulo → `403`.
 | `PUT` | `/api/v1/admin/identity/roles/{roleId}` | `{ name, description?, permissions }` | `200` `RoleResponse` |
 | `DELETE` | `/api/v1/admin/identity/roles/{roleId}` | — | `204` sin cuerpo |
 | `GET` | `/api/v1/admin/identity/permissions` | — | `200` `PermissionGroupResponse[]` |
+| `GET` | `/api/v1/identity/me` | — | `200` `ProfileResponse` |
+
+`ProfileResponse` (perfil propio, sin requerir `identity.manage`):
+
+```json
+{
+  "id": "<uuid>",
+  "email": "ana@acme.test",
+  "displayName": "Ana",
+  "roles": ["Vendedor"],
+  "permissions": ["sales.manage"]
+}
+```
+
+`permissions` solo incluye permisos efectivos: roles asignados a la cuenta activa
+y módulos habilitados en la empresa. El frontend lo usa para filtrar la
+navegación y bloquear por URL; el backend sigue autorizando cada operación.
 
 Formas comunes:
 

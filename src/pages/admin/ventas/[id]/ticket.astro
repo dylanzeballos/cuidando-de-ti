@@ -1,10 +1,9 @@
 ---
 import BaseLayout from '@/layouts/base-layout.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
-import { API_BASE_URL } from 'astro:env/server';
-import { createAdminClient } from '@/lib/admin/catalog-api';
 import { resolveSalesClient } from '@/lib/sales/sales-service';
-import { formatMoney, lineTaxIncluded, paymentMethodLabel, round2 } from '@/lib/sales/cart';
+import { formatMoney, paymentMethodLabel } from '@/lib/sales/cart';
+import { billingStatusLabel } from '@/lib/billing/labels';
 
 // El token y la empresa viven en el servidor; el navegador solo recibe el HTML
 // del comprobante. No se imprime el identificador ni el slug de la empresa: la
@@ -19,31 +18,6 @@ const sales = resolveSalesClient(auth.accessToken);
 const receiptResult = await sales.getReceipt(saleId);
 const receipt = receiptResult.status === 'ok' ? receiptResult.data : null;
 const empresaName = Astro.locals.empresa?.name ?? null;
-
-// Impuesto incluido por línea a partir de la tasa del catálogo (informativo).
-const taxRateById = new Map<string, number>();
-if (receipt) {
-  const catalog = createAdminClient({ baseUrl: API_BASE_URL, token: auth.accessToken });
-  const productsResult = await catalog.listProducts();
-  if (productsResult.status === 'ok') {
-    for (const product of productsResult.data.items) taxRateById.set(product.id, product.taxRate);
-  }
-}
-const taxTotal = receipt
-  ? round2(
-      receipt.items.reduce(
-        (sum, item) =>
-          sum +
-          lineTaxIncluded({
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            discount: item.discount,
-            taxRate: taxRateById.get(item.productId) ?? 0,
-          }),
-        0,
-      ),
-    )
-  : 0;
 ---
 
 <BaseLayout title={receipt ? `Comprobante N.º ${receipt.number}` : 'Comprobante'} noindex>
@@ -166,6 +140,18 @@ const taxTotal = receipt
               Comprobante N.º #{receipt.number} · {new Date(receipt.createdAt).toLocaleString('es-BO')} ·
               {receipt.status === 'ANNULLED' ? ' ANULADA' : ' COMPLETADA'}
             </p>
+            {receipt.customer && (
+              <p class="tkt-muted">
+                Cliente: {receipt.customer.name} · {receipt.customer.documentType}
+                {' '}{receipt.customer.documentNumber}
+              </p>
+            )}
+            {receipt.billing && (
+              <p class="tkt-muted">
+                Factura #{receipt.billing.number} · {billingStatusLabel(receipt.billing.status)}
+                {receipt.billing.cuf ? ` · CUF ${receipt.billing.cuf}` : ''}
+              </p>
+            )}
           </header>
 
           <div class="tkt-table-wrap">
@@ -194,7 +180,7 @@ const taxTotal = receipt
           <div class="tkt-totals">
             <p class="row"><span>Subtotal</span><span>{formatMoney(receipt.subtotal)}</span></p>
             <p class="row"><span>Descuentos</span><span>{formatMoney(receipt.discountTotal)}</span></p>
-            <p class="row tkt-muted"><span>Impuesto incluido</span><span>{formatMoney(taxTotal)}</span></p>
+            <p class="row"><span>IVA incluido</span><span>{formatMoney(receipt.taxTotal)}</span></p>
             <p class="row grand"><span>Total</span><span>{formatMoney(receipt.total)}</span></p>
             <p class="row"><span>Pagado</span><span>{formatMoney(receipt.paidTotal)}</span></p>
           </div>
@@ -203,7 +189,16 @@ const taxTotal = receipt
             Pagos: {receipt.payments.map((payment) => `${paymentMethodLabel(payment.method)} ${formatMoney(payment.amount)}`).join(' · ')}
           </p>
           {receipt.annulReason && <p class="tkt-muted">Motivo de anulación: {receipt.annulReason}</p>}
-          <p class="tkt-muted">Comprobante interno sin validez fiscal (moneda {receipt.currency}).</p>
+          {receipt.billing && (
+            <p class="tkt-muted">
+              <a href={`/admin/facturacion/${receipt.billing.documentId}`}>Ver documento fiscal</a>
+            </p>
+          )}
+          <p class="tkt-muted">
+            {receipt.billing
+              ? `Factura electrónica en estado ${billingStatusLabel(receipt.billing.status)} (moneda ${receipt.currency}).`
+              : `Comprobante interno sin validez fiscal (moneda ${receipt.currency}).`}
+          </p>
         </article>
       )
     }

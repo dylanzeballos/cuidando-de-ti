@@ -1,0 +1,37 @@
+---
+import type { BillingStatus } from '@/lib/billing/billing-types';
+
+interface Props {
+  statusFilter?: BillingStatus;
+  query: string;
+  desde: string;
+  hasta: string;
+}
+
+const { statusFilter, query, desde, hasta } = Astro.props;
+---
+
+<form class="adm-form bil-filters" method="get" action="/admin/facturacion">
+  {statusFilter && <input type="hidden" name="estado" value={statusFilter} />}
+  <div class="adm-field">
+    <label for="bil-q">Buscar</label>
+    <input
+      id="bil-q"
+      name="q"
+      type="search"
+      value={query}
+      placeholder="NIT, razón social, número o CUF"
+    />
+  </div>
+  <div class="adm-field">
+    <label for="bil-desde">Desde</label>
+    <input id="bil-desde" name="desde" type="date" value={desde} />
+  </div>
+  <div class="adm-field">
+    <label for="bil-hasta">Hasta</label>
+    <input id="bil-hasta" name="hasta" type="date" value={hasta} />
+  </div>
+  <div class="adm-actions">
+    <button class="adm-btn" type="submit">Filtrar</button>
+  </div>
+</form>

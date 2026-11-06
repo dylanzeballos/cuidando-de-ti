@@ -4,15 +4,24 @@ import type { Branch } from '@/lib/admin/catalog-api';
 interface Props {
   branches: Branch[];
   selectedId: string;
+  /** Ruta de la sección dueña del selector (inventario o costos). */
+  basePath: string;
+  /** Filtros de la ruta que deben conservarse al cambiar de sucursal. */
+  query?: Record<string, string>;
 }
 
-const { branches, selectedId } = Astro.props;
+const { branches, selectedId, basePath, query = {} } = Astro.props;
+
+function hrefFor(branchId: string): string {
+  const search = new URLSearchParams({ ...query, branchId });
+  return `${basePath}?${search.toString()}`;
+}
 ---
 
 <ul class="adm-list adm-branch-picker" role="list">
   {branches.map((branch) => (
     <li>
-      <a href={`/admin/inventario?branchId=${branch.id}`}>
+      <a href={hrefFor(branch.id)}>
         <span class={`adm-chip${branch.id === selectedId ? ' adm-chip--on' : ''}`}>
           {branch.code} · {branch.name}
         </span>

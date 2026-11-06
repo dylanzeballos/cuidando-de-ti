@@ -5,6 +5,7 @@ import EmptyState from '@/components/primitives/empty-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
 import { resolveSalesClient } from '@/lib/sales/sales-service';
 import { formatMoney, paymentMethodLabel } from '@/lib/sales/cart';
+import { billingStatusLabel, billingStatusTone } from '@/lib/billing/labels';
 import type { Sale, SaleStatus } from '@/lib/sales/sales-api';
 import { INSTALLATION } from '@/lib/installation';
 
@@ -122,6 +123,7 @@ const filterHref = (value: SaleStatus | null): string =>
                       <th scope="col">Fecha</th>
                       <th scope="col">Total</th>
                       <th scope="col">Pago</th>
+                      <th scope="col">Factura</th>
                       <th scope="col">Estado</th>
                       <th scope="col">Acciones</th>
                     </tr>
@@ -135,6 +137,17 @@ const filterHref = (value: SaleStatus | null): string =>
                         </td>
                         <td data-label="Total" class="adm-num">{formatMoney(sale.total)}</td>
                         <td data-label="Pago">{paymentSummary(sale)}</td>
+                        <td data-label="Factura">
+                          {sale.billing ? (
+                            <a href={`/admin/facturacion/${sale.billing.documentId}`}>
+                              <span class={`adm-badge ${billingStatusTone(sale.billing.status)}`}>
+                                {billingStatusLabel(sale.billing.status)}
+                              </span>
+                            </a>
+                          ) : (
+                            <span class="adm-cell-muted">Sin factura</span>
+                          )}
+                        </td>
                         <td data-label="Estado">
                           <span class={`adm-badge ${sale.status === 'ANNULLED' ? 'adm-badge--off' : 'adm-badge--on'}`}>
                             {sale.status === 'ANNULLED' ? 'Anulada' : 'Completada'}

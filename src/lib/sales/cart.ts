@@ -14,12 +14,10 @@ export type CartLine = {
   name: string;
   unit: string;
   quantity: number;
-  /** Precio unitario de catálogo. El total de la venta no añade impuesto. */
+  /** Precio unitario de catálogo. */
   unitPrice: number;
   /** Descuento por línea, nunca negativo ni mayor al subtotal de la línea. */
   discount: number;
-  /** Tasa de impuesto del catálogo, solo para el desglose informativo. */
-  taxRate: number;
 };
 
 export type CartLineTotal = {
@@ -27,8 +25,6 @@ export type CartLineTotal = {
   subtotal: number;
   discount: number;
   lineTotal: number;
-  /** Impuesto incluido en `lineTotal` a partir de `taxRate`; no se suma al total. */
-  taxIncluded: number;
 };
 
 export type CartTotals = {
@@ -36,8 +32,6 @@ export type CartTotals = {
   subtotal: number;
   discountTotal: number;
   total: number;
-  /** Suma del impuesto incluido en las líneas; informativo. */
-  taxIncluded: number;
 };
 
 /** Redondeo estable a dos decimales (moneda BOB). */
@@ -68,42 +62,25 @@ export function lineTotal(line: Pick<CartLine, 'quantity' | 'unitPrice' | 'disco
   return round2(lineSubtotal(line) - lineDiscount(line));
 }
 
-/**
- * Impuesto incluido en el total de una línea, a partir de la tasa del catálogo.
- * Es un desglose informativo: `unitPrice` ya incluye el impuesto, de modo que el
- * total mostrado coincide con el que registra el backend.
- */
-export function lineTaxIncluded(
-  line: Pick<CartLine, 'quantity' | 'unitPrice' | 'discount' | 'taxRate'>,
-): number {
-  const rate = Number.isFinite(line.taxRate) ? line.taxRate : 0;
-  if (rate <= 0) return 0;
-  const gross = lineTotal(line);
-  return round2(gross - gross / (1 + rate / 100));
-}
-
-/** Totales del carrito: subtotal, descuentos, total e impuesto incluido. */
+/** Totales del carrito: subtotal, descuentos y total. */
 export function computeCart(lines: readonly CartLine[]): CartTotals {
   const computed: CartLineTotal[] = lines.map((line) => ({
     line,
     subtotal: lineSubtotal(line),
     discount: lineDiscount(line),
     lineTotal: lineTotal(line),
-    taxIncluded: lineTaxIncluded(line),
   }));
 
   let subtotal = 0;
   let discountTotal = 0;
   let total = 0;
-  let taxIncluded = 0;
   for (const item of computed) {
     subtotal = round2(subtotal + item.subtotal);
     discountTotal = round2(discountTotal + item.discount);
     total = round2(total + item.lineTotal);
-    taxIncluded = round2(taxIncluded + item.taxIncluded);
   }
 
-  return { lines: computed, subtotal, discountTotal, total, taxIncluded };
+  return { lines: computed, subtotal, discountTotal, total };
 }
 
 export type CartValidation = { ok: true } | { ok: false; message: string };

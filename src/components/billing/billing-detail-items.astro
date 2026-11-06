@@ -1,0 +1,43 @@
+---
+import { formatMoney } from '@/lib/sales/cart';
+import type { BillingDocumentItem } from '@/lib/billing/billing-types';
+
+interface Props {
+  items: BillingDocumentItem[];
+}
+
+const { items } = Astro.props;
+---
+
+<section class="adm-card" aria-labelledby="bil-lineas">
+  <div class="adm-card-head">
+    <h2 id="bil-lineas">Detalle facturado</h2>
+    <span class="adm-chip">{items.length} líneas</span>
+  </div>
+  <div class="adm-table-wrap">
+    <table class="adm-table">
+      <thead>
+        <tr>
+          <th scope="col">Producto</th>
+          <th scope="col">Cantidad</th>
+          <th scope="col">Precio</th>
+          <th scope="col">Descuento</th>
+          <th scope="col">IVA</th>
+          <th scope="col">Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((item) => (
+          <tr>
+            <td>{item.sku} · {item.name}</td>
+            <td>{item.quantity}</td>
+            <td class="adm-num">{formatMoney(item.unitPrice)}</td>
+            <td class="adm-num">{formatMoney(item.discount)}</td>
+            <td class="adm-num">{formatMoney(item.taxAmount)}</td>
+            <td class="adm-num">{formatMoney(item.lineTotal)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</section>

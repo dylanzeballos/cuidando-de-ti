@@ -9,13 +9,12 @@ export type Category = {
 export type Product = {
   id: string;
   sku: string;
-  barcode: string | null;
+  brand: string | null;
   name: string;
   description: string | null;
   unit: string;
   unitPrice: number;
   costPrice: number | null;
-  taxRate: number;
   categoryId: string | null;
   active: boolean;
 };
@@ -50,23 +49,22 @@ export type AdminResult<T> =
   | { status: 'unavailable'; message: string };
 
 export type CreateProductInput = {
-  sku: string;
   name: string;
   unit: string;
   unitPrice: number;
-  taxRate: number;
-  barcode?: string | null;
+  brand?: string | null;
+  description?: string | null;
+  costPrice?: number;
   categoryId?: string | null;
 };
 
 export type UpdateProductInput = {
   name?: string;
+  brand?: string | null;
   description?: string | null;
-  barcode?: string | null;
   unit?: string;
   unitPrice?: number;
   costPrice?: number;
-  taxRate?: number;
   categoryId?: string | null;
   active?: boolean;
 };

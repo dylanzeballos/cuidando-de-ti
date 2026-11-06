@@ -1,0 +1,36 @@
+/* Facturación dentro del armado de venta. */
+.pos-invoice {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--adm-line);
+}
+
+.pos-invoice .adm-check {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pos-invoice-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.pos-invoice-fields > div:last-child {
+  grid-column: 1 / -1;
+}
+
+.pos-invoice-fields label {
+  font-size: 0.72rem;
+}
+
+@media (max-width: 620px) {
+  .pos-invoice-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .pos-invoice-fields > div:last-child {
+    grid-column: auto;
+  }
+}

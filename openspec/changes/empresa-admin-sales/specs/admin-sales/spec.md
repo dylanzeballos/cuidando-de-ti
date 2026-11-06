@@ -34,7 +34,7 @@ La aplicación MUST permitir buscar productos del catálogo, agregarlos como lí
 
 - **GIVEN** el armado de una venta abierto con productos disponibles en el catálogo
 - **WHEN** se agregan productos y se ajustan sus cantidades
-- **THEN** el total se recalcula con los precios e impuestos del catálogo y refleja las líneas agregadas
+- **THEN** el total se recalcula con los precios del catálogo y refleja las líneas agregadas
 
 #### Scenario: Registrar la venta con método de pago
 
@@ -56,13 +56,13 @@ La aplicación MUST permitir buscar productos del catálogo, agregarlos como lí
 
 ### Requirement: Emisión del ticket de venta
 
-La aplicación MUST emitir un ticket o comprobante de cada venta registrada con folio, líneas, impuestos, total y método de pago.
+La aplicación MUST emitir un ticket o comprobante de cada venta registrada con folio, líneas, total y método de pago.
 
 #### Scenario: Ticket de una venta registrada
 
 - **GIVEN** una venta registrada correctamente
 - **WHEN** se solicita su ticket
-- **THEN** se muestra un comprobante con folio, fecha, líneas con cantidades y precios, impuestos, total y método de pago
+- **THEN** se muestra un comprobante con folio, fecha, líneas con cantidades y precios, total y método de pago
 
 #### Scenario: Ticket disponible desde el historial
 

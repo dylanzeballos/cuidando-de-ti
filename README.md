@@ -186,6 +186,21 @@ desarrollo y con activación explícita** (`SALES_FIXTURE=true`); en cualquier o
 caso la aplicación consume el contrato real y, ante un fallo, muestra un estado
 neutro sin datos.
 
+### Facturación
+
+`/admin/facturacion` consume `empresa-billing-v1`
+(`docs/contracts/empresa-billing-v1.md`). La regla es explícita: la venta con NIT
+crea una factura `PENDING`; la venta sin NIT queda como comprobante interno y no
+crea documento fiscal. El panel muestra KPIs, pestañas por estado (pendiente,
+enviando, procesada, observada, rechazada, con error y anulada), búsqueda por NIT
+o CUF, filtros por fecha y paginación. El detalle incluye líneas, totales, CUF,
+CUFD, código SIAT y bitácora; las acciones de envío y anulación son formularios
+SSR. La factura imprimible vive en `/admin/facturacion/{id}/factura`.
+
+El POS incorpora el interruptor **Facturar con NIT** y los datos del comprador.
+La validación del NIT es compartida entre el navegador y el endpoint interno
+`POST /admin/ventas/registrar`.
+
 ### Costos y gastos
 
 El módulo `costs` habilita el control de costos de la empresa:

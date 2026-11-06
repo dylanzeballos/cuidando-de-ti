@@ -4,6 +4,7 @@ import BaseLayout from '@/layouts/base-layout.astro';
 import BrandLogo from '@/components/brand-logo.astro';
 import DialogController from '@/components/admin/dialog-controller.astro';
 import ModuleIcon from '@/components/module-icon.astro';
+import { canAccessModule } from '@/lib/admin/access';
 import { buildModuleViews, groupModuleViews } from '@/lib/module-catalog';
 import { getWorkspace } from '@/lib/workspaces';
 import { INSTALLATION } from '@/lib/installation';
@@ -25,17 +26,20 @@ const {
 } = Astro.props;
 
 const workspace = getWorkspace(Astro.locals.workspace);
-// El espacio lo define el tipo de usuario (middleware/sesión). Hasta que el
-// backend publique los roles, `Astro.locals.workspace` es nulo y la instalación
-// opera con la vista completa; el modelo ya filtra por módulos.
+// El espacio lo define el tipo de usuario (middleware/sesión). El perfil aporta
+// los permisos efectivos: solo se muestran los módulos que el backend permitiría.
+// Si el perfil no está disponible (`null`), se conserva la vista por módulos.
+const access = Astro.locals.access ?? null;
 const allViews = buildModuleViews(modules);
 const allowedModules = workspace.modules === null ? null : new Set(workspace.modules);
-const views = (allowedModules === null
-  ? allViews
-  : allViews.filter((view) => allowedModules.has(view.code))
-).filter((view) => view.code !== 'identity');
+const views = allViews
+  .filter((view) => allowedModules === null || allowedModules.has(view.code))
+  .filter((view) => access === null || canAccessModule(view.code, access.permissions))
+  .filter((view) => view.code !== 'identity');
 const groups = groupModuleViews(views);
-const identityEnabled = modules.includes('identity');
+const identityEnabled =
+  modules.includes('identity') &&
+  (access === null || canAccessModule('identity', access.permissions));
 
 // La sección activa es la del módulo dueño de la ruta: las subpáginas (caja,
 // gastos, roles, historial) comparten la del módulo para no perder el contexto.
@@ -57,6 +61,10 @@ const HEADER_TABS: Record<string, HeaderTab[]> = {
   '/admin/costos': [
     { label: 'Costos', href: '/admin/costos' },
     { label: 'Gastos', href: '/admin/gastos' },
+  ],
+  '/admin/facturacion': [
+    { label: 'Documentos', href: '/admin/facturacion' },
+    { label: 'Registrar venta', href: '/admin/ventas' },
   ],
   '/admin/usuarios': [
     { label: 'Usuarios', href: '/admin/usuarios' },
@@ -135,7 +143,11 @@ const today = new Intl.DateTimeFormat('es-BO', {
 
         {
           groups.length === 0 ? (
-            <p class="adm-nav-empty">No hay módulos habilitados.</p>
+            <p class="adm-nav-empty">
+              {access === null
+                ? 'No hay módulos habilitados.'
+                : 'Tu cuenta no tiene módulos asignados.'}
+            </p>
           ) : (
             groups.map((group) => (
               <details class="adm-nav-group" data-group={group.id} open>

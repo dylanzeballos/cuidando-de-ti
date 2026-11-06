@@ -1,40 +1,159 @@
 ---
 import AdminShell from '@/components/admin/admin-shell.astro';
 import LoadingState from '@/components/primitives/loading-state.astro';
+import EmptyState from '@/components/primitives/empty-state.astro';
 import ErrorState from '@/components/primitives/error-state.astro';
-import ModulePlaceholder from '@/components/admin/module-placeholder.astro';
+import BillingFilters from '@/components/billing/billing-filters.astro';
+import BillingTable from '@/components/billing/billing-table.astro';
+import { resolveBillingClient } from '@/lib/billing/billing-service';
+import { formatMoney } from '@/lib/sales/cart';
+import {
+  BILLING_STATUSES,
+  billingStatusDescription,
+  billingStatusLabel,
+  isBillingStatus,
+} from '@/lib/billing/labels';
+import type { BillingStatus } from '@/lib/billing/billing-types';
 import { INSTALLATION } from '@/lib/installation';
 
-// El middleware garantiza la sesión y adjunta la empresa desde el servidor. La
-// facturación aún no tiene contrato de backend: se muestra su estado.
+const auth = await Astro.session?.get('auth');
+if (!auth) {
+  return Astro.redirect('/entrar?redirect=%2Fadmin%2Ffacturacion', 303);
+}
+
+const billing = resolveBillingClient(auth.accessToken);
+const statusParam = Astro.url.searchParams.get('estado');
+const statusFilter: BillingStatus | undefined = isBillingStatus(statusParam) ? statusParam : undefined;
+const query = (Astro.url.searchParams.get('q') ?? '').trim();
+const desde = Astro.url.searchParams.get('desde') ?? '';
+const hasta = Astro.url.searchParams.get('hasta') ?? '';
+const pageParam = Number(Astro.url.searchParams.get('pagina') ?? '1');
+const currentPage = Number.isFinite(pageParam) && pageParam > 0 ? Math.floor(pageParam) : 1;
+const pageSize = 25;
+
+const toInstant = (value: string, endOfDay: boolean): string | undefined => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  const date = new Date(`${value}T${endOfDay ? '23:59:59' : '00:00:00'}`);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+};
+
+const [listResult, summaryResult] = await Promise.all([
+  billing.list({
+    status: statusFilter,
+    q: query || undefined,
+    from: toInstant(desde, false),
+    to: toInstant(hasta, true),
+    page: currentPage - 1,
+    size: pageSize,
+  }),
+  billing.summary(),
+]);
+
+const rows = listResult.status === 'ok' ? listResult.data.items : [];
+const total = listResult.status === 'ok' ? listResult.data.total : 0;
+const totalPages = Math.max(1, Math.ceil(total / pageSize));
+const summary = summaryResult.status === 'ok' ? summaryResult.data : null;
+const listError = listResult.status === 'unavailable' ? listResult.message : null;
 const empresa = Astro.locals.empresa;
 const empresaName = empresa?.name ?? INSTALLATION.name;
 const status = empresa === null ? 'loading' : empresa.status;
+const okMessage = Astro.url.searchParams.get('ok');
+const errorMessage = Astro.url.searchParams.get('error');
+
+const paramsFor = (overrides: Record<string, string | null>): string => {
+  const search = new URLSearchParams();
+  const base: Record<string, string | null> = {
+    estado: statusFilter ?? null,
+    q: query || null,
+    desde: desde || null,
+    hasta: hasta || null,
+    ...overrides,
+  };
+  for (const [key, value] of Object.entries(base)) {
+    if (value) search.set(key, value);
+  }
+  return search.toString();
+};
+const tabHref = (value: BillingStatus | null) =>
+  `/admin/facturacion?${paramsFor({ estado: value, pagina: null })}`;
+const pageHref = (page: number) => `/admin/facturacion?${paramsFor({ pagina: String(page) })}`;
+const countOf = (value: BillingStatus) => summary?.counts[value] ?? 0;
 ---
 
 <AdminShell title="Facturación" active="/admin/facturacion">
-  <header class="adm-page-head">
-    <h1>Facturación</h1>
-    <p class="adm-sub">Documentos y procesos fiscales de {empresaName}.</p>
+  <header class="adm-page-head adm-page-head--row">
+    <div>
+      <h1>Facturación</h1>
+      <p class="adm-sub">
+        Documentos fiscales de {empresaName}: pendientes, procesados en el SIAT,
+        observados, rechazados y anulados.
+      </p>
+    </div>
+    <div class="adm-page-actions">
+      <a class="adm-btn adm-btn--ghost" href="/admin/ventas">Registrar venta</a>
+    </div>
   </header>
+
+  {okMessage && <p class="adm-banner adm-banner--ok" role="status">{okMessage}</p>}
+  {errorMessage && <p class="adm-banner adm-banner--error" role="alert">{errorMessage}</p>}
+  {listError && <p class="adm-banner adm-banner--error" role="alert">{listError}</p>}
 
   {
     status === 'loading' ? (
-      <LoadingState label="Cargando la configuración de la empresa…" />
+      <LoadingState label="Cargando la configuración de la empresa." />
     ) : status === 'unavailable' ? (
       <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
+    ) : listResult.status !== 'ok' ? (
+      <ErrorState message="No pudimos cargar los documentos fiscales. Inténtalo de nuevo en unos minutos." />
     ) : (
-      <ModulePlaceholder
-        title="Emisión fiscal"
-        description="La facturación se activa cuando el backend publica su contrato y la empresa lo contrata. Mientras tanto puedes seguir registrando ventas y emitiendo comprobantes internos."
-        items={[
-          'Facturas y notas de crédito',
-          'Series y numeración fiscal',
-          'Impuestos discriminados por venta',
-        ]}
-        ctaHref="/admin/ventas"
-        ctaLabel="Ir al registro de venta"
-      />
+      <>
+        <dl class="adm-metrics" aria-label="Resumen fiscal">
+          <div><dt>Documentos</dt><dd>{summary?.totalDocuments ?? 0}</dd></div>
+          <div><dt>Facturado procesado</dt><dd>{formatMoney(summary?.processedTotal ?? 0)}</dd></div>
+          <div><dt>Pendiente de envío</dt><dd>{formatMoney(summary?.pendingTotal ?? 0)}</dd></div>
+          <div><dt>Requieren atención</dt><dd>{summary?.retryableCount ?? 0}</dd></div>
+        </dl>
+
+        <nav class="bil-tabs" aria-label="Filtrar por estado fiscal">
+          <a href={tabHref(null)} aria-current={statusFilter === undefined ? 'page' : undefined}>
+            Todas <span>{summary?.totalDocuments ?? 0}</span>
+          </a>
+          {BILLING_STATUSES.map((value) => (
+            <a
+              href={tabHref(value)}
+              aria-current={statusFilter === value ? 'page' : undefined}
+              title={billingStatusDescription(value)}
+            >
+              {billingStatusLabel(value)} <span>{countOf(value)}</span>
+            </a>
+          ))}
+        </nav>
+
+        <BillingFilters statusFilter={statusFilter} query={query} desde={desde} hasta={hasta} />
+
+        {rows.length === 0 ? (
+          <EmptyState
+            title="No hay documentos con este filtro"
+            message="Cuando registres una venta con NIT aparecerá aquí su factura, pendiente de envío al SIAT."
+          >
+            <a class="adm-link" href="/admin/ventas">Ir al registro de venta</a>
+          </EmptyState>
+        ) : (
+          <>
+            <BillingTable
+              rows={rows}
+              total={total}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageHref={pageHref}
+            />
+            <p class="adm-note">
+              El importe procesado suma {formatMoney(summary?.totals.PROCESSED ?? 0)} en
+              {' '}{countOf('PROCESSED')} documentos validados.
+            </p>
+          </>
+        )}
+      </>
     )
   }
 </AdminShell>

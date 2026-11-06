@@ -42,7 +42,6 @@ if (productsResult.status === 'ok') {
     name: product.name,
     unit: product.unit,
     unitPrice: product.unitPrice,
-    taxRate: product.taxRate,
   }));
 } else {
   loadError = productsResult.message;

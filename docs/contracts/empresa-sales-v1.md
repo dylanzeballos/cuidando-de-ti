@@ -26,7 +26,7 @@ permisos. Sin token válido → `401`; sin permiso o módulo → `403`.
 | `GET` | `/api/v1/sales/cash-sessions` | — (`status`, `branchId`) | `200` `CashSessionResponse[]` |
 | `GET` | `/api/v1/sales/cash-sessions/{id}` | — | `200` `CashSessionResponse` |
 | `POST` | `/api/v1/sales/cash-sessions/{id}/close` | `{ countedAmount }` | `200` `CashSessionResponse` |
-| `POST` | `/api/v1/sales` | `{ branchId, items, discount?, payments }` + `Idempotency-Key` | `201` / `200` (clave repetida) `SaleResponse` |
+| `POST` | `/api/v1/sales` | `{ branchId, items, discount?, payments, invoiceRequired?, customer? }` + `Idempotency-Key` | `201` / `200` (clave repetida) `SaleResponse` |
 | `GET` | `/api/v1/sales` | — (`from`, `to`, `branchId`, `cashSessionId`, `status`, `page`, `size`) | `200` `PageResponse<SaleResponse>` |
 | `GET` | `/api/v1/sales/{id}` | — | `200` `SaleResponse` |
 | `GET` | `/api/v1/sales/{id}/receipt` | — | `200` `ReceiptResponse` |
@@ -43,11 +43,15 @@ Formas comunes:
   "saleCount": 0, "totalsByPaymentMethod": {} }
 { "id": "<uuid>", "number": 1, "branchId": "<uuid>", "cashSessionId": "<uuid>",
   "status": "COMPLETED", "currency": "BOB", "subtotal": 17.00, "discountTotal": 2.00,
-  "total": 15.00, "paidTotal": 15.00, "createdBy": "<uuid>", "createdAt": "<iso>",
-  "annulledAt": null, "annulledBy": null, "annulReason": null,
+  "taxTotal": 1.73, "total": 15.00, "paidTotal": 15.00, "createdBy": "<uuid>",
+  "createdAt": "<iso>", "annulledAt": null, "annulledBy": null, "annulReason": null,
+  "customer": { "documentType": "NIT", "documentNumber": "123456789",
+    "name": "Farmacia del Sur", "email": "compras@farmacia.test", "address": null },
+  "billing": { "documentId": "<uuid>", "number": 1, "status": "PENDING", "cuf": null,
+    "customerDocumentNumber": "123456789", "customerName": "Farmacia del Sur" },
   "items": [ { "id": "<uuid>", "lineNumber": 1, "productId": "<uuid>", "sku": "AGUA-2L",
     "name": "Agua 2L", "unit": "UNIT", "quantity": 2.000, "unitPrice": 8.50,
-    "discount": 0.00, "lineTotal": 17.00 } ],
+    "discount": 0.00, "lineTotal": 17.00, "taxRate": 13.00, "taxAmount": 1.96 } ],
   "payments": [ { "id": "<uuid>", "method": "CASH", "amount": 15.00 } ] }
 { "id": "<uuid>", "saleId": "<uuid>", "total": 8.50, "reason": "producto dañado",
   "createdBy": "<uuid>", "createdAt": "<iso>",
@@ -60,7 +64,11 @@ Métodos de pago soportados: `CASH` | `CARD` | `TRANSFER` | `QR`. Moneda `BOB`.
 `POST /sales` es **idempotente**: exige el encabezado `Idempotency-Key`; un
 reintento con la misma clave devuelve la venta ya registrada sin repetir el
 descuento de stock. `subtotal` es la suma de `quantity × unitPrice`,
-`discountTotal` la suma de descuentos y `total = subtotal − discountTotal`.
+`discountTotal` la suma de descuentos y `total = subtotal - discountTotal`.
+`invoiceRequired = true` exige NIT (7 a 14 dígitos) y razón social; la venta
+crea una factura `PENDING` y `billing` deja de ser `null`. Sin NIT la venta es
+un comprobante interno. Los estados fiscales y sus rutas están en
+`empresa-billing-v1.md`.
 
 Errores en `application/problem+json` (RFC 7807) con `detail`. `400` es cuerpo o
 campos inválidos (venta sin ítems, cantidad `≤ 0`, pago que no cubre el total,
@@ -80,9 +88,9 @@ insuficiente).
   (turno, venta, devolución y ticket). Se usa solo en desarrollo y con activación
   explícita (`SALES_FIXTURE=true`); en cualquier otro caso la aplicación consume el
   contrato real y ante un fallo muestra un estado neutro sin datos.
-- `src/lib/sales/cart.ts` concentra los cálculos del detalle de venta (total por línea,
-  impuestos y total) como funciones puras, compartidas por la isla del POS y por
-  la validación del servidor.
+- `src/lib/sales/cart.ts` concentra los cálculos del detalle de venta (total por línea
+  y total) como funciones puras, compartidas por la isla del POS y por la validación
+  del servidor.
 - La isla React del POS (`src/components/sales/`) hidrata solo el armado de la
   venta. Llama a `POST /admin/ventas/registrar`, un endpoint de Astro que lee
   `Astro.session`, resuelve la empresa de la instalación y usa el cliente de
@@ -94,10 +102,9 @@ insuficiente).
 ## Notas de interpretación
 
 - El contrato de ventas no incluye campos fiscales: `unitPrice` es el precio de
-  catálogo y `total` es el autoritativo (`subtotal − discountTotal`). El POS
-  muestra el impuesto **incluido** en el precio a partir de `taxRate` del catálogo
-  (`lineTotal − lineTotal / (1 + taxRate/100)`) solo como desglose informativo; no
-  altera el total registrado. La facturación fiscal (SIAT) queda fuera de alcance.
+  catálogo y `total` es el autoritativo (`subtotal − discountTotal`). El catálogo no
+  modela impuesto ni código de barras; la facturación fiscal (SIAT) queda fuera de
+  alcance.
 - La apertura de caja y el registro de ventas requieren `branchId`. Como la
   empresa es la de la instalación, la sucursal se elige entre las de la empresa
   (`/api/v1/inventory/branches`) y no implica selección de empresa.

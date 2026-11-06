@@ -8,7 +8,7 @@ Con el catálogo, el inventario y la fundación de la aplicación ya definidos, 
 
 - Añadir el **turno de caja**: abrir una caja con un monto inicial, operar ventas asociadas al turno y cerrarla con un resumen (ventas, totales por método de pago y arqueo).
 - Añadir el **armado de una venta**: buscar y agregar productos del catálogo, ajustar cantidades, ver el total recalculado en vivo y elegir el método de pago.
-- **Emitir un ticket/comprobante** de cada venta registrada, imprimible o consultable, con folio, líneas, impuestos, total y método de pago.
+- **Emitir un ticket/comprobante** de cada venta registrada, imprimible o consultable, con folio, líneas, total y método de pago.
 - Añadir el **historial de ventas** con filtros por fecha, caja y estado, y el **detalle** de cada venta.
 - Añadir **anulación** de una venta registrada y **registro de devoluciones** parciales o totales que reintegran stock.
 - **Isla React con shadcn/ui hidratada solo en el registro de venta** (armado de venta) porque requiere estado en cliente (detalle de venta, cantidades, total y método de pago); el resto de las pantallas de ventas se renderizan en servidor sin hidratación.

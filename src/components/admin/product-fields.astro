@@ -1,0 +1,119 @@
+---
+import type { Category, Product } from '@/lib/admin/catalog-api';
+import { CATALOG_UNITS, UNIT_LABELS } from '@/lib/admin/catalog-schema';
+
+interface Props {
+  idPrefix: string;
+  categories: Category[];
+  product?: Product;
+  includeStatus?: boolean;
+}
+
+const { idPrefix, categories, product, includeStatus = false } = Astro.props;
+const unit = product?.unit ?? 'UNIT';
+const active = product?.active ?? true;
+const availableCategories = categories.filter(
+  (category) => category.active || category.id === product?.categoryId,
+);
+---
+
+<div class="adm-field">
+  <label for={`${idPrefix}-name`}>Nombre</label>
+  <input
+    id={`${idPrefix}-name`}
+    name="name"
+    required
+    maxlength="200"
+    value={product?.name ?? ''}
+    placeholder="Paracetamol 500 mg"
+    autocomplete="off"
+  />
+  <p class="adm-field-error" id={`${idPrefix}-name-error`} data-field-error="name" hidden></p>
+</div>
+
+<div class="adm-field">
+  <label for={`${idPrefix}-brand`}>Marca</label>
+  <input
+    id={`${idPrefix}-brand`}
+    name="brand"
+    maxlength="120"
+    value={product?.brand ?? ''}
+    placeholder="Ej. Bayer, Genomma"
+    autocomplete="off"
+  />
+  <p class="adm-field-error" id={`${idPrefix}-brand-error`} data-field-error="brand" hidden></p>
+</div>
+
+<div class="adm-field adm-field--full">
+  <label for={`${idPrefix}-description`}>Descripción</label>
+  <textarea
+    id={`${idPrefix}-description`}
+    name="description"
+    maxlength="500"
+    rows="2"
+    placeholder="Presentación, laboratorio o notas">{product?.description ?? ''}</textarea>
+  <p class="adm-field-error" id={`${idPrefix}-description-error`} data-field-error="description" hidden></p>
+</div>
+
+<div class="adm-field">
+  <label for={`${idPrefix}-unit`}>Unidad</label>
+  <select id={`${idPrefix}-unit`} name="unit" required>
+    {CATALOG_UNITS.map((value) => (
+      <option value={value} selected={value === unit}>{UNIT_LABELS[value]}</option>
+    ))}
+  </select>
+  <p class="adm-field-error" id={`${idPrefix}-unit-error`} data-field-error="unit" hidden></p>
+</div>
+
+<div class="adm-field">
+  <label for={`${idPrefix}-price`}>Precio de venta (Bs)</label>
+  <input
+    id={`${idPrefix}-price`}
+    name="unitPrice"
+    type="number"
+    min="0"
+    step="0.01"
+    required
+    value={product?.unitPrice ?? ''}
+  />
+  <p class="adm-field-error" id={`${idPrefix}-price-error`} data-field-error="unitPrice" hidden></p>
+</div>
+
+<div class="adm-field">
+  <label for={`${idPrefix}-cost`}>Costo (Bs)</label>
+  <input
+    id={`${idPrefix}-cost`}
+    name="costPrice"
+    type="number"
+    min="0"
+    step="0.01"
+    value={product?.costPrice ?? ''}
+    placeholder="Opcional"
+  />
+  <p class="adm-field-error" id={`${idPrefix}-cost-error`} data-field-error="costPrice" hidden></p>
+</div>
+
+<div class="adm-field">
+  <label for={`${idPrefix}-category`}>Categoría</label>
+  <select id={`${idPrefix}-category`} name="categoryId">
+    <option value="" selected={!product?.categoryId}>Sin categoría</option>
+    {availableCategories.map((category) => (
+      <option value={category.id} selected={category.id === product?.categoryId}>
+        {category.name}
+        {!category.active ? ' · inactiva' : ''}
+      </option>
+    ))}
+  </select>
+  <p class="adm-field-error" id={`${idPrefix}-category-error`} data-field-error="categoryId" hidden></p>
+</div>
+
+{includeStatus && (
+  <div class="adm-field">
+    <label for={`${idPrefix}-active`}>Estado</label>
+    <select id={`${idPrefix}-active`} name="active">
+      <option value="true" selected={active}>Activo</option>
+      <option value="false" selected={!active}>Inactivo</option>
+    </select>
+    <p class="adm-field-error" id={`${idPrefix}-active-error`} data-field-error="active" hidden></p>
+  </div>
+)}

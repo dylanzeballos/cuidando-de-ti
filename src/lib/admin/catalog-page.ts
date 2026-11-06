@@ -1,16 +1,21 @@
-import type { AdminClient, UpdateProductInput } from '@/lib/admin/catalog-api';
+import type {
+  AdminClient,
+  CreateProductInput,
+  UpdateProductInput,
+} from '@/lib/admin/catalog-api';
+import {
+  validateCatalogForm,
+  type CatalogFormAction,
+} from '@/lib/admin/catalog-schema';
+
+export type CatalogForm = CatalogFormAction;
 
 export type CatalogPostResult =
   | { status: 'ok'; message: string }
-  | { status: 'error'; message: string; productId?: string };
+  | { status: 'error'; message: string; form?: CatalogForm; productId?: string };
 
-const VALID_UNITS = new Set(['UNIT', 'KG', 'LITER', 'PACK']);
-
-function numberFrom(form: FormData, name: string): number | null {
-  const raw = String(form.get(name) ?? '').trim();
-  if (raw.length === 0) return null;
-  const value = Number(raw);
-  return Number.isFinite(value) ? value : Number.NaN;
+function idFrom(form: FormData, name: string): string {
+  return String(form.get(name) ?? '').trim();
 }
 
 /** Valida y ejecuta las acciones POST del catálogo (crear y editar). */
@@ -21,16 +26,19 @@ export async function handleCatalogPost(
   const action = String(form.get('action') ?? '');
 
   if (action === 'category') {
-    const name = String(form.get('name') ?? '').trim();
-    if (name.length === 0) return { status: 'error', message: 'Escribe el nombre de la categoría.' };
-    const result = await client.createCategory(name);
+    const parsed = validateCatalogForm('category', form);
+    if (!parsed.ok) return { status: 'error', form: 'category', message: parsed.message };
+    if (parsed.action !== 'category') {
+      return { status: 'error', form: 'category', message: 'Formulario no reconocido.' };
+    }
+    const result = await client.createCategory(parsed.data.name);
     return result.status === 'ok'
       ? { status: 'ok', message: 'Categoría creada.' }
-      : { status: 'error', message: result.message };
+      : { status: 'error', form: 'category', message: result.message };
   }
 
   if (action === 'category-status') {
-    const categoryId = String(form.get('categoryId') ?? '').trim();
+    const categoryId = idFrom(form, 'categoryId');
     const active = String(form.get('active') ?? '') === 'true';
     if (categoryId.length === 0) {
       return { status: 'error', message: 'No se identificó la categoría.' };
@@ -42,7 +50,7 @@ export async function handleCatalogPost(
   }
 
   if (action === 'product-status') {
-    const productId = String(form.get('productId') ?? '').trim();
+    const productId = idFrom(form, 'productId');
     const active = String(form.get('active') ?? '') === 'true';
     if (productId.length === 0) {
       return { status: 'error', message: 'No se identificó el producto.' };
@@ -54,86 +62,65 @@ export async function handleCatalogPost(
   }
 
   if (action === 'product-update') {
-    const productId = String(form.get('productId') ?? '').trim();
-    if (productId.length === 0) {
-      return { status: 'error', message: 'No se identificó el producto.' };
-    }
-
-    const name = String(form.get('name') ?? '').trim();
-    const unit = String(form.get('unit') ?? '');
-    const unitPrice = numberFrom(form, 'unitPrice');
-    const taxRate = numberFrom(form, 'taxRate');
-    const costPrice = numberFrom(form, 'costPrice');
-
-    if (name.length === 0) {
-      return { status: 'error', message: 'El nombre del producto es obligatorio.', productId };
-    }
-    if (!VALID_UNITS.has(unit)) {
-      return { status: 'error', message: 'Elige una unidad válida.', productId };
-    }
-    if (unitPrice === null || Number.isNaN(unitPrice) || unitPrice < 0) {
+    const productId = idFrom(form, 'productId');
+    const parsed = validateCatalogForm('product-update', form);
+    if (!parsed.ok) {
       return {
         status: 'error',
-        message: 'El precio debe ser un número mayor o igual a cero.',
+        form: 'product-update',
+        message: parsed.message,
         productId,
       };
     }
-    if (taxRate === null || Number.isNaN(taxRate) || taxRate < 0 || taxRate > 100) {
-      return { status: 'error', message: 'El impuesto debe estar entre 0 y 100.', productId };
-    }
-    if (costPrice !== null && (Number.isNaN(costPrice) || costPrice < 0)) {
+    if (parsed.action !== 'product-update') {
       return {
         status: 'error',
-        message: 'El costo debe ser un número mayor o igual a cero.',
+        form: 'product-update',
+        message: 'Formulario no reconocido.',
         productId,
       };
     }
 
-    const categoryId = String(form.get('categoryId') ?? '').trim();
+    const data = parsed.data;
     const input: UpdateProductInput = {
-      name,
-      description: String(form.get('description') ?? '').trim(),
-      barcode: String(form.get('barcode') ?? '').trim() || null,
-      unit,
-      unitPrice,
-      taxRate,
-      active: String(form.get('active') ?? '') === 'true',
+      name: data.name,
+      brand: data.brand ?? '',
+      description: data.description ?? '',
+      unit: data.unit,
+      unitPrice: data.unitPrice,
+      active: data.active,
     };
-    if (categoryId.length > 0) input.categoryId = categoryId;
-    if (costPrice !== null) input.costPrice = costPrice;
+    if (data.costPrice !== undefined) input.costPrice = data.costPrice;
+    if (data.categoryId.length > 0) input.categoryId = data.categoryId;
 
-    const result = await client.updateProduct(productId, input);
+    const result = await client.updateProduct(data.productId, input);
     return result.status === 'ok'
       ? { status: 'ok', message: 'Producto actualizado.' }
-      : { status: 'error', message: result.message, productId };
+      : { status: 'error', form: 'product-update', message: result.message, productId };
   }
 
   if (action === 'product') {
-    const sku = String(form.get('sku') ?? '').trim();
-    const name = String(form.get('name') ?? '').trim();
-    const unitPrice = numberFrom(form, 'unitPrice');
-    const taxRate = numberFrom(form, 'taxRate');
-    if (sku.length === 0 || name.length === 0) {
-      return { status: 'error', message: 'El SKU y el nombre del producto son obligatorios.' };
+    const parsed = validateCatalogForm('product', form);
+    if (!parsed.ok) return { status: 'error', form: 'product', message: parsed.message };
+    if (parsed.action !== 'product') {
+      return { status: 'error', form: 'product', message: 'Formulario no reconocido.' };
     }
-    if (unitPrice === null || Number.isNaN(unitPrice) || unitPrice < 0) {
-      return { status: 'error', message: 'El precio debe ser un número mayor o igual a cero.' };
-    }
-    if (taxRate === null || Number.isNaN(taxRate) || taxRate < 0 || taxRate > 100) {
-      return { status: 'error', message: 'El impuesto debe estar entre 0 y 100.' };
-    }
-    const result = await client.createProduct({
-      sku,
-      name,
-      unit: String(form.get('unit') ?? 'UNIT'),
-      unitPrice,
-      taxRate,
-      barcode: String(form.get('barcode') ?? '').trim() || null,
-      categoryId: String(form.get('categoryId') ?? '').trim() || null,
-    });
+
+    const data = parsed.data;
+    const input: CreateProductInput = {
+      name: data.name,
+      brand: data.brand,
+      description: data.description,
+      unit: data.unit,
+      unitPrice: data.unitPrice,
+      categoryId: data.categoryId.length > 0 ? data.categoryId : null,
+    };
+    if (data.costPrice !== undefined) input.costPrice = data.costPrice;
+
+    const result = await client.createProduct(input);
     return result.status === 'ok'
-      ? { status: 'ok', message: 'Producto creado.' }
-      : { status: 'error', message: result.message };
+      ? { status: 'ok', message: `Producto creado con SKU ${result.data.sku}.` }
+      : { status: 'error', form: 'product', message: result.message };
   }
 
   return { status: 'error', message: 'Acción no reconocida.' };

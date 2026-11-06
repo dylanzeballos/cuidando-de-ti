@@ -5,9 +5,18 @@ import type { Branch } from '@/lib/admin/catalog-api';
 interface Props {
   branches: Branch[];
   selectedBranchId: string;
+  /** Filtros de la página que se conservan al cambiar de sucursal. */
+  query?: Record<string, string>;
+  /** Solo se enlaza al inventario si la cuenta puede administrarlo. */
+  showInventoryLink?: boolean;
 }
 
-const { branches, selectedBranchId } = Astro.props;
+const {
+  branches,
+  selectedBranchId,
+  query = {},
+  showInventoryLink = true,
+} = Astro.props;
 ---
 
 <section class="adm-card" aria-labelledby="sucursal-title">
@@ -15,8 +24,13 @@ const { branches, selectedBranchId } = Astro.props;
     <h2 id="sucursal-title">Sucursal</h2>
     <div class="adm-card-head-side">
       <span class="adm-chip">{branches.length}</span>
-      <a class="adm-link" href="/admin/inventario">Inventario</a>
+      {showInventoryLink && <a class="adm-link" href="/admin/inventario">Inventario</a>}
     </div>
   </div>
-  <BranchPicker branches={branches} selectedId={selectedBranchId} />
+  <BranchPicker
+    branches={branches}
+    selectedId={selectedBranchId}
+    basePath="/admin/costos"
+    query={query}
+  />
 </section>

@@ -2,11 +2,11 @@
 
 ## Why
 
-El catálogo actual solo permite crear categorías y productos. Un encargado de farmacia no puede corregir un precio, cambiar el impuesto, reasignar la categoría ni retirar de la venta un producto o una categoría. Sin edición, cualquier error de carga obliga a llamar a la API a mano y el catálogo deja de ser operable antes de integrar la facturación.
+El catálogo actual solo permite crear categorías y productos. Un encargado de farmacia no puede corregir un precio, editar la marca, reasignar la categoría ni retirar de la venta un producto o una categoría. Sin edición, cualquier error de carga obliga a llamar a la API a mano y el catálogo deja de ser operable antes de integrar la facturación.
 
 ## What Changes
 
-- **Editar producto** desde `/admin/catalogo` en un diálogo modal nativo: nombre, descripción, código de barras, unidad, precio de venta, costo, impuesto, categoría y estado.
+- **Editar producto** desde `/admin/catalogo` en un diálogo modal nativo: nombre, marca, descripción, unidad, precio de venta, costo, categoría y estado.
 - **Activar/desactivar productos** desde la tabla, con confirmación al desactivar.
 - **Activar/desactivar categorías** desde la lista, con confirmación al desactivar.
 - El **SKU** queda inmutable porque el backend no lo acepta en la actualización.

@@ -43,6 +43,25 @@ export type SaleItem = {
   unitPrice: number;
   discount: number;
   lineTotal: number;
+  taxRate: number;
+  taxAmount: number;
+};
+
+export type SaleCustomer = {
+  documentType: string;
+  documentNumber: string;
+  name: string;
+  email: string | null;
+  address: string | null;
+};
+
+export type SaleBillingSummary = {
+  documentId: string;
+  number: number;
+  status: string;
+  cuf: string | null;
+  customerDocumentNumber: string;
+  customerName: string;
 };
 
 export type SalePayment = {
@@ -60,6 +79,7 @@ export type Sale = {
   currency: string;
   subtotal: number;
   discountTotal: number;
+  taxTotal: number;
   total: number;
   paidTotal: number;
   createdBy: string;
@@ -67,6 +87,8 @@ export type Sale = {
   annulledAt: string | null;
   annulledBy: string | null;
   annulReason: string | null;
+  customer: SaleCustomer | null;
+  billing: SaleBillingSummary | null;
   items: SaleItem[];
   payments: SalePayment[];
 };
@@ -99,8 +121,11 @@ export type Receipt = {
   currency: string;
   subtotal: number;
   discountTotal: number;
+  taxTotal: number;
   total: number;
   paidTotal: number;
+  customer: SaleCustomer | null;
+  billing: SaleBillingSummary | null;
   items: SaleItem[];
   payments: SalePayment[];
   annulledAt: string | null;
@@ -149,6 +174,14 @@ export type CreateSaleInput = {
   items: CreateSaleItemInput[];
   discount?: number;
   payments: CreateSalePaymentInput[];
+  invoiceRequired?: boolean;
+  customer?: {
+    documentType: 'NIT';
+    documentNumber: string;
+    name: string;
+    email?: string;
+    address?: string;
+  };
 };
 
 export type ListSalesParams = {

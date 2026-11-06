@@ -14,6 +14,12 @@ declare namespace App {
     } | null;
     /** Cuenta autenticada de la sesión de servidor. */
     account: { email: string } | null;
+    /**
+     * Roles y permisos efectivos de la cuenta, resueltos en el servidor. `null`
+     * cuando el perfil no está disponible: no se filtra la navegación y el
+     * backend sigue siendo la autoridad de cada operación.
+     */
+    access: { roles: string[]; permissions: string[] } | null;
     /** Espacio de trabajo derivado del tipo de usuario, si la sesión lo conoce. */
     workspace?: 'administracion' | 'ventas' | 'almacen' | 'contabilidad' | null;
   }

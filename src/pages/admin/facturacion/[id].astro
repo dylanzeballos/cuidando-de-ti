@@ -1,0 +1,150 @@
+---
+import AdminShell from '@/components/admin/admin-shell.astro';
+import LoadingState from '@/components/primitives/loading-state.astro';
+import ErrorState from '@/components/primitives/error-state.astro';
+import BillingDetailItems from '@/components/billing/billing-detail-items.astro';
+import BillingTimeline from '@/components/billing/billing-timeline.astro';
+import { resolveBillingClient } from '@/lib/billing/billing-service';
+import { formatMoney } from '@/lib/sales/cart';
+import {
+  billingStatusDescription,
+  billingStatusLabel,
+  billingStatusTone,
+  isCancellable,
+  isRetryable,
+} from '@/lib/billing/labels';
+
+const auth = await Astro.session?.get('auth');
+const documentId = Astro.params.id ?? '';
+if (!auth) {
+  return Astro.redirect(`/entrar?redirect=${encodeURIComponent(`/admin/facturacion/${documentId}`)}`, 303);
+}
+
+const billing = resolveBillingClient(auth.accessToken);
+const back = (params: Record<string, string>) =>
+  new Response(null, {
+    status: 303,
+    headers: {
+      location: `/admin/facturacion/${documentId}?${new URLSearchParams(params).toString()}`,
+    },
+  });
+
+const current = await billing.get(documentId);
+
+if (Astro.request.method === 'POST' && current.status === 'ok') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+  if (action === 'submit') {
+    const result = await billing.submit(documentId);
+    return result.status === 'ok'
+      ? back({ ok: 'Intento de envío registrado. Revisa el estado del documento.' })
+      : back({ error: result.message });
+  }
+  if (action === 'cancel') {
+    const reason = String(form.get('reason') ?? '').trim();
+    if (reason.length === 0) return back({ error: 'Indica el motivo de la anulación.' });
+    const result = await billing.cancel(documentId, reason);
+    return result.status === 'ok'
+      ? back({ ok: 'Documento anulado.' })
+      : back({ error: result.message });
+  }
+  return back({ error: 'Acción no reconocida.' });
+}
+
+const document = current.status === 'ok' ? current.data : null;
+const okMessage = Astro.url.searchParams.get('ok');
+const errorMessage = Astro.url.searchParams.get('error');
+const empresa = Astro.locals.empresa;
+const status = empresa === null ? 'loading' : empresa.status;
+const notFound = current.status === 'notFound';
+const loadError = current.status === 'unavailable' ? current.message : null;
+---
+
+<AdminShell title={document ? `Factura #${document.number}` : 'Facturación'} active="/admin/facturacion">
+  <header class="adm-page-head">
+    <h1>{document ? `Factura #${document.number}` : 'Documento fiscal'}</h1>
+    <p class="adm-sub">
+      <a href="/admin/facturacion">Volver a facturación</a>
+      {document && <> · <a href={`/admin/ventas/${document.saleId}`}>Venta #{document.saleNumber}</a></>}
+      {document && <> · <a href={`/admin/facturacion/${document.id}/factura`}>Ver factura imprimible</a></>}
+    </p>
+  </header>
+
+  {okMessage && <p class="adm-banner adm-banner--ok" role="status">{okMessage}</p>}
+  {errorMessage && <p class="adm-banner adm-banner--error" role="alert">{errorMessage}</p>}
+  {loadError && <p class="adm-banner adm-banner--error" role="alert">{loadError}</p>}
+
+  {
+    status === 'loading' ? (
+      <LoadingState label="Cargando la configuración de la empresa." />
+    ) : status === 'unavailable' ? (
+      <ErrorState message="No pudimos cargar la configuración de la empresa. Inténtalo de nuevo en unos minutos." />
+    ) : notFound ? (
+      <ErrorState title="Documento no encontrado" message="El documento no existe o pertenece a otra instalación." />
+    ) : document === null ? (
+      <ErrorState message="No pudimos cargar el documento fiscal. Inténtalo de nuevo en unos minutos." />
+    ) : (
+      <>
+        <section class="adm-card" aria-labelledby="bil-resumen">
+          <div class="adm-card-head">
+            <h2 id="bil-resumen">Resumen fiscal</h2>
+            <span class={`adm-badge ${billingStatusTone(document.status)}`}>
+              {billingStatusLabel(document.status)}
+            </span>
+          </div>
+          <p class="adm-sub">{billingStatusDescription(document.status)}</p>
+          <dl class="svc-summary">
+            <div><dt>N.º factura</dt><dd>#{document.number}</dd></div>
+            <div><dt>Venta</dt><dd>#{document.saleNumber}</dd></div>
+            <div><dt>Emitida</dt><dd>{new Date(document.issuedAt).toLocaleString('es-BO')}</dd></div>
+            <div><dt>Cliente</dt><dd>{document.customerName}</dd></div>
+            <div><dt>{document.customerDocumentType}</dt><dd>{document.customerDocumentNumber}</dd></div>
+            <div><dt>Correo</dt><dd>{document.customerEmail ?? '—'}</dd></div>
+            <div><dt>Subtotal</dt><dd>{formatMoney(document.subtotal)}</dd></div>
+            <div><dt>Descuentos</dt><dd>{formatMoney(document.discountTotal)}</dd></div>
+            <div><dt>IVA</dt><dd>{formatMoney(document.taxTotal)}</dd></div>
+            <div><dt>Total</dt><dd>{formatMoney(document.total)}</dd></div>
+            <div><dt>CUF</dt><dd class="bil-code">{document.cuf ?? 'Pendiente de asignación'}</dd></div>
+            <div><dt>CUFD</dt><dd class="bil-code">{document.cufd ?? '—'}</dd></div>
+            <div><dt>Código SIAT</dt><dd>{document.siatCode ?? '—'}</dd></div>
+            <div><dt>Intentos</dt><dd>{document.attemptCount}</dd></div>
+          </dl>
+          {document.siatMessage && <p class="bil-message">{document.siatMessage}</p>}
+          {document.cancelledAt && (
+            <p class="bil-message">
+              Anulada el {new Date(document.cancelledAt).toLocaleString('es-BO')}
+              {document.cancelReason ? ` · ${document.cancelReason}` : ''}
+            </p>
+          )}
+
+          <div class="adm-page-actions">
+            {isRetryable(document.status) && (
+              <form method="post">
+                <input type="hidden" name="action" value="submit" />
+                <button class="adm-btn" type="submit">
+                  {document.status === 'PENDING' ? 'Enviar al SIAT' : 'Reintentar envío'}
+                </button>
+              </form>
+            )}
+          </div>
+
+          {isCancellable(document.status) && (
+            <form class="adm-form bil-cancel" method="post">
+              <input type="hidden" name="action" value="cancel" />
+              <div class="adm-field">
+                <label for="bil-motivo">Motivo de anulación</label>
+                <input id="bil-motivo" name="reason" maxlength="240" required />
+              </div>
+              <div class="adm-actions">
+                <button class="adm-btn adm-btn--danger" type="submit">Anular documento</button>
+              </div>
+            </form>
+          )}
+        </section>
+
+        <BillingDetailItems items={document.items} />
+        <BillingTimeline events={document.events} />
+      </>
+    )
+  }
+</AdminShell>
