@@ -241,7 +241,7 @@ export default function PosIsland({ branchId, branchName, registerEndpoint, prod
         {created !== null ? (
           <div className="pos-success" role="status">
             <span className="pos-success-mark" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m5 13 4 4L19 7" />
               </svg>
             </span>
